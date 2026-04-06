@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منطقة محظورة - دخول الثلاثي</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: sans-serif; background: #1e3c72; height: 100vh; display: flex; justify-content: center; align-items: center; color: white; }
+        .login-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input { padding: 12px; width: 100%; border-radius: 10px; border: none; margin: 20px 0; outline: none; text-align: center; font-size: 18px; }
+        button { background: #4facfe; color: white; border: none; padding: 12px 30px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; }
+        .error { color: #ff6b6b; margin-top: 10px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>🔒 منطقة خاصة</h2>
+        <p>ادخل كلمة السر للدخول لعالمنا</p>
+        <form method="post">
+            <input type="password" name="password" placeholder="كلمة السر هنا..." required>
+            <button type="submit">دخول</button>
+        </form>
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    </div>
+</body>
+</html>
