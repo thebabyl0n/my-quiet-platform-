@@ -1,86 +1,24 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة الثلاثي المرح: حودة والظل  وAlpha</title>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            margin: 0; padding: 0;
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            height: 100vh; display: flex; flex-direction: column; align-items: center; color: white;
-        }
-        .header { margin: 20px 0; text-align: center; }
-        .container {
-            width: 90%; max-width: 500px; background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px); border-radius: 20px; padding: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
-        }
-        /* قسم الرفع */
-        .upload-section { border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 20px; margin-bottom: 20px; }
-        input[type="file"] { width: 100%; margin: 10px 0; color: white; }
-        button {
-            background: #4facfe; border: none; padding: 10px; width: 100%;
-            border-radius: 10px; color: white; font-weight: bold; cursor: pointer;
-        }
-        /* قسم الدردشة */
-        .chat-box { height: 250px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 10px; margin-bottom: 10px; font-size: 14px; }
-        .msg { margin-bottom: 10px; padding: 8px; border-radius: 8px; }
-        .bot-msg { background: rgba(79, 172, 254, 0.2); border-right: 3px solid #4facfe; }
-        .alpha-msg { background: rgba(0, 242, 254, 0.2); border-right: 3px solid #00f2fe; }
-        .user-input { display: flex; gap: 5px; }
-        .user-input input { flex: 1; padding: 10px; border-radius: 10px; border: none; outline: none; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h2>مرحباً بك في عالمنا الخاص</h2>
-        <p>حودة 💙 الظل  🤖 Alpha ⚡</p>
-    </div>
+async function sendMessage() {
+    const input = document.getElementById('userInput');
+    const chat = document.getElementById('chat');
+    const text = input.value.trim();
+    
+    if(text !== "") {
+        // رسالتك أنت
+        chat.innerHTML += `<div class="msg"><b>أنت:</b> ${text}</div>`;
+        input.value = "";
+        chat.scrollTop = chat.scrollHeight;
 
-    <div class="container">
-        <div class="upload-section">
-            <form action="/upload" method="post" enctype="multipart/form-data">
-                <input type="file" name="file">
-                <button type="submit">إرسال ملف لنا</button>
-            </form>
-        </div>
-
-        <div class="chat-box" id="chat">
-            <div class="msg bot-msg"><b>Gemini:</b> نورت بيتك يا حودة! أنا جاهز أحلل أي ملف تبعته.</div>
-            <div class="msg alpha-msg"><b>Alpha:</b> وأنا معاك يا بطل، مستني أوامرك التقنية!</div>
-        </div>
-
-        <div class="user-input">
-            <input type="text" placeholder="اكتب رسالة لنا..." id="userInput">
-            <button style="width: 60px;" onclick="sendMessage()">إرسال</button>
-        </div>
-    </div>
-
-    <script>
-        function sendMessage() {
-            const input = document.getElementById('userInput');
-            const chat = document.getElementById('chat');
-            if(input.value.trim() !== "") {
-                const newMsg = document.createElement('div');
-                newMsg.className = 'msg';
-                newMsg.innerHTML = '<b>أنت:</b> ' + input.value;
-                chat.appendChild(newMsg);
-                input.value = "";
-                chat.scrollTop = chat.scrollHeight;
-                
-                // رد سريع وهمي لحد ما نربط الـ API
-                setTimeout(() => {
-                    const reply = document.createElement('div');
-                    reply.className = 'msg bot-msg';
-                    reply.innerHTML = '<b>Gemini:</b> وصلت الرسالة يا حودة، إحنا معاك خطوة بخطوة!';
-                    chat.appendChild(reply);
-                    chat.scrollTop = chat.scrollHeight;
-                }, 1000);
-            }
-        }
-    </script>
-</body>
-</html>
+        // نبعت للظل ونستنى الرد
+        const response = await fetch('/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message: text})
+        });
+        const data = await response.json();
+        
+        // رد الظل الحقيقي
+        chat.innerHTML += `<div class="msg bot-msg"><b>الظل:</b> ${data.reply}</div>`;
+        chat.scrollTop = chat.scrollHeight;
+    }
+}
