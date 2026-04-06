@@ -3,7 +3,7 @@ import google.generativeai as genai
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 
 app = Flask(__name__)
-# سحب مفتاح السر الخاص بالجلسة من Render أو استخدام افتراضي
+# سكرت كي للجلسة
 app.secret_key = os.environ.get('SECRET_KEY', 'hamada_alpha_77')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -27,11 +27,11 @@ def chat():
         
     user_msg = request.json.get("message")
     
-    # 🔑 هنا السحر: الكود بيروح يدور في "الخزنة" اللي أنت ربطتها
-    api_key = os.environ.get('GOOGLE_API_KEY')
+    # 🔑 هنا الربط مع اسم الخزنة اللي اخترته يا بطل
+    api_key = os.environ.get('Alpha-Worm-Vault-77')
     
     if not api_key:
-        return jsonify({"reply": "الفا: لسه الموقع مش شايف الخزنة، اتأكد إنك عملت Link للمجموعة في إعدادات الموقع!"})
+        return jsonify({"reply": "الفا: الخزنة Alpha-Worm-Vault-77 مش موجودة في إعدادات Render!"})
 
     try:
         genai.configure(api_key=api_key)
@@ -43,9 +43,8 @@ def chat():
         return jsonify({"reply": response.text})
     except Exception as e:
         print(f"Error: {e}")
-        return jsonify({"reply": "الظل: المفتاح وصل بس السيرفر مهنج، جرب تبعت تاني يا بطل!"})
+        return jsonify({"reply": "الظل: لسه فيه حاجة بسيطة معلقة، جرب تبعت تاني يا بطل!"})
 
 if __name__ == "__main__":
-    # Render بيفضل بورت 10000
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
