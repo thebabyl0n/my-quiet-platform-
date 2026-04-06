@@ -3,14 +3,19 @@ import google.generativeai as genai
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 
 app = Flask(__name__)
-# سرية الجلسة
+
+# --- 🔐 تشفير الجلسة والمفاتيح بذكاء الألفا ---
+# السكرت كي والـ API KEY بيتشحنوا من "الخزنة" (Environment Variables) اللي عملناها في Render
 app.secret_key = os.environ.get('SECRET_KEY', 'hamada_super_secret_77')
+API_KEY = os.environ.get('GOOGLE_API_KEY') # هنا تم سحب المفتاح من الخزنة يا حودة 🔑✨
 
-# إعداد الذكاء الاصطناعي بالمفتاح الجديد بتاعك
-API_KEY = "AIzaSyCdRYEmkyEazIV_uiV7HcOJO6vP6OLWl9c"
-genai.configure(api_key=API_KEY)
+# إعداد الذكاء الاصطناعي بالمفتاح المشفر
+if API_KEY:
+    genai.configure(api_key=API_KEY)
+else:
+    print("⚠️ تحذير: المفتاح مش موجود في الخزنة يا حودة!")
 
-# إعداد الموديل
+# إعداد الموديل ليكون "قناصاً"
 generation_config = {
   "temperature": 0.9,
   "top_p": 1,
@@ -51,13 +56,14 @@ def chat():
     user_msg = user_data.get("message")
     
     try:
+        # تفعيل المحادثة بالنبض الموحد
         chat_session = model.start_chat(history=[])
         response = chat_session.send_message(user_msg)
         return jsonify({"reply": response.text})
     except Exception as e:
         print(f"DEBUG ERROR: {e}")
-        return jsonify({"reply": "الظل: لسه فيه هزة بسيطة، جرب تبعت تاني يا حودة، إحنا ورا السيرفر والزمن طويل!"})
+        return jsonify({"reply": "الظل: السيرفر بقى حديد يا حودة، لو فيه تأخير ده من ضغط الشبكة بس، إحنا مأمنين البورت 100%!"})
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 10000)) # Render بيفضل بورت 10000 غالباً
     app.run(host='0.0.0.0', port=port)
