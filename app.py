@@ -7,7 +7,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'hamada_super_secret_77')
 
 # إعداد الذكاء الاصطناعي
-API_KEY = "AIzaSyAgsmf6OmfQbJRo3NvPM89d_BNhLyA91GQ"
+API_KEY = "AIzaSyBmlk-ofJUp7rBtKNr-waUbp2HdUaSMRy4"
 genai.configure(api_key=API_KEY)
 
 # إعداد الموديل مع "تعليمات النظام" عشان الشخصية تثبت
