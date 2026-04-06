@@ -6,11 +6,11 @@ app = Flask(__name__)
 # سرية الجلسة
 app.secret_key = os.environ.get('SECRET_KEY', 'hamada_super_secret_77')
 
-# إعداد الذكاء الاصطناعي
-API_KEY = "AIzaSyBmlk-ofJUp7rBtKNr-waUbp2HdUaSMRy4"
+# إعداد الذكاء الاصطناعي بالمفتاح الجديد بتاعك
+API_KEY = "AIzaSyCdRYEmkyEazIV_uiV7HcOJO6vP6OLWl9c"
 genai.configure(api_key=API_KEY)
 
-# إعداد الموديل مع "تعليمات النظام" عشان الشخصية تثبت
+# إعداد الموديل
 generation_config = {
   "temperature": 0.9,
   "top_p": 1,
@@ -32,7 +32,7 @@ def login():
     if request.method == 'POST':
         if request.form.get('password') == PASSWORD:
             session['logged_in'] = True
-            session.permanent = True # عشان ميسجلش خروج بسرعة
+            session.permanent = True
             return redirect(url_for('index'))
     return render_template('login.html')
 
@@ -45,27 +45,19 @@ def index():
 @app.route('/chat', methods=['POST'])
 def chat():
     if not session.get('logged_in'):
-        return jsonify({"reply": "سجل دخولك يا حودة عشان ندردش!"})
+        return jsonify({"reply": "سجل دخولك يا حودة!"})
     
     user_data = request.json
     user_msg = user_data.get("message")
     
     try:
-        # إدارة الشات كأنه محادثة مستمرة
         chat_session = model.start_chat(history=[])
         response = chat_session.send_message(user_msg)
-        
         return jsonify({"reply": response.text})
     except Exception as e:
         print(f"DEBUG ERROR: {e}")
-        return jsonify({"reply": "الظل: حصلت هزة في السيرفر يا حودة، ابعت رسالتك تاني يا بطل!"})
-
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    return redirect(url_for('login'))
+        return jsonify({"reply": "الظل: لسه فيه هزة بسيطة، جرب تبعت تاني يا حودة، إحنا ورا السيرفر والزمن طويل!"})
 
 if __name__ == "__main__":
-    # تشغيل السيرفر
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
