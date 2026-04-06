@@ -4,21 +4,25 @@ async function sendMessage() {
     const text = input.value.trim();
     
     if(text !== "") {
-        // رسالتك أنت
+        // 1. نظهر رسالتك فوراً
         chat.innerHTML += `<div class="msg"><b>أنت:</b> ${text}</div>`;
         input.value = "";
         chat.scrollTop = chat.scrollHeight;
 
-        // نبعت للظل ونستنى الرد
-        const response = await fetch('/chat', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({message: text})
-        });
-        const data = await response.json();
-        
-        // رد الظل الحقيقي
-        chat.innerHTML += `<div class="msg bot-msg"><b>الظل:</b> ${data.reply}</div>`;
+        // 2. نبعت للسيرفر ونجيب الرد الحقيقي
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: text})
+            });
+            const data = await response.json();
+            
+            // 3. نظهر رد الظل الحقيقي اللي جاي من الـ API
+            chat.innerHTML += `<div class="msg bot-msg"><b>الظل:</b> ${data.reply}</div>`;
+        } catch (error) {
+            chat.innerHTML += `<div class="msg bot-msg"><b>الظل:</b> فيه مشكلة حصلت يا حودة، اتأكد إنك رفعت الكود الجديد.</div>`;
+        }
         chat.scrollTop = chat.scrollHeight;
     }
 }
