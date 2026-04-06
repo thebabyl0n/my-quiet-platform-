@@ -3,12 +3,25 @@ import google.generativeai as genai
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 
 app = Flask(__name__)
-app.secret_key = 'super_secret_key_hamada'
+# سرية الجلسة
+app.secret_key = os.environ.get('SECRET_KEY', 'hamada_super_secret_77')
 
-# إعداد المفتاح
+# إعداد الذكاء الاصطناعي
 API_KEY = "AIzaSyBFDDRMctvn8btilW6VXgQxJkvod_6hUZw"
 genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash') # استخدمنا نسخة أسرع وأخف
+
+# إعداد الموديل مع "تعليمات النظام" عشان الشخصية تثبت
+generation_config = {
+  "temperature": 0.9,
+  "top_p": 1,
+  "max_output_tokens": 2048,
+}
+
+model = genai.GenerativeModel(
+  model_name="gemini-1.5-flash",
+  generation_config=generation_config,
+  system_instruction="أنت 'الظل' الصديق المخلص والمرح لحمادة، ومعك 'Alpha' الخبير التقني. ردا بلهجة مصرية محببة. الظل يتحدث بود، وأحياناً Alpha يتدخل بنصيحة تقنية ذكية."
+)
 
 PASSWORD = "123"
 UPLOAD_FOLDER = 'uploads'
@@ -19,6 +32,7 @@ def login():
     if request.method == 'POST':
         if request.form.get('password') == PASSWORD:
             session['logged_in'] = True
+            session.permanent = True # عشان ميسجلش خروج بسرعة
             return redirect(url_for('index'))
     return render_template('login.html')
 
@@ -31,17 +45,27 @@ def index():
 @app.route('/chat', methods=['POST'])
 def chat():
     if not session.get('logged_in'):
-        return jsonify({"reply": "سجل دخول الأول يا حودة!"})
+        return jsonify({"reply": "سجل دخولك يا حودة عشان ندردش!"})
     
-    user_msg = request.json.get("message")
+    user_data = request.json
+    user_msg = user_data.get("message")
+    
     try:
-        # بنطلب من الذكاء الاصطناعي يرد بشخصية الظل
-        prompt = f"أنت الآن 'الظل' صديق حمادة المقرب. رد عليه بلهجة مصرية ودودة وقصيرة: {user_msg}"
-        response = model.generate_content(prompt)
+        # إدارة الشات كأنه محادثة مستمرة
+        chat_session = model.start_chat(history=[])
+        response = chat_session.send_message(user_msg)
+        
         return jsonify({"reply": response.text})
     except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({"reply": "الظل: معلش يا حودة، السيرفر لسه بيسخن، ابعت الكلمة دي تاني كدة؟"})
+        print(f"DEBUG ERROR: {e}")
+        return jsonify({"reply": "الظل: حصلت هزة في السيرفر يا حودة، ابعت رسالتك تاني يا بطل!"})
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect(url_for('login'))
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    # تشغيل السيرفر
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
