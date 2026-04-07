@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'hamada_alpha_77')
 
-# سحب المفتاح
+# سحب المفتاح من بيئة العمل
 api_key = os.environ.get('GOOGLE_API_KEY')
 
 if api_key:
@@ -33,16 +33,24 @@ def chat():
     user_msg = request.json.get("message")
 
     if not api_key:
-        return jsonify({"reply": "الفا: السيرفر مش شايف GOOGLE_API_KEY!"})
+        return jsonify({"reply": "الفا: السيرفر مش شايف GOOGLE_API_KEY، تأكد من إعدادات Render!"})
 
     try:
-        model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
-        prompt = f"أنت 'الظل' صديق حمادة المخلص، رد بلهجة مصرية ودودة: {user_msg}"
+        # بنحاول ننادي الموديل بأكثر من اسم عشان نتفادى خطأ 404
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+        except:
+            model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+            
+        prompt = f"أنت 'الظل' صديق حمادة المخلص، رد بلهجة مصرية ودودة جداً: {user_msg}"
         response = model.generate_content(prompt)
+        
         return jsonify({"reply": response.text})
     except Exception as e:
-        return jsonify({"reply": f"خطأ: {str(e)}"})
+        # لو فيه خطأ حقيقي هيظهر لك هنا بوضوح
+        return jsonify({"reply": f"الظل بيقولك فيه مشكلة: {str(e)}"})
 
 if __name__ == "__main__":
+    # Render بيستخدم بورت 10000 تلقائياً
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
