@@ -5,6 +5,13 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'hamada_alpha_77')
 
+# ✅ سحب المفتاح مرة واحدة
+api_key = os.environ.get('GOOGLE_API_KEY')
+
+# ✅ تأكد إنه موجود قبل أي حاجة
+if api_key:
+    genai.configure(api_key=api_key)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -25,14 +32,12 @@ def chat():
         return jsonify({"reply": "سجل دخولك يا حودة!"})
         
     user_msg = request.json.get("message")
-    # بينادي على المفتاح بالاسم اللي موجود في الصورة (الخزنة)
-    api_key = os.environ.get('GOOGLE_API_KEY')
-    
+
+    # ✅ تحقق من المفتاح
     if not api_key:
-        return jsonify({"reply": "الفا: لسه الموقع مش شايف الخزنة، اتأكد إنك عملت Link Environment Group!"})
+        return jsonify({"reply": "الفا: السيرفر مش شايف GOOGLE_API_KEY، راجع Render!"})
 
     try:
-        genai.configure(api_key="AIzaYourKeyHere")
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = f"أنت 'الظل' صديق حمادة المخلص، رد بلهجة مصرية ودودة: {user_msg}"
@@ -40,7 +45,7 @@ def chat():
         
         return jsonify({"reply": response.text})
     except Exception as e:
-        return jsonify({"reply": "الظل: المفتاح وصل بس جوجل لسه زعلانة، جرب كمان 5 دقايق!"})
+        return jsonify({"reply": f"خطأ: {str(e)}"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
