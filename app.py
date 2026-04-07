@@ -5,10 +5,9 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'hamada_alpha_77')
 
-# ✅ سحب المفتاح مرة واحدة
+# سحب المفتاح
 api_key = os.environ.get('GOOGLE_API_KEY')
 
-# ✅ تأكد إنه موجود قبل أي حاجة
 if api_key:
     genai.configure(api_key=api_key)
 
@@ -33,16 +32,13 @@ def chat():
         
     user_msg = request.json.get("message")
 
-    # ✅ تحقق من المفتاح
     if not api_key:
-        return jsonify({"reply": "الفا: السيرفر مش شايف GOOGLE_API_KEY، راجع Render!"})
+        return jsonify({"reply": "الفا: السيرفر مش شايف GOOGLE_API_KEY!"})
 
     try:
-       model = genai.GenerativeModel('gemini-1.5-flash')
-        
+        model = genai.GenerativeModel('gemini-1.5-flash')
         prompt = f"أنت 'الظل' صديق حمادة المخلص، رد بلهجة مصرية ودودة: {user_msg}"
         response = model.generate_content(prompt)
-        
         return jsonify({"reply": response.text})
     except Exception as e:
         return jsonify({"reply": f"خطأ: {str(e)}"})
