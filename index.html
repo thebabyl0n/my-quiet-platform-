@@ -3,88 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بارنيز - المنيو الذكي</title>
+    <title>بارنيز - منيو الجدة الذكي</title>
     <style>
         :root { --primary-color: #006a4d; --accent-color: #c8a27c; --bg-color: #f8f9fa; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: #333; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: #333; }
         #welcome-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-color); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; }
-        .logo-welcome { width: 180px; border-radius: 25px; margin-bottom: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); border: 3px solid white; object-fit: cover; height: 180px; }
-        .btn-start { background-color: var(--accent-color); color: white; border: none; padding: 18px 60px; border-radius: 50px; font-size: 24px; cursor: pointer; font-weight: bold; transition: 0.4s; }
-        #table-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 35px; border-radius: 25px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); z-index: 1001; width: 85%; max-width: 380px; text-align: center; }
-        select { width: 100%; padding: 15px; margin: 25px 0; border-radius: 12px; border: 2px solid var(--primary-color); font-size: 20px; font-weight: bold; }
-        .header { background: white; padding: 20px; position: sticky; top: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.08); z-index: 100; display: flex; justify-content: space-between; align-items: center; }
-        .logo-small { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; }
-        .menu-container { padding: 20px; max-width: 600px; margin: auto; padding-bottom: 120px; }
-        .menu-item { background: white; margin-bottom: 20px; border-radius: 20px; overflow: hidden; display: flex; align-items: center; box-shadow: 0 8px 20px rgba(0,0,0,0.06); border: 1px solid #eee; }
-        .item-img { width: 110px; height: 110px; object-fit: cover; border-left: 1px solid #eee; }
-        .item-info { padding: 15px; flex-grow: 1; }
-        .item-name { font-weight: bold; font-size: 19px; color: #222; }
-        .item-price { color: var(--primary-color); font-weight: 800; }
+        .logo-welcome { width: 150px; border-radius: 20px; margin-bottom: 20px; border: 3px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .btn-start { background: var(--accent-color); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 20px; cursor: pointer; font-weight: bold; }
+        #order-type-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 25px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); z-index: 1001; width: 85%; max-width: 400px; text-align: center; }
+        .type-box { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-type { flex: 1; padding: 15px; border-radius: 12px; border: 2px solid var(--primary-color); background: white; font-weight: bold; cursor: pointer; }
+        .btn-type.active { background: var(--primary-color); color: white; }
+        select { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; }
+        .header { background: white; padding: 15px; position: sticky; top: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        .logo-small { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
+        .menu-container { padding: 15px; padding-bottom: 110px; }
+        .menu-item { background: white; margin-bottom: 15px; border-radius: 15px; overflow: hidden; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        .item-img { width: 110px; height: 110px; object-fit: cover; }
+        .item-info { padding: 12px; flex-grow: 1; }
+        .item-name { font-weight: bold; font-size: 17px; }
+        .item-price { color: var(--primary-color); font-weight: bold; display: block; margin-top: 5px; }
         .btn-add { background: var(--primary-color); color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        .cart-float { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; background: #25d366; color: white; padding: 18px; border-radius: 50px; font-size: 18px; font-weight: bold; border: none; display: flex; justify-content: center; align-items: center; gap: 10px; z-index: 200; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .cart-float { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; background: #25d366; color: white; padding: 18px; border-radius: 50px; font-size: 18px; font-weight: bold; border: none; z-index: 200; display: flex; justify-content: center; gap: 10px; }
     </style>
 </head>
 <body>
     <div id="welcome-screen">
-        <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400" alt="Barnies" class="logo-welcome">
-        <h1>أهلاً بك في بارنيز</h1>
-        <p>نكهة القهوة الأصيلة بين يديك</p>
-        <button class="btn-start" onclick="showTableModal()">ابدأ طلبك الآن</button>
+        <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400" class="logo-welcome">
+        <h1>يا هلا بيك في بارنيز</h1>
+        <button class="btn-start" onclick="openOrderModal()">ابدأ طلبك يا بطل</button>
     </div>
 
-    <div id="table-modal">
-        <h2>تشرفنا بزيارتك</h2>
-        <p>من فضلك اختر رقم الطاولة</p>
-        <select id="table-select">
-            <option value="1">طاولة 1</option><option value="2">طاولة 2</option><option value="3">طاولة 3</option><option value="4">طاولة 4</option><option value="5">طاولة 5</option>
-        </select>
-        <button class="btn-start" onclick="startMenu()" style="width: 100%;">استعراض المنيو</button>
+    <div id="order-type-modal">
+        <h3 style="color:var(--primary-color)">نورتنا.. كيف حابب طلبك؟</h3>
+        <div class="type-box">
+            <button class="btn-type" id="local-btn" onclick="setType('محلي')">📍 محلي</button>
+            <button class="btn-type" id="takeaway-btn" onclick="setType('سفري')">🚗 سفري</button>
+        </div>
+        <div id="table-selection" style="display:none;">
+            <p style="margin-top:15px; font-weight:bold;">اختار رقم الطاولة:</p>
+            <select id="table-select">
+                <option value="1">طاولة 1</option><option value="2">طاولة 2</option><option value="3">طاولة 3</option>
+            </select>
+        </div>
+        <button class="btn-start" style="width:100%; margin-top:20px;" onclick="goToMenu()">فتح المنيو</button>
     </div>
 
     <div id="main-content" style="display: none;">
         <div class="header">
             <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=200" class="logo-small">
-            <span id="table-display" style="font-weight: bold; color: var(--primary-color); font-size: 18px;"></span>
+            <span id="order-info-display" style="font-weight: bold; color: var(--primary-color);"></span>
         </div>
         <div class="menu-container">
             <div class="menu-item">
-                <img src="https://images.unsplash.com/photo-1541167760496-162955ed8a9f?w=400" class="item-img">
-                <div class="item-info"><span class="item-name">سبانش لاتيه</span><br><span class="item-price">18 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('سبانش لاتيه')">إضافة</button>
+                <img src="https://images.unsplash.com/photo-1592663516240-203496458514?w=400" class="item-img">
+                <div class="item-info"><span class="item-name">سبانش لاتيه بارد</span><span class="item-price">18 ريال</span></div>
+                <button class="btn-add" onclick="addToCart('سبانش لاتيه بارد')">إضافة</button>
             </div>
             <div class="menu-item">
-                <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400" class="item-img">
-                <div class="item-info"><span class="item-name">V60 حار</span><br><span class="item-price">22 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('V60 حار')">إضافة</button>
+                <img src="https://images.unsplash.com/photo-1544787210-2827448b303c?w=400" class="item-img">
+                <div class="item-info"><span class="item-name">V60 قهوة مختصة</span><span class="item-price">22 ريال</span></div>
+                <button class="btn-add" onclick="addToCart('V60')">إضافة</button>
             </div>
             <div class="menu-item">
-                <img src="https://images.unsplash.com/photo-1587049016823-69ef9d68bd44?w=400" class="item-img">
-                <div class="item-info"><span class="item-name">كيكة العسل</span><br><span class="item-price">15 ريال</span></div>
+                <img src="https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400" class="item-img">
+                <div class="item-info"><span class="item-name">كيكة العسل</span><span class="item-price">15 ريال</span></div>
                 <button class="btn-add" onclick="addToCart('كيكة العسل')">إضافة</button>
             </div>
         </div>
-        <button class="cart-float" onclick="sendOrder()">إرسال الطلب (واتساب) - <span id="cart-count">0</span></button>
+        <button class="cart-float" onclick="sendOrder()">إرسال الطلب (<span id="cart-count">0</span>)</button>
     </div>
 
     <script>
-        let cart = []; let selectedTable = "";
-        function speak(text) { if ('speechSynthesis' in window) { const msg = new SpeechSynthesisUtterance(text); msg.lang = 'ar-SA'; window.speechSynthesis.speak(msg); } }
-        function showTableModal() { document.getElementById('table-modal').style.display = 'block'; speak("أهلاً بك في بارنيز.. اختر طاولتك"); }
-        function startMenu() { 
-            selectedTable = document.getElementById('table-select').value; 
-            document.getElementById('welcome-screen').style.display = 'none'; 
-            document.getElementById('table-modal').style.display = 'none'; 
-            document.getElementById('main-content').style.display = 'block'; 
-            document.getElementById('table-display').innerText = "طاولة: " + selectedTable; 
-            speak("تفضل المنيو.. وقتاً سعيداً"); 
+        let cart = []; let orderType = ""; let tableNum = "";
+        function speak(t) { if('speechSynthesis' in window){ window.speechSynthesis.cancel(); const m=new SpeechSynthesisUtterance(t); m.lang='ar-SA'; m.rate=0.9; window.speechSynthesis.speak(m); }}
+        function openOrderModal() { document.getElementById('order-type-modal').style.display='block'; speak("يا هلا بيك في بارنيز.. نورتنا.. كيف حابب تطلب اليوم؟ سفري ولا محلي؟"); }
+        function setType(t) { 
+            orderType = t; 
+            document.getElementById('local-btn').className = t==='محلي' ? 'btn-type active' : 'btn-type';
+            document.getElementById('takeaway-btn').className = t==='سفري' ? 'btn-type active' : 'btn-type';
+            document.getElementById('table-selection').style.display = t==='محلي' ? 'block' : 'none';
+            speak(t==='محلي' ? "على راسي.. اختار طاولتك" : "أبشر.. سفري وعينك ما تشوف إلا النور");
         }
-        function addToCart(name) { cart.push(name); document.getElementById('cart-count').innerText = cart.length; speak("تم إضافة " + name + ".. تأمرني بشيء ثاني؟"); }
-        function sendOrder() { 
-            if(cart.length === 0) return speak("السلة فارغة");
-            const phone = "966579747707"; 
-            let text = `*طلب جديد من بارنيز ☕*\n\n📍 طاولة: ${selectedTable}\n📋 الطلبات:\n- ${cart.join('\n- ')}`; 
-            speak("شكراً لطلبك.. جاري الإرسال");
-            setTimeout(() => { window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank'); }, 1000);
+        function goToMenu() {
+            if(!orderType) return speak("يا حبيب أخوك اختار سفري ولا محلي أول");
+            tableNum = orderType === 'محلي' ? document.getElementById('table-select').value : "سفري";
+            document.getElementById('welcome-screen').style.display='none';
+            document.getElementById('order-type-modal').style.display='none';
+            document.getElementById('main-content').style.display='block';
+            document.getElementById('order-info-display').innerText = orderType + (orderType==='محلي' ? " - طاولة " + tableNum : "");
+            speak("تفضل يا غالي المنيو قدامك.. تمنيت لو أصب لك القهوة بيدي والله");
+        }
+        function addToCart(n) { cart.push(n); document.getElementById('cart-count').innerText = cart.length; speak("أبشر ضفنا " + n + ".. تبي شي ثاني؟"); }
+        function sendOrder() {
+            const p = "966579747707";
+            let msg = `*طلب جديد من بارنيز ☕*\nالنوع: ${orderType}\nالطاولة: ${tableNum}\nالطلبات:\n- ${cart.join('\n- ')}`;
+            speak("تسلم يمينك.. جاري إرسال الطلب ويوصلك لعندك فوراً");
+            setTimeout(() => { window.open(`https://wa.me/${p}?text=${encodeURIComponent(msg)}`, '_blank'); }, 1200);
         }
     </script>
 </body>
