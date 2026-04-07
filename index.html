@@ -3,141 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بارنيز - منيو الإخوة</title>
+    <title>Barnies - المنيو الجديد</title>
     <style>
-        :root { --primary: #006a4d; --accent: #c8a27c; --bg: #fdfdfd; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; transition: 0.3s; }
+        :root { --p: #006a4d; --a: #c8a27c; }
+        body { font-family: sans-serif; margin: 0; background: #fdfdfd; transition: 0.3s; }
         
         /* شاشة البداية */
-        #setup { position: fixed; inset: 0; background: var(--primary); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
-        .card-setup { background: white; padding: 30px; border-radius: 30px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
-        .btn-action { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 50px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        .btn-lang { background: var(--accent); margin-bottom: 25px; border: 2px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        select { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid #eee; margin: 10px 0; font-size: 16px; outline: none; }
+        #SCREEN_START { position: fixed; inset: 0; background: var(--p); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
+        .BOX { background: white; padding: 30px; border-radius: 30px; width: 100%; max-width: 380px; text-align: center; }
+        .BTN { background: var(--p); color: white; border: none; padding: 15px; border-radius: 50px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .BTN_LANG { background: var(--a); margin-bottom: 20px; }
+        select { width: 100%; padding: 12px; border-radius: 12px; margin: 10px 0; font-size: 16px; }
 
         /* المنيو */
-        .header { background: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .logo-sm { width: 55px; border-radius: 12px; }
-        .container { padding: 15px; max-width: 500px; margin: auto; padding-bottom: 120px; }
-        .item-row { background: white; border-radius: 20px; display: flex; margin-bottom: 20px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.06); align-items: center; border: 1px solid #f5f5f5; }
-        
-        /* الصور HD */
-        .img-box { width: 110px; height: 110px; flex-shrink: 0; }
-        .img-box img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .info-box { padding: 15px; flex: 1; text-align: right; }
-        .item-name { font-weight: bold; font-size: 19px; color: #222; display: block; }
-        .item-price { color: var(--primary); font-weight: 800; font-size: 17px; }
-        .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .HEADER { background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .ITEM { background: white; margin: 15px; border-radius: 20px; display: flex; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); align-items: center; border: 1px solid #eee; }
+        .ITEM img { width: 100px; height: 100px; object-fit: cover; }
+        .INFO { padding: 15px; flex: 1; text-align: right; }
+        .ADD { background: var(--p); color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
 
         /* سلة الواتساب */
-        .cart-btn { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 440px; background: #25d366; color: white; padding: 20px; border-radius: 50px; text-align: center; font-weight: bold; font-size: 20px; border: none; box-shadow: 0 15px 30px rgba(37, 211, 102, 0.3); z-index: 1000; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .CART { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: #25d366; color: white; padding: 18px; border-radius: 50px; text-align: center; font-weight: bold; font-size: 19px; border: none; z-index: 1000; }
         
         body.en { direction: ltr; }
-        body.en .info-box { text-align: left; }
+        body.en .INFO { text-align: left; }
     </style>
 </head>
-<body id="body-tag">
+<body id="MAIN_BODY">
 
-    <div id="setup">
-        <div class="card-setup">
-            <button class="btn-action btn-lang" onclick="changeL()">English / عربي</button>
-            <h2 id="m1">مرحباً بك في بارنيز</h2>
-            
-            <p id="m2" style="margin:0; font-weight:bold;">نوع الطلب:</p>
-            <select id="sel-type" onchange="toggleT()">
-                <option value="dine">محلي (Dine-in)</option>
+    <div id="SCREEN_START">
+        <div class="BOX">
+            <button class="BTN BTN_LANG" onclick="SwitchL()">English / عربي</button>
+            <h2 id="H1">مرحباً بك في بارنيز</h2>
+            <p id="H2">نوع الطلب:</p>
+            <select id="TYPE" onchange="CheckT()">
+                <option value="dine">محلي (Inside)</option>
                 <option value="take">سفري (Takeaway)</option>
             </select>
-
-            <div id="div-table">
-                <p id="m3" style="margin:0; font-weight:bold;">رقم الطاولة:</p>
-                <select id="sel-table">
-                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+            <div id="TABLE_DIV">
+                <p id="H3">رقم الطاولة:</p>
+                <select id="TABLE_NUM">
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option>
                 </select>
             </div>
-
-            <button class="btn-action" onclick="startApp()" id="m4">ابدأ الطلب</button>
+            <button class="BTN" onclick="Go()" id="H4">ابدأ الطلب</button>
         </div>
     </div>
 
-    <div id="app-ui" style="display:none;">
-        <div class="header">
-            <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/logo.jpg" class="logo-sm" onerror="this.src='https://via.placeholder.com/60'">
-            <b id="m5" style="font-size:20px;">منيو بارنيز</b>
-            <span id="label-info" style="color:var(--primary); font-weight:bold; background:#eee; padding:5px 12px; border-radius:10px;"></span>
+    <div id="APP" style="display:none;">
+        <div class="HEADER">
+            <b id="H5">منيو بارنيز</b>
+            <span id="BADGE" style="color:var(--p); font-weight:bold;"></span>
         </div>
-        <div id="items-list" class="container"></div>
-        <button class="cart-btn" onclick="sendW()">
-            <span id="m6">إرسال الطلب</span> (<span id="cart-num">0</span>)
+        <div id="LIST"></div>
+        <button class="CART" onclick="Send()">
+            <span id="H6">إرسال الطلب</span> (<span id="COUNT">0</span>)
         </button>
     </div>
 
     <script>
-        let lang = 'ar'; let cart = [];
-        const menu = [
-            { id:1, ar:"سبانش لاتيه حار", en:"Hot Spanish Latte", p:18, img:"https://images.unsplash.com/photo-1541167760496-162955ed8a9f?w=400" },
-            { id:2, ar:"V60 حار", en:"Hot V60", p:22, img:"https://images.unsplash.com/photo-1544787210-22db3677f29e?w=400" },
-            { id:3, ar:"كيكة العسل", en:"Honey Cake", p:15, img:"https://images.unsplash.com/photo-1586040140378-b5634cb4c8fc?w=400" }
+        let L = 'ar'; let C = [];
+        const M = [
+            { id:1, ar:"سبانش لاتيه", en:"Spanish Latte", p:18, img:"https://images.unsplash.com/photo-1541167760496-162955ed8a9f?w=200" },
+            { id:2, ar:"V60 حار", en:"Hot V60", p:22, img:"https://images.unsplash.com/photo-1544787210-22db3677f29e?w=200" }
         ];
 
-        // 🎤 دالة الصوت الإمبراطورية - إيقاف فوري وتشغيل ذكي
-        function talk(text) {
-            window.speechSynthesis.cancel();
+        function Speak(t) {
+            window.speechSynthesis.cancel(); // وقف اللي فات فوراً!
             setTimeout(() => {
-                const speech = new SpeechSynthesisUtterance(text);
-                speech.lang = (lang === 'ar') ? 'ar-SA' : 'en-US';
-                speech.rate = 0.85;
-                window.speechSynthesis.speak(speech);
-            }, 40);
+                const s = new SpeechSynthesisUtterance(t);
+                s.lang = L === 'ar' ? 'ar-SA' : 'en-US';
+                s.rate = 0.85;
+                window.speechSynthesis.speak(s);
+            }, 50);
         }
 
-        function changeL() {
-            lang = (lang === 'ar') ? 'en' : 'ar';
-            document.getElementById('body-tag').className = (lang === 'en') ? 'en' : '';
+        function SwitchL() {
+            L = L === 'ar' ? 'en' : 'ar';
+            document.getElementById('MAIN_BODY').className = L === 'en' ? 'en' : '';
             const words = {
-                ar: {m1:"مرحباً بك في بارنيز", m2:"نوع الطلب:", m3:"رقم الطاولة:", m4:"ابدأ الطلب", m5:"منيو بارنيز", m6:"إرسال الطلب"},
-                en: {m1:"Welcome to Barnies", m2:"Order Type:", m3:"Table Number:", m4:"Start Order", m5:"Barnies Menu", m6:"Send Order"}
+                ar: {H1:"مرحباً بك في بارنيز", H2:"نوع الطلب:", H3:"رقم الطاولة:", H4:"ابدأ الطلب", H5:"منيو بارنيز", H6:"إرسال الطلب"},
+                en: {H1:"Welcome to Barnies", H2:"Order Type:", H3:"Table Number:", H4:"Start Order", H5:"Barnies Menu", H6:"Send Order"}
             };
-            for(let id in words[lang]) document.getElementById(id).innerText = words[lang][id];
-            talk(lang === 'ar' ? "تم اختيار العربية" : "English selected");
+            for(let id in words[L]) document.getElementById(id).innerText = words[L][id];
+            Speak(L === 'ar' ? "تم اختيار العربية" : "English selected");
         }
 
-        function toggleT() {
-            document.getElementById('div-table').style.display = (document.getElementById('sel-type').value === 'take') ? 'none' : 'block';
+        function CheckT() { document.getElementById('TABLE_DIV').style.display = document.getElementById('TYPE').value === 'take' ? 'none' : 'block'; }
+
+        function Go() {
+            document.getElementById('SCREEN_START').style.display = 'none';
+            document.getElementById('APP').style.display = 'block';
+            const info = document.getElementById('TYPE').value === 'take' ? (L==='ar'?'سفري':'Takeaway') : (L==='ar'?'طاولة: ':'Table: ') + document.getElementById('TABLE_NUM').value;
+            document.getElementById('BADGE').innerText = info;
+            Draw();
+            Speak(L === 'ar' ? "أهلاً بك" : "Welcome");
         }
 
-        function startApp() {
-            document.getElementById('setup').style.display = 'none';
-            document.getElementById('app-ui').style.display = 'block';
-            const typeText = document.getElementById('sel-type').value === 'take' ? (lang==='ar'?'سفري':'Takeaway') : (lang==='ar'?'طاولة: ':'Table: ') + document.getElementById('sel-table').value;
-            document.getElementById('label-info').innerText = typeText;
-            render();
-            talk(lang === 'ar' ? "أهلاً بك.. استمتع بالمنيو الخاص بنا" : "Welcome.. please enjoy our menu");
-        }
-
-        function render() {
-            document.getElementById('items-list').innerHTML = menu.map(i => `
-                <div class="item-row">
-                    <div class="img-box"><img src="${i.img}"></div>
-                    <div class="info-box">
-                        <span class="item-name">${lang==='ar'?i.ar:i.en}</span>
-                        <span class="item-price">${i.p} ${lang==='ar'?'ريال':'SAR'}</span>
+        function Draw() {
+            document.getElementById('LIST').innerHTML = M.map(i => `
+                <div class="ITEM">
+                    <img src="${i.img}">
+                    <div class="INFO">
+                        <span style="font-weight:bold;">${L==='ar'?i.ar:i.en}</span><br>
+                        <span style="color:var(--p);">${i.p} ريال</span>
                     </div>
-                    <button class="btn-add" onclick="addItem('${i.ar}','${i.en}')">${lang==='ar'?'إضافة':'Add'}</button>
+                    <button class="ADD" onclick="Add('${i.ar}','${i.en}')">${L==='ar'?'إضافة':'Add'}</button>
                 </div>
             `).join('');
         }
 
-        function addItem(ar, en) {
-            cart.push(lang === 'ar' ? ar : en);
-            document.getElementById('cart-num').innerText = cart.length;
-            talk(lang === 'ar' ? "تم إضافة " + ar : "Added " + en);
+        function Add(ar, en) {
+            C.push(L === 'ar' ? ar : en);
+            document.getElementById('COUNT').innerText = C.length;
+            Speak(L === 'ar' ? "تم إضافة " + ar : "Added " + en);
         }
 
-        function sendW() {
-            if(cart.length === 0) return;
-            const msg = `*New Order / طلب جديد*\n📍 Type: ${document.getElementById('label-info').innerText}\n📋 Items:\n- ${cart.join('\n- ')}`;
+        function Send() {
+            if(C.length === 0) return;
+            const msg = `*طلب جديد*\n📍 النوع: ${document.getElementById('BADGE').innerText}\n📋 الطلبات:\n- ${C.join('\n- ')}`;
             window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`, '_blank');
         }
     </script>
