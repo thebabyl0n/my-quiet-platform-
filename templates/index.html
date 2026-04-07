@@ -3,111 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قائمة بارنيز الذكية</title>
+    <title>بارنيز - نظام الطلب الذكي</title>
     <style>
-        body { font-family: 'Arial', sans-serif; background-color: #f4f1ea; margin: 0; padding: 20px; text-align: center; color: #3e2723; }
-        .header { margin-bottom: 20px; }
-        .logo { width: 120px; border-radius: 50%; border: 3px solid #3e2723; }
-        .menu-item { background: #fff; margin: 10px auto; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-add { background-color: #3e2723; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
-        .cart-section { margin-top: 30px; padding: 20px; background: #e0d8c3; border-radius: 15px; max-width: 400px; margin-left: auto; margin-right: auto; }
-        select { padding: 10px; border-radius: 5px; width: 100%; margin-bottom: 15px; font-size: 16px; border: 1px solid #3e2723; }
-        .btn-order { background-color: #25d366; color: white; border: none; padding: 15px 30px; border-radius: 10px; font-size: 18px; width: 100%; cursor: pointer; font-weight: bold; }
+        body { font-family: 'Arial', sans-serif; background-color: #f4f1ea; margin: 0; padding: 0; text-align: center; color: #3e2723; }
+        
+        /* شاشة الترحيب واختيار الترابيزة */
+        #welcome-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #3e2723; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+        #welcome-screen h1 { margin-bottom: 20px; font-size: 28px; }
+        .btn-start { background-color: #c8a27c; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 20px; cursor: pointer; font-weight: bold; }
+
+        /* نافذة اختيار الترابيزة */
+        #table-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1001; width: 80%; max-width: 300px; color: #3e2723; }
+        select { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; font-size: 16px; border: 1px solid #3e2723; }
+
+        /* تصميم المنيو */
+        .header { background: #fff; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .logo { width: 100px; border-radius: 50%; margin-bottom: 10px; }
+        .menu-container { padding: 20px; }
+        .menu-item { background: #fff; margin: 10px auto; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; max-width: 450px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .btn-add { background-color: #3e2723; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
+        
+        /* سلة الطلبات */
+        .cart-float { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; background: #25d366; color: white; padding: 15px; border-radius: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <img src="https://i.imgur.com/your-barnies-logo.png" alt="Barnies Logo" class="logo">
-        <h1>أهلاً بك في بارنيز</h1>
-        <p>اطلب كل اللي في خاطرك مرة واحدة</p>
+    <div id="welcome-screen">
+        <img src="https://i.imgur.com/your-barnies-logo.png" alt="Barnies" style="width: 150px; margin-bottom: 20px;">
+        <h1>أهلاً بك في عالم بارنيز</h1>
+        <button class="btn-start" onclick="showTableModal()">ابدأ الطلب الآن</button>
     </div>
 
-    <div id="menu">
-        <div class="menu-item">
-            <span>سبانش لاتيه - 18 ريال</span>
-            <button class="btn-add" onclick="addToCart('سبانش لاتيه', 18)">إضافة +</button>
-        </div>
-        <div class="menu-item">
-            <span>V60 كوفي - 22 ريال</span>
-            <button class="btn-add" onclick="addToCart('V60 كوفي', 22)">إضافة +</button>
-        </div>
-        <div class="menu-item">
-            <span>كيكة العسل - 15 ريال</span>
-            <button class="btn-add" onclick="addToCart('كيكة العسل', 15)">إضافة +</button>
-        </div>
-    </div>
-
-    <div class="cart-section">
-        <h3>طلباتك:</h3>
-        <ul id="cart-list" style="list-style: none; padding: 0;"></ul>
-        <hr>
-        <p>إجمالي الحساب: <span id="total-price">0</span> ريال</p>
-        
-        <label for="table-select">اختر رقم الطاولة:</label>
+    <div id="table-modal">
+        <h3>اختر رقم طاولتك</h3>
         <select id="table-select">
-            <option value="1">طاولة رقم 1</option>
-            <option value="2">طاولة رقم 2</option>
-            <option value="3">طاولة رقم 3</option>
+            <option value="1">طاولة 1</option>
+            <option value="2">طاولة 2</option>
+            <option value="3">طاولة 3</option>
+            <option value="4">طاولة 4</option>
+            <option value="5">طاولة 5</option>
         </select>
+        <button class="btn-start" onclick="startMenu()" style="width: 100%; background: #3e2723;">دخول للمنيو</button>
+    </div>
 
-        <button class="btn-order" onclick="sendOrder()">إرسال الطلب عبر واتساب</button>
+    <div id="main-content" style="display: none;">
+        <div class="header">
+            <img src="https://i.imgur.com/your-barnies-logo.png" alt="Barnies" class="logo">
+            <h2 id="table-display">منيو طاولة رقم: </h2>
+        </div>
+
+        <div class="menu-container">
+            <div class="menu-item">
+                <div><strong>سبانش لاتيه</strong><br><small>18 ريال</small></div>
+                <button class="btn-add" onclick="addToCart('سبانش لاتيه', 18)">إضافة +</button>
+            </div>
+            <div class="menu-item">
+                <div><strong>V60 كوفي</strong><br><small>22 ريال</small></div>
+                <button class="btn-add" onclick="addToCart('V60 كوفي', 22)">إضافة +</button>
+            </div>
+            <div class="menu-item">
+                <div><strong>كيكة العسل</strong><br><small>15 ريال</small></div>
+                <button class="btn-add" onclick="addToCart('كيكة العسل', 15)">إضافة +</button>
+            </div>
+        </div>
+
+        <div class="cart-float" onclick="sendOrder()">
+            إرسال الطلبات للواتساب (<span id="cart-count">0</span> أصناف)
+        </div>
     </div>
 
     <script>
+        let selectedTable = "";
         let cart = [];
-        let total = 0;
 
-        // وظيفة نطق الترحيب بصوت أنثوي
-        function welcomeVoice() {
-            const msg = new SpeechSynthesisUtterance("أهلاً بك في بارنيز، يسعدنا خدمتك. اطلب الآن وسنصل إليك فوراً");
+        // وظيفة الصوت الأنثوي
+        function playWelcome() {
+            const msg = new SpeechSynthesisUtterance("أهلاً بك في بارنيز، يسعدنا خدمتك. من فضلك اختر رقم الطاولة لنتعرف عليك");
             msg.lang = 'ar-SA';
-            
-            // البحث عن صوت أنثوي في النظام
             const voices = window.speechSynthesis.getVoices();
-            const femaleVoice = voices.find(voice => voice.name.includes('Female') || voice.name.includes('Google Arabic'));
+            // محاولة اختيار صوت أنثوي
+            const femaleVoice = voices.find(v => v.name.includes('Female') || v.name.includes('Arabic'));
             if (femaleVoice) msg.voice = femaleVoice;
-            
             window.speechSynthesis.speak(msg);
         }
 
-        // تشغيل الصوت عند أول ضغطة في الصفحة (بسبب سياسة المتصفح)
-        window.onclick = function() {
-            if (!window.voicePlayed) {
-                welcomeVoice();
-                window.voicePlayed = true;
-            }
-        };
+        function showTableModal() {
+            playWelcome();
+            document.getElementById('table-modal').style.display = 'block';
+        }
+
+        function startMenu() {
+            selectedTable = document.getElementById('table-select').value;
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('table-modal').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            document.getElementById('table-display').innerText = "منيو طاولة رقم: " + selectedTable;
+        }
 
         function addToCart(name, price) {
             cart.push(name);
-            total += price;
-            updateUI();
-        }
-
-        function updateUI() {
-            const list = document.getElementById('cart-list');
-            list.innerHTML = cart.map(item => `<li>${item}</li>`).join('');
-            document.getElementById('total-price').innerText = total;
+            document.getElementById('cart-count').innerText = cart.length;
         }
 
         function sendOrder() {
             if (cart.length === 0) {
-                alert("السلة فاضية يا بطل!");
+                alert("السلة فارغة، اختر بعض الأصناف أولاً!");
                 return;
             }
-            const tableNum = document.getElementById('table-select').value;
-            const phoneNumber = "9665XXXXXXXX"; // هنا تحط رقم واتساب الكاشير اللي في السعودية
-            
+            const phoneNumber = "9665XXXXXXXX"; // رقم الكاشير
             let message = `*طلب جديد من بارنيز* \n`;
-            message += `📍 *رقم الطاولة:* ${tableNum}\n`;
-            message += `📋 *الطلبات:* \n- ${cart.join('\n- ')}\n`;
-            message += `💰 *الإجمالي:* ${total} ريال`;
+            message += `📍 *الطاولة رقم:* ${selectedTable}\n`;
+            message += `📋 *قائمة الطلبات:* \n- ${cart.join('\n- ')}\n`;
+            message += `✅ *يرجى التجهيز فوراً*`;
 
             const encodedMsg = encodeURIComponent(message);
             window.open(`https://wa.me/${phoneNumber}?text=${encodedMsg}`, '_blank');
         }
     </script>
-
 </body>
 </html>
