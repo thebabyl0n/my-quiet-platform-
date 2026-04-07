@@ -6,31 +6,27 @@
     <title>بارنيز - المنيو الذكي HD</title>
     <style>
         :root { --primary-color: #006a4d; --accent-color: #c8a27c; --bg-color: #f8f9fa; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: #333; overflow-x: hidden; }
         
-        /* شاشة الترحيب */
         #welcome-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-color); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; }
-        .logo-welcome { width: 150px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 2px solid white; }
-        .btn-start { background-color: var(--accent-color); color: white; border: none; padding: 15px 45px; border-radius: 50px; font-size: 20px; cursor: pointer; font-weight: bold; }
+        .logo-welcome { width: 160px; border-radius: 25px; margin-bottom: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); border: 3px solid white; }
+        .btn-start { background-color: var(--accent-color); color: white; border: none; padding: 18px 60px; border-radius: 50px; font-size: 24px; cursor: pointer; font-weight: bold; transition: 0.4s; }
         
-        /* اختيار الطاولة */
-        #table-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); z-index: 1001; width: 85%; max-width: 350px; text-align: center; }
-        select { width: 100%; padding: 12px; margin: 20px 0; border-radius: 10px; border: 2px solid var(--primary-color); font-size: 18px; font-weight: bold; }
+        #table-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 35px; border-radius: 25px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); z-index: 1001; width: 85%; max-width: 380px; text-align: center; }
+        select { width: 100%; padding: 15px; margin: 25px 0; border-radius: 12px; border: 2px solid var(--primary-color); font-size: 20px; font-weight: bold; }
 
-        /* القائمة */
-        .header { background: white; padding: 15px; position: sticky; top: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; display: flex; justify-content: space-between; align-items: center; }
-        .logo-small { width: 50px; border-radius: 5px; }
-        .menu-container { padding: 15px; padding-bottom: 110px; }
-        .menu-item { background: white; margin-bottom: 15px; border-radius: 15px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; }
+        .header { background: white; padding: 20px; position: sticky; top: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.08); z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        .logo-small { width: 70px; border-radius: 8px; }
+        .menu-container { padding: 20px; max-width: 600px; margin: auto; padding-bottom: 120px; }
+        .menu-item { background: white; margin-bottom: 20px; border-radius: 20px; overflow: hidden; display: flex; align-items: center; box-shadow: 0 8px 20px rgba(0,0,0,0.06); border: 1px solid #eee; }
         
-        /* ضبط الصور HD */
-        .item-img { width: 100px; height: 100px; object-fit: contain; background: #fff; padding: 5px; }
-        .item-info { padding: 10px; flex-grow: 1; }
-        .item-name { font-weight: bold; font-size: 17px; color: #222; }
-        .item-price { color: var(--primary-color); font-weight: bold; }
-        .btn-add { background: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .item-img { width: 110px; height: 110px; object-fit: contain; background: #fff; padding: 8px; border-left: 1px solid #eee; }
+        .item-info { padding: 15px; flex-grow: 1; }
+        .item-name { font-weight: bold; font-size: 19px; color: #222; }
+        .item-price { color: var(--primary-color); font-weight: 800; font-size: 17px; }
+        .btn-add { background: var(--primary-color); color: white; border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
 
-        .cart-float { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; background: #25d366; color: white; padding: 15px; border-radius: 50px; font-size: 18px; font-weight: bold; border: none; display: flex; justify-content: center; align-items: center; gap: 10px; z-index: 200; }
+        .cart-float { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; background: #25d366; color: white; padding: 20px; border-radius: 50px; font-size: 20px; font-weight: bold; border: none; display: flex; justify-content: center; align-items: center; gap: 10px; z-index: 200; box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3); }
     </style>
 </head>
 <body>
@@ -46,8 +42,10 @@
         <h2>تشرفنا بزيارتك</h2>
         <p>من فضلك اختر رقم طاولتك</p>
         <select id="table-select">
-            <option value="1">طاولة 1</option><option value="2">طاولة 2</option>
-            <option value="3">طاولة 3</option><option value="4">طاولة 4</option>
+            <option value="1">طاولة 1</option>
+            <option value="2">طاولة 2</option>
+            <option value="3">طاولة 3</option>
+            <option value="4">طاولة 4</option>
         </select>
         <button class="btn-start" onclick="startMenu()" style="width: 100%;">استعراض المنيو</button>
     </div>
@@ -55,53 +53,74 @@
     <div id="main-content" style="display: none;">
         <div class="header">
             <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/logo.jpg" class="logo-small">
-            <span id="table-display" style="font-weight: bold; color: var(--primary-color);"></span>
+            <span id="table-display" style="font-weight: bold; color: var(--primary-color); font-size: 18px;"></span>
         </div>
 
         <div class="menu-container">
             <div class="menu-item">
-                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/spanish.jpg" class="item-img" alt="سبانش لاتيه" onerror="this.src='https://via.placeholder.com/100?text=Drink'">
-                <div class="item-info"><span class="item-name">سبانش لاتيه حار</span><br><span class="item-price">18 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('سبانش لاتيه حار', 18)">إضافة</button>
+                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/spanish.jpg" class="item-img" alt="سبانش">
+                <div class="item-info">
+                    <span class="item-name">سبانش لاتيه حار</span>
+                    <span class="item-price">18 ريال</span>
+                </div>
+                <button class="btn-add" onclick="addToCart('سبانش لاتيه حار')">إضافة</button>
+            </div>
+            
+            <div class="menu-item">
+                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/v60.jpg" class="item-img" alt="V60">
+                <div class="item-info">
+                    <span class="item-name">V60 حار</span>
+                    <span class="item-price">22 ريال</span>
+                </div>
+                <button class="btn-add" onclick="addToCart('V60 حار')">إضافة</button>
             </div>
 
             <div class="menu-item">
-                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/v60.jpg" class="item-img" alt="V60" onerror="this.src='https://via.placeholder.com/100?text=V60'">
-                <div class="item-info"><span class="item-name">V60 حار</span><br><span class="item-price">22 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('V60 حار', 22)">إضافة</button>
-            </div>
-
-            <div class="menu-item">
-                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/honey_cake.jpg" class="item-img" alt="كيكة عسل" onerror="this.src='https://via.placeholder.com/100?text=Cake'">
-                <div class="item-info"><span class="item-name">كيكة العسل</span><br><span class="item-price">15 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('كيكة العسل', 15)">إضافة</button>
+                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/honey_cake.jpg" class="item-img" alt="كيكة">
+                <div class="item-info">
+                    <span class="item-name">كيكة العسل</span>
+                    <span class="item-price">15 ريال</span>
+                </div>
+                <button class="btn-add" onclick="addToCart('كيكة العسل')">إضافة</button>
             </div>
         </div>
-        <button class="cart-float" onclick="sendOrder()">إرسال الطلب عبر واتساب (<span id="cart-count">0</span>)</button>
+
+        <button class="cart-float" onclick="sendOrder()">
+            <span>إرسال الطلب</span>
+            <span id="cart-count" style="background: white; color: #25d366; padding: 2px 10px; border-radius: 10px;">0</span>
+        </button>
     </div>
 
     <script>
-        let cart = []; let selectedTable = "";
+        let cart = [];
+        let selectedTable = "";
 
-        // 🎤 محرك الصوت HD - حقنة "ألفا" السيادية المعتمدة
+        // 🎤 محرك الصوت HD مع ميزة "الإيقاف الفوري"
         function speak(text) {
-            window.speechSynthesis.cancel();
+            // التكة دي هي اللي بتوقف الصوت القديم فوراً قبل ما يبدأ الجديد
+            window.speechSynthesis.cancel(); 
+            
             const msg = new SpeechSynthesisUtterance(text);
             let voices = window.speechSynthesis.getVoices();
             
-            // اختيار أفضل صوت بشري متاح
-            msg.voice = voices.find(v => v.lang === 'ar-SA' && v.name.includes('Maged')) || 
-                        voices.find(v => v.lang === 'ar-SA') || voices[0];
+            // اختيار صوت ماجد السعودي الفخم
+            let bestVoice = voices.find(v => v.lang === 'ar-SA' && v.name.includes('Maged')) || 
+                            voices.find(v => v.lang === 'ar-SA') ||
+                            voices.find(v => v.lang.includes('ar'));
+            
+            if (bestVoice) msg.voice = bestVoice;
             
             msg.lang = 'ar-SA';
-            msg.pitch = 0.85; // نبرة رخيمة ورزينة كما طلب ألفا
+            msg.pitch = 0.85; // نبرة فخمة ورزينة
             msg.rate = 0.82;  // سرعة وقورة
+            msg.volume = 1;
+            
             window.speechSynthesis.speak(msg);
         }
 
         function showTableModal() {
             document.getElementById('table-modal').style.display = 'block';
-            setTimeout(() => speak("أهلاً بك في بارنيز.. من فضلك اختر رقم الطاولة"), 500);
+            speak("أهلاً بك في بارنيز.. من فضلك اختر رقم الطاولة");
         }
 
         function startMenu() {
@@ -113,9 +132,10 @@
             speak("تفضل المنيو.. نتمنى لك وقتاً سعيداً");
         }
 
-        function addToCart(name, price) {
+        function addToCart(name) {
             cart.push(name);
             document.getElementById('cart-count').innerText = cart.length;
+            // هنا الصوت هيقف ويبدأ فوراً باسم المنتج الجديد
             speak("تم إضافة " + name + " لسلتك.. تأمرني بشيء ثاني؟");
         }
 
@@ -129,7 +149,7 @@
             }, 1000);
         }
 
-        window.speechSynthesis.onvoiceschanged = () => { console.log("HD Voices Ready"); };
+        window.speechSynthesis.onvoiceschanged = () => { console.log("Voices Ready"); };
     </script>
 </body>
 </html>
