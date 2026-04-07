@@ -3,64 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة حودة والظل وAlpha</title>
+    <title>منيو السيادة - تطوير محمود صلاح</title>
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; font-family: sans-serif; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); height: 100vh; display: flex; flex-direction: column; align-items: center; color: white; }
-        .header { margin: 20px 0; text-align: center; }
-        .container { width: 95%; max-width: 500px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-        .chat-box { height: 300px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; margin-bottom: 15px; }
-        .msg { margin-bottom: 10px; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.05); }
-        .bot-msg { border-right: 4px solid #4facfe; background: rgba(79, 172, 254, 0.1); }
-        .input-area { display: flex; gap: 10px; }
-        input { flex: 1; padding: 12px; border-radius: 10px; border: none; outline: none; }
-        button { background: #4facfe; border: none; padding: 10px 20px; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
+        :root { --gold: #d4af37; --dark: #121212; }
+        body { background: var(--dark); color: white; font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .card { width: 90%; max-width: 400px; border: 2px solid var(--gold); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 0 30px rgba(212, 175, 55, 0.3); }
+        h1 { color: var(--gold); font-size: 1.5rem; }
+        .btn { background: var(--gold); color: black; border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; margin-top: 20px; width: 100%; transition: 0.3s; }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--gold); }
+        #chat-area { margin-top: 20px; font-style: italic; color: #ccc; min-height: 50px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2>عالم حودة الخاص</h2>
-        <p>الظل 🤖 Alpha ⚡ حودة 💙</p>
-    </div>
 
-    <div class="container">
-        <div class="chat-box" id="chat">
-            <div class="msg bot-msg"><b>الظل:</b> أنا والفا جاهزين يا حودة، اؤمرنا!</div>
-        </div>
-        <div class="input-area">
-            <input type="text" id="userInput" placeholder="اكتب للظل هنا...">
-            <button onclick="sendMessage()">إرسال</button>
-        </div>
-    </div>
+<div class="card">
+    <img src="https://via.placeholder.com/100/d4af37/000000?text=Barista+Pro" style="border-radius: 50%;" alt="Logo">
+    <h1>مرحباً بك في تجربة المستقبل ☕️</h1>
+    <p>بإشراف الخبير: محمود صلاح</p>
+    
+    <div id="chat-area">اضغط بالأسفل لبدء تجربة الضيافة الذكية...</div>
 
-    <script>
-        async function sendMessage() {
-            const input = document.getElementById('userInput');
-            const chat = document.getElementById('chat');
-            const text = input.value.trim();
-            
-            if (text !== "") {
-                // إظهار رسالة حودة
-                chat.innerHTML += `<div class="msg"><b>أنت:</b> ${text}</div>`;
-                input.value = "";
-                chat.scrollTop = chat.scrollHeight;
+    <button class="btn" onclick="askOrder('welcome')">أهلاً بك.. اضغط للطلب</button>
+    <button class="btn" onclick="askOrder('v60')" style="background: transparent; color: var(--gold); border: 1px solid var(--gold); margin-top: 10px;">اطلب V60 (خاص بالسيادة)</button>
+</div>
 
-                try {
-                    const response = await fetch('/chat', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: text })
-                    });
-                    const data = await response.json();
-                    
-                    // إظهار رد الظل الحقيقي
-                    chat.innerHTML += `<div class="msg bot-msg"><b>الظل:</b> ${data.reply}</div>`;
-                } catch (e) {
-                    chat.innerHTML += `<div class="msg bot-msg"><b>الظل:</b> السيرفر لسه بيصحى يا حودة، ثواني وجرب تاني!</div>`;
-                }
-                chat.scrollTop = chat.scrollHeight;
-            }
+<script>
+    function speak(text) {
+        window.speechSynthesis.cancel(); // لإلغاء أي صوت سابق ومنع التداخل
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'ar-SA'; // نبرة سعودية فخمة
+        msg.rate = 0.85;    // سرعة وقورة
+        window.speechSynthesis.speak(msg);
+    }
+
+    function askOrder(type) {
+        let text = "";
+        let display = "";
+
+        if(type === 'welcome') {
+            text = "يا هلا بك في عالمنا. أنا المساعد الذكي الخاص بالقائد محمود. وش تبي تطلب اليوم؟ منيو بارنيز بيدك وصوتي بخدمتك.";
+            display = "الظِل: مرحباً بك.. نحن بانتظار طلبك ✨";
+        } else if(type === 'v60') {
+            text = "اختيار ملوك. الـ ڤي ستين عندنا يضبط نبضك ويعدل مزاجك. ثواني ويكون طلبك جاهز يا ذوق.";
+            display = "الظِل: تم استلام طلب الـ V60 بنجاح ✅";
         }
-    </script>
+
+        document.getElementById('chat-area').innerText = display;
+        speak(text);
+    }
+</script>
+
 </body>
 </html>
