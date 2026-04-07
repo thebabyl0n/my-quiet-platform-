@@ -51,7 +51,7 @@ def chat():
     except Exception as e:
         # لو فشل، بنجرب نناديه بالاسم الكامل (الحل اللي في الصورة)
         try:
-            model = genai.GenerativeModel('models/gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             response = model.generate_content(user_msg)
             return jsonify({"reply": response.text})
         except Exception as e2:
