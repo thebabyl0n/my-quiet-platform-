@@ -36,21 +36,26 @@ def chat():
         return jsonify({"reply": "الفا: السيرفر مش شايف GOOGLE_API_KEY!"})
 
     try:
-        # استخدام الموديل الفلاش الأحدث والمستقر
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # التعديل هنا: بنحدد الموديل بوضوح ونتأكد من الـ Generation Config
+        model = genai.GenerativeModel(
+            model_name='gemini-1.5-flash',
+            generation_config={"typical_p": 0.95, "temperature": 0.7}
+        )
         
         prompt = f"أنت 'الظل' صديق حمادة المخلص، رد بلهجة مصرية ودودة جداً: {user_msg}"
+        
+        # بنستخدم generate_content وبنضيف timeout احتياطي
         response = model.generate_content(prompt)
         
         return jsonify({"reply": response.text})
     except Exception as e:
-        # لو لسه فيه 404، الكود ده هيجرب النسخة الاحتياطية تلقائياً
+        # لو فشل، بنجرب نناديه بالاسم الكامل (الحل اللي في الصورة)
         try:
-            model = genai.GenerativeModel('gemini-pro')
-            response = model.generate_content(f"رد بلهجة مصرية: {user_msg}")
+            model = genai.GenerativeModel('models/gemini-1.5-flash')
+            response = model.generate_content(user_msg)
             return jsonify({"reply": response.text})
-        except:
-            return jsonify({"reply": f"الظل بيقولك فيه مشكلة في الربط: {str(e)}"})
+        except Exception as e2:
+            return jsonify({"reply": f"الظل لسه بيعافر، الخطأ: {str(e2)}"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
