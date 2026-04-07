@@ -5,94 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>بورت السيادة - بارنيز كافيه</title>
     <style>
-        :root { --gold: #d4af37; --dark: #000; --card-bg: #121212; }
-        body { background: var(--dark); color: white; font-family: 'Arial', sans-serif; margin: 0; padding: 20px; text-align: center; }
-        .card { width: 95%; max-width: 450px; border: 1px solid var(--gold); border-radius: 25px; padding: 25px; box-shadow: 0 0 50px rgba(212, 175, 55, 0.2); margin: auto; background: #0a0a0a; }
-        
-        #welcome-section { display: block; animation: fadeIn 1s; }
-        #menu-section { display: none; text-align: right; animation: fadeIn 0.8s; }
-
-        .btn { background: var(--gold); color: black; border: none; padding: 18px; border-radius: 50px; width: 100%; font-weight: bold; font-size: 1.2rem; cursor: pointer; margin-top: 20px; box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); transition: 0.3s; }
-        .btn:active { transform: scale(0.95); }
-        
-        .section-title { color: var(--gold); border-right: 4px solid var(--gold); padding-right: 15px; margin-top: 30px; font-size: 1.3rem; font-weight: bold; }
-        .menu-item { background: var(--card-bg); border: 1px solid #222; border-radius: 15px; padding: 15px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.3s; }
-        .menu-item:active { border-color: var(--gold); background: #1a1a1a; }
-        .price { color: var(--gold); font-weight: bold; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        :root { --gold: #d4af37; --dark: #000; --card-bg: rgba(10, 10, 10, 0.92); --green: #007a53; }
+        body { 
+            background: var(--dark); 
+            background-image: url('https://i.ibb.co/L9Y00k4/barnies-bg.jpg'); /* استبدل برابط اللوجو المباشر */
+            background-size: cover; background-attachment: fixed; background-position: center;
+            color: white; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 15px;
+        }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: -1; }
+        .card { width: 95%; max-width: 550px; border: 1px solid var(--gold); border-radius: 30px; padding: 25px; box-shadow: 0 0 60px rgba(212, 175, 55, 0.2); margin: auto; background: var(--card-bg); backdrop-filter: blur(10px); }
+        #welcome-section { display: block; padding: 40px 10px; }
+        #menu-section { display: none; text-align: right; max-height: 85vh; overflow-y: auto; padding-left: 10px; }
+        #menu-section::-webkit-scrollbar { width: 0px; }
+        .btn { background: var(--gold); color: black; border: none; padding: 18px; border-radius: 50px; width: 100%; font-weight: bold; font-size: 1.2rem; cursor: pointer; margin-top: 15px; box-shadow: 0 5px 20px rgba(212, 175, 55, 0.3); transition: 0.3s; }
+        .section-title { color: var(--gold); border-right: 5px solid var(--green); padding-right: 15px; margin: 30px 0 15px 0; font-size: 1.3rem; font-weight: bold; background: rgba(212, 175, 55, 0.05); }
+        .menu-item { background: rgba(255,255,255,0.04); border: 1px solid #222; border-radius: 15px; padding: 15px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+        .menu-item:active { transform: scale(0.97); border-color: var(--gold); }
+        .price { color: var(--gold); font-weight: bold; font-size: 1.1rem; min-width: 60px; text-align: left; }
+        .logo-img { width: 100px; margin-bottom: 10px; border-radius: 50%; border: 2px solid var(--gold); }
     </style>
 </head>
 <body>
-
-<div class="card" id="main-card">
+<div class="overlay"></div>
+<div class="card">
     <div id="welcome-section">
-        <div style="font-size: 60px;">☕️</div>
-        <h1 style="color: var(--gold);">بارنيز - تجربة المستقبل</h1>
-        <p>بإشراف الخبير: محمود صلاح</p>
-        <div id="chat-msg" style="margin-top: 20px; font-style: italic; color: var(--gold);">اضغط لبدء الضيافة الذكية...</div>
-        <button class="btn" onclick="startExperience()">أهلاً بك.. ادخل للمنيو 🚀</button>
+        <img src="https://i.ibb.co/0mS4P4q/barnies-logo.png" class="logo-img" alt="Barnies Logo"> <h1 style="color: var(--gold); font-size: 1.8rem; margin: 10px 0;">أهلاً بضيوفنا الكرام</h1>
+        <p style="color: #ccc; font-size: 0.9rem;">تجربة ذكية بإشراف: محمود صلاح</p>
+        <button class="btn" onclick="startExperience()">استعراض المنيو الكامل 🚀</button>
     </div>
 
     <div id="menu-section">
-        <h2 style="color: var(--gold); text-align: center;">منيو بارنيز السيادي</h2>
+        <h2 style="color: var(--gold); text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px;">منيو السيادة 2026</h2>
         
-        <div class="section-title">الأكثر طلباً 🔥</div>
-        <div class="menu-item" onclick="selectItem('سبانش لاتيه مثلج', 'سبانش لاتيه بارد وراقي.. يبرد على قلبك بهيبة بارنيز.')">
-            <div><b>سبانش لاتيه</b><br><small>انتعاش السيادة</small></div>
-            <div class="price">22 SR</div>
-        </div>
+        <div class="section-title">المشروبات الساخنة ☕️</div>
+        <div class="menu-item" onclick="selectItem('كورتادو', 'كورتادو موزون بـ 15 ريال')"><div>كورتادو</div><div class="price">١٥ ر.س</div></div>
+        <div class="menu-item" onclick="selectItem('فلات وايت', 'فلات وايت مخملي بـ 16 ريال')"><div>فلات وايت</div><div class="price">١٦ ر.س</div></div>
+        <div class="menu-item" onclick="selectItem('موكا حارة', 'موكا حارة غنية بـ 22 ريال')"><div>موكا</div><div class="price">٢٢ ر.س</div></div>
+        <div class="menu-item" onclick="selectItem('سبانش لاتيه حار', 'سْبَانِيش لَاتيه حار بـ 21 ريال')"><div>سبانش لاتيه</div><div class="price">٢١ ر.س</div></div>
 
-        <div class="section-title">المشروبات المثلجة ❄️</div>
-        <div class="menu-item" onclick="selectItem('أيس بيستاشيو لاتيه', 'أيس بيستاشيو يسرسح على قلبك ويعدل مزاجك يا غالي.')">
-            <div><b>أيس بيستاشيو</b><br><small>ذوق الملوك</small></div>
-            <div class="price">23 SR</div>
-        </div>
+        <div class="section-title">المشروبات الباردة ❄️</div>
+        <div class="menu-item" onclick="selectItem('أيس سبانش لاتيه', 'أيس سْبَانِيش لَاتيه يسرسح على قلبك بـ 23 ريال')"><div>أيس سبانش لاتيه</div><div class="price">٢٣ ر.س</div></div>
+        <div class="menu-item" onclick="selectItem('أيس بيستاشيو لاتيه', 'أيس بيستاشيو لاتيه بـ 23 ريال')"><div>أيس بيستاشيو لاتيه</div><div class="price">٢٣ ر.س</div></div>
+        <div class="menu-item" onclick="selectItem('مهيتو بلو اوشن', 'مهيتو بلو أوشن منعش بـ 21 ريال')"><div>مهيتو بلو اوشن</div><div class="price">٢١ ر.س</div></div>
 
-        <div class="section-title">القهوة المقطرة ☕️</div>
-        <div class="menu-item" onclick="selectItem('V60', 'في سكستي مقطرة بذكاء.. تضبط يومك وتعدل مزاجك.')">
-            <div><b>V60</b><br><small>إثيوبي / كولومبي</small></div>
-            <div class="price">22 SR</div>
-        </div>
+        <div class="section-title">الحلا والمخبوزات 🥐</div>
+        <div class="menu-item" onclick="selectItem('كيكة العسل', 'كيكة العسل اللذيذة بـ 24 ريال')"><div>كيكة العسل</div><div class="price">٢٤ ر.س</div></div>
+        <div class="menu-item" onclick="selectItem('كروسان جبنة بيضاء', 'كروسان جبنة بيضاء طازج بـ 12 ريال')"><div>كروسان جبنة بيضاء</div><div class="price">١٢ ر.س</div></div>
 
-        <button class="btn" onclick="confirmOrder()" id="order-btn" style="position: sticky; bottom: 10px;">تأكيد الطلب لواتساب السيادة ✅</button>
+        <button class="btn" onclick="confirmOrder()" id="order-btn" style="position: sticky; bottom: 0; background: var(--green); color: white;">تأكيد الطلب عبر واتساب ✅</button>
     </div>
 </div>
 
 <script>
     let currentOrder = "";
-
     function speak(text) {
         window.speechSynthesis.cancel();
         const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'ar-SA';
-        msg.rate = 0.85;
+        msg.lang = 'ar-SA'; msg.rate = 0.88;
         window.speechSynthesis.speak(msg);
     }
-
     function startExperience() {
-        const welcomeText = "يا هلا بك في بارنيز كافيه. نورت المكان يا طويل العمر. المنيو بيدك وصوتي بخدمتك. تفضل اختر ما يسر خاطرك.";
-        speak(welcomeText);
+        speak("أهلاً بضيوفنا الكرام في بارنيز كافيه. نورتوا المكان. المنيو بين يديكم وصوتي في خدمتكم.");
         document.getElementById('welcome-section').style.display = 'none';
         document.getElementById('menu-section').style.display = 'block';
     }
-
     function selectItem(name, desc) {
-        currentOrder = name;
-        speak(desc);
+        currentOrder = name; speak(desc);
         document.getElementById('order-btn').innerText = `تأكيد طلب (${name}) ✅`;
-        document.getElementById('order-btn').style.boxShadow = "0 0 30px var(--gold)";
-        setTimeout(() => { document.getElementById('order-btn').style.boxShadow = "0 5px 15px rgba(212, 175, 55, 0.4)"; }, 500);
     }
-
     function confirmOrder() {
-        if(!currentOrder) { speak("يا طويل العمر، اختر مشروبك أولاً."); return; }
+        if(!currentOrder) { speak("يا ذوق، اختر مشروبك أولاً."); return; }
         const phone = "966579747707";
-        const msg = `أهلاً بارنيز، أريد طلب: ${currentOrder}. تم الطلب عبر منصة السيادة للمهندس محمود صلاح. ☕️💎`;
-        // التصحيح البرمجي من ألفا والظل لضمان عمل الرابط
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+        const msg = `أهلاً بارنيز، أريد طلب: ${currentOrder}. تم الطلب عبر منصة السيادة - محمود صلاح. ☕️💎`;
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
     }
 </script>
-
 </body>
 </html>
