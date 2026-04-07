@@ -14,8 +14,7 @@
         .logo-small { width: 60px; border-radius: 8px; }
         .menu-container { padding: 15px; max-width: 600px; margin: auto; padding-bottom: 120px; }
         .menu-item { background: white; margin-bottom: 15px; border-radius: 18px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; }
-        /* ضبط مساحة الصور HD */
-        .item-img { width: 110px; height: 110px; object-fit: cover; background: #fdfdfd; border-left: 1px solid #f0f0f0; }
+        .item-img { width: 110px; height: 110px; object-fit: cover; background: #fff; border-left: 1px solid #f0f0f0; }
         .item-info { padding: 15px; flex-grow: 1; text-align: right; }
         .item-name { font-weight: bold; font-size: 18px; color: #222; display: block; margin-bottom: 5px; }
         .item-price { color: var(--primary-color); font-weight: 800; font-size: 16px; }
@@ -26,35 +25,39 @@
 <body>
 
     <div id="welcome-screen">
-        <!-- روابط صور من مخزن Github الخاص بك بكلمة سر السيادة -->
-        <img src="https://githubusercontent.com" class="logo-welcome" alt="Logo">
+        <!-- تم التأكد من الحروف الصغيرة بالكامل لمطابقة صورك -->
+        <img src="https://githubusercontent.com" class="logo-welcome" alt="logo">
         <h1>أهلاً بك في بارنيز</h1>
         <button class="btn-start" onclick="startMenu()">ابدأ طلبك الآن 🚀</button>
     </div>
 
     <div id="main-content" style="display: none;">
         <div class="header">
-            <img src="https://githubusercontent.com" class="logo-small" alt="Barnies">
+            <img src="https://githubusercontent.com" class="logo-small" alt="logo">
             <span style="font-weight: bold; color: var(--primary-color);">بورت السيادة - محمود صلاح</span>
         </div>
 
         <div class="menu-container">
+            <!-- الروابط مأمنة بالحروف الصغيرة 100% -->
             <div class="menu-item">
-                <img src="https://githubusercontent.com" class="item-img" alt="سبانش">
+                <img src="https://githubusercontent.com" class="item-img" alt="spanish">
                 <div class="item-info"><span class="item-name">سبانش لاتيه حار</span><span class="item-price">18 ريال</span></div>
                 <button class="btn-add" onclick="addToCart('سبانش لاتيه حار')">إضافة</button>
             </div>
+            
             <div class="menu-item">
-                <img src="https://githubusercontent.com" class="item-img" alt="V60">
+                <img src="https://githubusercontent.com" class="item-img" alt="v60">
                 <div class="item-info"><span class="item-name">V60 حار</span><span class="item-price">22 ريال</span></div>
                 <button class="btn-add" onclick="addToCart('V60 حار')">إضافة</button>
             </div>
+
             <div class="menu-item">
-                <img src="https://githubusercontent.com" class="item-img" alt="كيكة">
+                <img src="https://githubusercontent.com" class="item-img" alt="honey_cake">
                 <div class="item-info"><span class="item-name">كيكة العسل</span><span class="item-price">15 ريال</span></div>
                 <button class="btn-add" onclick="addToCart('كيكة العسل')">إضافة</button>
             </div>
         </div>
+
         <button class="cart-float" onclick="sendOrder()">إرسال للواتساب (<span id="cart-count">0</span>) ✅</button>
     </div>
 
@@ -63,9 +66,10 @@
         function speak(text) {
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'ar-SA';
-            msg.rate = 0.82; // سرعة رزينة كما طلب محمود
-            msg.pitch = 0.85; // نبرة رخيمة
+            msg.lang = 'ar-SA'; msg.rate = 0.82; msg.pitch = 0.85;
+            let voices = window.speechSynthesis.getVoices();
+            let voice = voices.find(v => v.lang.includes('ar'));
+            if (voice) msg.voice = voice;
             window.speechSynthesis.speak(msg);
         }
         function startMenu() {
