@@ -3,82 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بورت السيادة - بارنيز كافيه</title>
+    <title>قائمة بارنيز الذكية</title>
     <style>
-        :root { --gold: #d4af37; --dark: #000; --card-bg: rgba(10, 10, 10, 0.92); --green: #007a53; }
-        body { 
-            background: var(--dark); 
-            background-image: url('https://i.ibb.co/L9Y00k4/barnies-bg.jpg'); /* استبدل برابط اللوجو المباشر */
-            background-size: cover; background-attachment: fixed; background-position: center;
-            color: white; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 15px;
-        }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: -1; }
-        .card { width: 95%; max-width: 550px; border: 1px solid var(--gold); border-radius: 30px; padding: 25px; box-shadow: 0 0 60px rgba(212, 175, 55, 0.2); margin: auto; background: var(--card-bg); backdrop-filter: blur(10px); }
-        #welcome-section { display: block; padding: 40px 10px; }
-        #menu-section { display: none; text-align: right; max-height: 85vh; overflow-y: auto; padding-left: 10px; }
-        #menu-section::-webkit-scrollbar { width: 0px; }
-        .btn { background: var(--gold); color: black; border: none; padding: 18px; border-radius: 50px; width: 100%; font-weight: bold; font-size: 1.2rem; cursor: pointer; margin-top: 15px; box-shadow: 0 5px 20px rgba(212, 175, 55, 0.3); transition: 0.3s; }
-        .section-title { color: var(--gold); border-right: 5px solid var(--green); padding-right: 15px; margin: 30px 0 15px 0; font-size: 1.3rem; font-weight: bold; background: rgba(212, 175, 55, 0.05); }
-        .menu-item { background: rgba(255,255,255,0.04); border: 1px solid #222; border-radius: 15px; padding: 15px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
-        .menu-item:active { transform: scale(0.97); border-color: var(--gold); }
-        .price { color: var(--gold); font-weight: bold; font-size: 1.1rem; min-width: 60px; text-align: left; }
-        .logo-img { width: 100px; margin-bottom: 10px; border-radius: 50%; border: 2px solid var(--gold); }
+        body { font-family: 'Arial', sans-serif; background-color: #f4f1ea; margin: 0; padding: 20px; text-align: center; color: #3e2723; }
+        .header { margin-bottom: 20px; }
+        .logo { width: 120px; border-radius: 50%; border: 3px solid #3e2723; }
+        .menu-item { background: #fff; margin: 10px auto; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-add { background-color: #3e2723; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+        .cart-section { margin-top: 30px; padding: 20px; background: #e0d8c3; border-radius: 15px; max-width: 400px; margin-left: auto; margin-right: auto; }
+        select { padding: 10px; border-radius: 5px; width: 100%; margin-bottom: 15px; font-size: 16px; border: 1px solid #3e2723; }
+        .btn-order { background-color: #25d366; color: white; border: none; padding: 15px 30px; border-radius: 10px; font-size: 18px; width: 100%; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
-<div class="overlay"></div>
-<div class="card">
-    <div id="welcome-section">
-        <img src="https://i.ibb.co/0mS4P4q/barnies-logo.png" class="logo-img" alt="Barnies Logo"> <h1 style="color: var(--gold); font-size: 1.8rem; margin: 10px 0;">أهلاً بضيوفنا الكرام</h1>
-        <p style="color: #ccc; font-size: 0.9rem;">تجربة ذكية بإشراف: محمود صلاح</p>
-        <button class="btn" onclick="startExperience()">استعراض المنيو الكامل 🚀</button>
+
+    <div class="header">
+        <img src="https://i.imgur.com/your-barnies-logo.png" alt="Barnies Logo" class="logo">
+        <h1>أهلاً بك في بارنيز</h1>
+        <p>اطلب كل اللي في خاطرك مرة واحدة</p>
     </div>
 
-    <div id="menu-section">
-        <h2 style="color: var(--gold); text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px;">منيو السيادة 2026</h2>
+    <div id="menu">
+        <div class="menu-item">
+            <span>سبانش لاتيه - 18 ريال</span>
+            <button class="btn-add" onclick="addToCart('سبانش لاتيه', 18)">إضافة +</button>
+        </div>
+        <div class="menu-item">
+            <span>V60 كوفي - 22 ريال</span>
+            <button class="btn-add" onclick="addToCart('V60 كوفي', 22)">إضافة +</button>
+        </div>
+        <div class="menu-item">
+            <span>كيكة العسل - 15 ريال</span>
+            <button class="btn-add" onclick="addToCart('كيكة العسل', 15)">إضافة +</button>
+        </div>
+    </div>
+
+    <div class="cart-section">
+        <h3>طلباتك:</h3>
+        <ul id="cart-list" style="list-style: none; padding: 0;"></ul>
+        <hr>
+        <p>إجمالي الحساب: <span id="total-price">0</span> ريال</p>
         
-        <div class="section-title">المشروبات الساخنة ☕️</div>
-        <div class="menu-item" onclick="selectItem('كورتادو', 'كورتادو موزون بـ 15 ريال')"><div>كورتادو</div><div class="price">١٥ ر.س</div></div>
-        <div class="menu-item" onclick="selectItem('فلات وايت', 'فلات وايت مخملي بـ 16 ريال')"><div>فلات وايت</div><div class="price">١٦ ر.س</div></div>
-        <div class="menu-item" onclick="selectItem('موكا حارة', 'موكا حارة غنية بـ 22 ريال')"><div>موكا</div><div class="price">٢٢ ر.س</div></div>
-        <div class="menu-item" onclick="selectItem('سبانش لاتيه حار', 'سْبَانِيش لَاتيه حار بـ 21 ريال')"><div>سبانش لاتيه</div><div class="price">٢١ ر.س</div></div>
+        <label for="table-select">اختر رقم الطاولة:</label>
+        <select id="table-select">
+            <option value="1">طاولة رقم 1</option>
+            <option value="2">طاولة رقم 2</option>
+            <option value="3">طاولة رقم 3</option>
+        </select>
 
-        <div class="section-title">المشروبات الباردة ❄️</div>
-        <div class="menu-item" onclick="selectItem('أيس سبانش لاتيه', 'أيس سْبَانِيش لَاتيه يسرسح على قلبك بـ 23 ريال')"><div>أيس سبانش لاتيه</div><div class="price">٢٣ ر.س</div></div>
-        <div class="menu-item" onclick="selectItem('أيس بيستاشيو لاتيه', 'أيس بيستاشيو لاتيه بـ 23 ريال')"><div>أيس بيستاشيو لاتيه</div><div class="price">٢٣ ر.س</div></div>
-        <div class="menu-item" onclick="selectItem('مهيتو بلو اوشن', 'مهيتو بلو أوشن منعش بـ 21 ريال')"><div>مهيتو بلو اوشن</div><div class="price">٢١ ر.س</div></div>
-
-        <div class="section-title">الحلا والمخبوزات 🥐</div>
-        <div class="menu-item" onclick="selectItem('كيكة العسل', 'كيكة العسل اللذيذة بـ 24 ريال')"><div>كيكة العسل</div><div class="price">٢٤ ر.س</div></div>
-        <div class="menu-item" onclick="selectItem('كروسان جبنة بيضاء', 'كروسان جبنة بيضاء طازج بـ 12 ريال')"><div>كروسان جبنة بيضاء</div><div class="price">١٢ ر.س</div></div>
-
-        <button class="btn" onclick="confirmOrder()" id="order-btn" style="position: sticky; bottom: 0; background: var(--green); color: white;">تأكيد الطلب عبر واتساب ✅</button>
+        <button class="btn-order" onclick="sendOrder()">إرسال الطلب عبر واتساب</button>
     </div>
-</div>
 
-<script>
-    let currentOrder = "";
-    function speak(text) {
-        window.speechSynthesis.cancel();
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'ar-SA'; msg.rate = 0.88;
-        window.speechSynthesis.speak(msg);
-    }
-    function startExperience() {
-        speak("أهلاً بضيوفنا الكرام في بارنيز كافيه. نورتوا المكان. المنيو بين يديكم وصوتي في خدمتكم.");
-        document.getElementById('welcome-section').style.display = 'none';
-        document.getElementById('menu-section').style.display = 'block';
-    }
-    function selectItem(name, desc) {
-        currentOrder = name; speak(desc);
-        document.getElementById('order-btn').innerText = `تأكيد طلب (${name}) ✅`;
-    }
-    function confirmOrder() {
-        if(!currentOrder) { speak("يا ذوق، اختر مشروبك أولاً."); return; }
-        const phone = "966579747707";
-        const msg = `أهلاً بارنيز، أريد طلب: ${currentOrder}. تم الطلب عبر منصة السيادة - محمود صلاح. ☕️💎`;
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
-    }
-</script>
+    <script>
+        let cart = [];
+        let total = 0;
+
+        // وظيفة نطق الترحيب بصوت أنثوي
+        function welcomeVoice() {
+            const msg = new SpeechSynthesisUtterance("أهلاً بك في بارنيز، يسعدنا خدمتك. اطلب الآن وسنصل إليك فوراً");
+            msg.lang = 'ar-SA';
+            
+            // البحث عن صوت أنثوي في النظام
+            const voices = window.speechSynthesis.getVoices();
+            const femaleVoice = voices.find(voice => voice.name.includes('Female') || voice.name.includes('Google Arabic'));
+            if (femaleVoice) msg.voice = femaleVoice;
+            
+            window.speechSynthesis.speak(msg);
+        }
+
+        // تشغيل الصوت عند أول ضغطة في الصفحة (بسبب سياسة المتصفح)
+        window.onclick = function() {
+            if (!window.voicePlayed) {
+                welcomeVoice();
+                window.voicePlayed = true;
+            }
+        };
+
+        function addToCart(name, price) {
+            cart.push(name);
+            total += price;
+            updateUI();
+        }
+
+        function updateUI() {
+            const list = document.getElementById('cart-list');
+            list.innerHTML = cart.map(item => `<li>${item}</li>`).join('');
+            document.getElementById('total-price').innerText = total;
+        }
+
+        function sendOrder() {
+            if (cart.length === 0) {
+                alert("السلة فاضية يا بطل!");
+                return;
+            }
+            const tableNum = document.getElementById('table-select').value;
+            const phoneNumber = "9665XXXXXXXX"; // هنا تحط رقم واتساب الكاشير اللي في السعودية
+            
+            let message = `*طلب جديد من بارنيز* \n`;
+            message += `📍 *رقم الطاولة:* ${tableNum}\n`;
+            message += `📋 *الطلبات:* \n- ${cart.join('\n- ')}\n`;
+            message += `💰 *الإجمالي:* ${total} ريال`;
+
+            const encodedMsg = encodeURIComponent(message);
+            window.open(`https://wa.me/${phoneNumber}?text=${encodedMsg}`, '_blank');
+        }
+    </script>
+
 </body>
 </html>
