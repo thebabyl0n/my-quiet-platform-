@@ -3,126 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barnies - المنيو الجديد</title>
+    <title>منيو بارنيز الإحترافي</title>
     <style>
-        :root { --p: #006a4d; --a: #c8a27c; }
-        body { font-family: sans-serif; margin: 0; background: #fdfdfd; transition: 0.3s; }
+        :root { --primary: #006a4d; --accent: #c8a27c; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #fdfdfd; transition: 0.3s; }
         
         /* شاشة البداية */
-        #SCREEN_START { position: fixed; inset: 0; background: var(--p); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
-        .BOX { background: white; padding: 30px; border-radius: 30px; width: 100%; max-width: 380px; text-align: center; }
-        .BTN { background: var(--p); color: white; border: none; padding: 15px; border-radius: 50px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        .BTN_LANG { background: var(--a); margin-bottom: 20px; }
-        select { width: 100%; padding: 12px; border-radius: 12px; margin: 10px 0; font-size: 16px; }
+        #SETUP_SCREEN { position: fixed; inset: 0; background: var(--primary); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
+        .CARD { background: white; padding: 30px; border-radius: 30px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .BTN_GO { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 50px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .BTN_LANG { background: var(--accent); margin-bottom: 20px; border: 2px solid white; }
+        select { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid #eee; margin: 10px 0; font-size: 16px; }
 
         /* المنيو */
-        .HEADER { background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .ITEM { background: white; margin: 15px; border-radius: 20px; display: flex; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); align-items: center; border: 1px solid #eee; }
-        .ITEM img { width: 100px; height: 100px; object-fit: cover; }
-        .INFO { padding: 15px; flex: 1; text-align: right; }
-        .ADD { background: var(--p); color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .HEADER { background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .CONTAINER { padding: 15px; max-width: 500px; margin: auto; padding-bottom: 110px; }
+        .ITEM_CARD { background: white; border-radius: 20px; display: flex; margin-bottom: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); align-items: center; border: 1px solid #f0f0f0; }
+        .ITEM_IMG { width: 110px; height: 110px; object-fit: cover; }
+        .ITEM_INFO { padding: 15px; flex: 1; text-align: right; }
+        .ITEM_NAME { font-weight: bold; font-size: 18px; display: block; }
+        .ITEM_PRICE { color: var(--primary); font-weight: bold; }
+        .BTN_ADD { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 12px; font-weight: bold; cursor: pointer; }
 
-        /* سلة الواتساب */
-        .CART { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: #25d366; color: white; padding: 18px; border-radius: 50px; text-align: center; font-weight: bold; font-size: 19px; border: none; z-index: 1000; }
+        /* السلة */
+        .CART_BTN { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 420px; background: #25d366; color: white; padding: 18px; border-radius: 50px; text-align: center; font-weight: bold; font-size: 19px; border: none; box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3); z-index: 1000; cursor: pointer; }
         
         body.en { direction: ltr; }
-        body.en .INFO { text-align: left; }
+        body.en .ITEM_INFO { text-align: left; }
     </style>
 </head>
-<body id="MAIN_BODY">
+<body id="BODY_TAG">
 
-    <div id="SCREEN_START">
-        <div class="BOX">
-            <button class="BTN BTN_LANG" onclick="SwitchL()">English / عربي</button>
-            <h2 id="H1">مرحباً بك في بارنيز</h2>
-            <p id="H2">نوع الطلب:</p>
-            <select id="TYPE" onchange="CheckT()">
-                <option value="dine">محلي (Inside)</option>
+    <div id="SETUP_SCREEN">
+        <div class="CARD">
+            <button class="BTN_GO BTN_LANG" onclick="SwitchL()">English / عربي</button>
+            <h2 id="L1">مرحباً بك في بارنيز</h2>
+            <p id="L2" style="margin:0; font-weight:bold;">نوع الطلب:</p>
+            <select id="ORDER_TYPE" onchange="ToggleTable()">
+                <option value="dine">محلي (Dine-in)</option>
                 <option value="take">سفري (Takeaway)</option>
             </select>
             <div id="TABLE_DIV">
-                <p id="H3">رقم الطاولة:</p>
+                <p id="L3" style="margin:0; font-weight:bold;">رقم الطاولة:</p>
                 <select id="TABLE_NUM">
-                    <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
                 </select>
             </div>
-            <button class="BTN" onclick="Go()" id="H4">ابدأ الطلب</button>
+            <button class="BTN_GO" onclick="StartApp()" id="L4">ابدأ الطلب</button>
         </div>
     </div>
 
-    <div id="APP" style="display:none;">
+    <div id="APP_UI" style="display:none;">
         <div class="HEADER">
-            <b id="H5">منيو بارنيز</b>
-            <span id="BADGE" style="color:var(--p); font-weight:bold;"></span>
+            <b id="L5">منيو بارنيز</b>
+            <span id="INFO_BADGE" style="color:var(--primary); font-weight:bold;"></span>
         </div>
-        <div id="LIST"></div>
-        <button class="CART" onclick="Send()">
-            <span id="H6">إرسال الطلب</span> (<span id="COUNT">0</span>)
+        <div id="MENU_LIST" class="CONTAINER"></div>
+        <button class="CART_BTN" onclick="SendWA()">
+            <span id="L6">إرسال الطلب</span> (<span id="CART_COUNT">0</span>)
         </button>
     </div>
 
     <script>
-        let L = 'ar'; let C = [];
-        const M = [
-            { id:1, ar:"سبانش لاتيه", en:"Spanish Latte", p:18, img:"https://images.unsplash.com/photo-1541167760496-162955ed8a9f?w=200" },
-            { id:2, ar:"V60 حار", en:"Hot V60", p:22, img:"https://images.unsplash.com/photo-1544787210-22db3677f29e?w=200" }
+        let lang = 'ar'; let cart = [];
+        const items = [
+            { id:1, ar:"سبانش لاتيه حار", en:"Hot Spanish Latte", p:18, img:"https://images.unsplash.com/photo-1541167760496-162955ed8a9f?w=400" },
+            { id:2, ar:"V60 حار", en:"Hot V60", p:22, img:"https://images.unsplash.com/photo-1544787210-22db3677f29e?w=400" },
+            { id:3, ar:"كيكة العسل", en:"Honey Cake", p:15, img:"https://images.unsplash.com/photo-1586040140378-b5634cb4c8fc?w=400" }
         ];
 
-        function Speak(t) {
-            window.speechSynthesis.cancel(); // وقف اللي فات فوراً!
+        function Speak(text) {
+            window.speechSynthesis.cancel(); 
             setTimeout(() => {
-                const s = new SpeechSynthesisUtterance(t);
-                s.lang = L === 'ar' ? 'ar-SA' : 'en-US';
-                s.rate = 0.85;
-                window.speechSynthesis.speak(s);
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
+                u.rate = 0.85;
+                window.speechSynthesis.speak(u);
             }, 50);
         }
 
         function SwitchL() {
-            L = L === 'ar' ? 'en' : 'ar';
-            document.getElementById('MAIN_BODY').className = L === 'en' ? 'en' : '';
-            const words = {
-                ar: {H1:"مرحباً بك في بارنيز", H2:"نوع الطلب:", H3:"رقم الطاولة:", H4:"ابدأ الطلب", H5:"منيو بارنيز", H6:"إرسال الطلب"},
-                en: {H1:"Welcome to Barnies", H2:"Order Type:", H3:"Table Number:", H4:"Start Order", H5:"Barnies Menu", H6:"Send Order"}
+            lang = lang === 'ar' ? 'en' : 'ar';
+            document.getElementById('BODY_TAG').className = lang === 'en' ? 'en' : '';
+            const t = {
+                ar: {L1:"مرحباً بك في بارنيز", L2:"نوع الطلب:", L3:"رقم الطاولة:", L4:"ابدأ الطلب", L5:"منيو بارنيز", L6:"إرسال الطلب"},
+                en: {L1:"Welcome to Barnies", L2:"Order Type:", L3:"Table Number:", L4:"Start Order", L5:"Barnies Menu", L6:"Send Order"}
             };
-            for(let id in words[L]) document.getElementById(id).innerText = words[L][id];
-            Speak(L === 'ar' ? "تم اختيار العربية" : "English selected");
+            for(let key in t[lang]) document.getElementById(key).innerText = t[lang][key];
+            Speak(lang === 'ar' ? "تم اختيار العربية" : "English selected");
         }
 
-        function CheckT() { document.getElementById('TABLE_DIV').style.display = document.getElementById('TYPE').value === 'take' ? 'none' : 'block'; }
-
-        function Go() {
-            document.getElementById('SCREEN_START').style.display = 'none';
-            document.getElementById('APP').style.display = 'block';
-            const info = document.getElementById('TYPE').value === 'take' ? (L==='ar'?'سفري':'Takeaway') : (L==='ar'?'طاولة: ':'Table: ') + document.getElementById('TABLE_NUM').value;
-            document.getElementById('BADGE').innerText = info;
-            Draw();
-            Speak(L === 'ar' ? "أهلاً بك" : "Welcome");
+        function ToggleTable() { 
+            document.getElementById('TABLE_DIV').style.display = document.getElementById('ORDER_TYPE').value === 'take' ? 'none' : 'block'; 
         }
 
-        function Draw() {
-            document.getElementById('LIST').innerHTML = M.map(i => `
-                <div class="ITEM">
-                    <img src="${i.img}">
-                    <div class="INFO">
-                        <span style="font-weight:bold;">${L==='ar'?i.ar:i.en}</span><br>
-                        <span style="color:var(--p);">${i.p} ريال</span>
+        function StartApp() {
+            document.getElementById('SETUP_SCREEN').style.display = 'none';
+            document.getElementById('APP_UI').style.display = 'block';
+            const info = document.getElementById('ORDER_TYPE').value === 'take' ? (lang==='ar'?'سفري':'Takeaway') : (lang==='ar'?'طاولة: ':'Table: ') + document.getElementById('TABLE_NUM').value;
+            document.getElementById('INFO_BADGE').innerText = info;
+            Render();
+            Speak(lang === 'ar' ? "أهلاً بك، تفضل المنيو" : "Welcome, here is our menu");
+        }
+
+        function Render() {
+            document.getElementById('MENU_LIST').innerHTML = items.map(i => `
+                <div class="ITEM_CARD">
+                    <img src="${i.img}" class="ITEM_IMG">
+                    <div class="ITEM_INFO">
+                        <span class="ITEM_NAME">${lang==='ar'?i.ar:i.en}</span>
+                        <span class="ITEM_PRICE">${i.p} ${lang==='ar'?'ريال':'SAR'}</span>
                     </div>
-                    <button class="ADD" onclick="Add('${i.ar}','${i.en}')">${L==='ar'?'إضافة':'Add'}</button>
+                    <button class="BTN_ADD" onclick="Add('${i.ar}','${i.en}')">${lang==='ar'?'إضافة':'Add'}</button>
                 </div>
             `).join('');
         }
 
         function Add(ar, en) {
-            C.push(L === 'ar' ? ar : en);
-            document.getElementById('COUNT').innerText = C.length;
-            Speak(L === 'ar' ? "تم إضافة " + ar : "Added " + en);
+            cart.push(lang === 'ar' ? ar : en);
+            document.getElementById('CART_COUNT').innerText = cart.length;
+            Speak(lang === 'ar' ? "تم إضافة " + ar : "Added " + en);
         }
 
-        function Send() {
-            if(C.length === 0) return;
-            const msg = `*طلب جديد*\n📍 النوع: ${document.getElementById('BADGE').innerText}\n📋 الطلبات:\n- ${C.join('\n- ')}`;
-            window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`, '_blank');
+        function SendWA() {
+            if(cart.length === 0) return;
+            const text = `*New Order / طلب جديد*\n📍 Type: ${document.getElementById('INFO_BADGE').innerText}\n📋 Items:\n- ${cart.join('\n- ')}`;
+            window.open(`https://wa.me/966579747707?text=${encodeURIComponent(text)}`, '_blank');
         }
     </script>
 </body>
