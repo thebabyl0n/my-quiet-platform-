@@ -7,119 +7,83 @@
     <style>
         :root { --primary-color: #006a4d; --accent-color: #c8a27c; --bg-color: #f8f9fa; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: #333; overflow-x: hidden; }
-        
-        /* شاشة الترحيب */
         #welcome-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-color); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; }
         .logo-welcome { width: 160px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 2px solid white; }
         .btn-start { background-color: var(--accent-color); color: white; border: none; padding: 18px 60px; border-radius: 50px; font-size: 22px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        
-        /* المنيو */
         .header { background: white; padding: 15px; position: sticky; top: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; display: flex; justify-content: space-between; align-items: center; }
         .logo-small { width: 60px; border-radius: 8px; }
         .menu-container { padding: 15px; max-width: 600px; margin: auto; padding-bottom: 120px; }
         .menu-item { background: white; margin-bottom: 15px; border-radius: 18px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; }
-        
-        /* ضبط الصور HD */
         .item-img { width: 110px; height: 110px; object-fit: cover; background: #fff; border-left: 1px solid #f0f0f0; }
-        .item-info { padding: 15px; flex-grow: 1; }
+        .item-info { padding: 15px; flex-grow: 1; text-align: right; }
         .item-name { font-weight: bold; font-size: 18px; color: #222; display: block; margin-bottom: 5px; }
         .item-price { color: var(--primary-color); font-weight: 800; font-size: 16px; }
         .btn-add { background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
-
         .cart-float { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: #25d366; color: white; padding: 18px; border-radius: 50px; font-size: 20px; font-weight: bold; border: none; display: flex; justify-content: center; align-items: center; gap: 10px; z-index: 200; box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3); }
     </style>
 </head>
 <body>
 
     <div id="welcome-screen">
-        <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/logo.jpg" class="logo-welcome">
+        <img src="https://ibb.co" class="logo-welcome" alt="Logo">
         <h1>أهلاً بك في بارنيز</h1>
-        <button class="btn-start" onclick="startMenu()">ابدأ طلبك الآن</button>
+        <button class="btn-start" onclick="startMenu()">ابدأ طلبك الآن 🚀</button>
     </div>
 
     <div id="main-content" style="display: none;">
         <div class="header">
-            <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/logo.jpg" class="logo-small">
-            <span style="font-weight: bold; color: var(--primary-color);">منيو بارنيز الذكي</span>
+            <img src="https://ibb.co" class="logo-small" alt="Barnies">
+            <span style="font-weight: bold; color: var(--primary-color);">بورت السيادة - محمود صلاح</span>
         </div>
 
         <div class="menu-container">
             <div class="menu-item">
-                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/spanish.jpg" class="item-img" alt="سبانش">
-                <div class="item-info">
-                    <span class="item-name">سبانش لاتيه حار</span>
-                    <span class="item-price">18 ريال</span>
-                </div>
+                <img src="https://ibb.co" class="item-img" alt="سبانش">
+                <div class="item-info"><span class="item-name">سبانش لاتيه حار</span><span class="item-price">18 ريال</span></div>
                 <button class="btn-add" onclick="addToCart('سبانش لاتيه حار')">إضافة</button>
             </div>
-            
             <div class="menu-item">
-                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/v60.jpg" class="item-img" alt="V60">
-                <div class="item-info">
-                    <span class="item-name">V60 حار</span>
-                    <span class="item-price">22 ريال</span>
-                </div>
+                <img src="https://ibb.co" class="item-img" alt="V60">
+                <div class="item-info"><span class="item-name">V60 حار</span><span class="item-price">22 ريال</span></div>
                 <button class="btn-add" onclick="addToCart('V60 حار')">إضافة</button>
             </div>
-
             <div class="menu-item">
-                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/honey_cake.jpg" class="item-img" alt="كيكة">
-                <div class="item-info">
-                    <span class="item-name">كيكة العسل</span>
-                    <span class="item-price">15 ريال</span>
-                </div>
+                <img src="https://ibb.co" class="item-img" alt="كيكة">
+                <div class="item-info"><span class="item-name">كيكة العسل</span><span class="item-price">15 ريال</span></div>
                 <button class="btn-add" onclick="addToCart('كيكة العسل')">إضافة</button>
             </div>
         </div>
-
-        <button class="cart-float" onclick="sendOrder()">إرسال الطلب عبر واتساب (<span id="cart-count">0</span>)</button>
+        <button class="cart-float" onclick="sendOrder()">إرسال للواتساب (<span id="cart-count">0</span>) ✅</button>
     </div>
 
     <script>
         let cart = [];
-
         function speak(text) {
-            // إيقاف أي صوت شغال فوراً لمنع التداخل
             window.speechSynthesis.cancel();
-            
             const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'ar-SA';
-            msg.rate = 0.85; // سرعة رزينة
-            msg.pitch = 1.0;
-            
-            // اختيار أفضل صوت متاح
+            msg.lang = 'ar-SA'; msg.rate = 0.85;
             let voices = window.speechSynthesis.getVoices();
             let voice = voices.find(v => v.lang.includes('ar'));
             if (voice) msg.voice = voice;
-            
             window.speechSynthesis.speak(msg);
         }
-
         function startMenu() {
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
-            speak("تفضل المنيو.. نتمنى لك وقتاً سعيداً");
+            speak("يا هلا بك في بارنيز. نورت المكان يا طويل العمر. تفضل المنيو.");
         }
-
         function addToCart(name) {
             cart.push(name);
             document.getElementById('cart-count').innerText = cart.length;
-            speak("تم إضافة " + name + " لسلتك");
+            speak("تم إضافة " + name + " لسلتك يا ذوق.");
         }
-
         function sendOrder() {
             if(cart.length === 0) return;
             const phone = "966579747707";
-            let text = `*طلب جديد من بارنيز ☕*\n📋 *الطلبات:*\n- ${cart.join('\n- ')}`;
-            speak("شكراً لطلبك.. جاري توجيهك للواتساب");
-            setTimeout(() => {
-                window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
-            }, 1000);
+            let text = `*طلب جديد من بارنيز ☕*\n📋 *الطلبات:*\n- ${cart.join('\n- ')}\n\n✅ *يرجى التحضير فوراً، شكراً!*`;
+            speak("أبشر بالسعد.. جاري توجيهك لواتساب محمود.");
+            setTimeout(() => { window.open(`https://wa.me{phone}?text=${encodeURIComponent(text)}`, '_blank'); }, 1000);
         }
-
-        // تهيئة الأصوات للمتصفح
-        window.speechSynthesis.onvoiceschanged = () => {};
     </script>
 </body>
 </html>
-
