@@ -32,7 +32,7 @@ def chat():
         return jsonify({"reply": "الفا: لسه الموقع مش شايف الخزنة، اتأكد إنك عملت Link Environment Group!"})
 
     try:
-        genai.configure(api_key=api_key)
+        genai.configure(api_key="AIzaYourKeyHere")
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = f"أنت 'الظل' صديق حمادة المخلص، رد بلهجة مصرية ودودة: {user_msg}"
