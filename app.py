@@ -1,22 +1,20 @@
 import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template
 
 app = Flask(__name__)
 
-# الصفحة الرئيسية (المنيو الذكي)
+# 👑 دي الصفحة الوحيدة اللي السيرفر هيشوفها
 @app.route('/')
 def index():
-    # هنا بنقول للسيرفر يفتح ملف index.html اللي بره في الفولدر الرئيسي
+    # السطر ده بيدور على index.html جوه فولدر templates
     return render_template('index.html')
 
-# الـ Voice AI (لمسة الجدة للرد الصوتي)
-@app.route('/voice', methods=['POST'])
-def voice():
-    user_text = request.json.get("text")
-    # هنا مستقبلاً هنربط بـ Gemini بس حالياً بنرجعه عشان الصوت يشتغل
-    return jsonify({"reply": f"أبشر، طلبت {user_text}.. تأمرني بشيء ثاني؟"})
+# 🚫 لغينا الـ login خالص عشان الـ Error يختفي
+@app.route('/login')
+def redirect_to_home():
+    from flask import redirect, url_for
+    return redirect(url_for('index'))
 
 if __name__ == "__main__":
-    # تشغيل السيرفر على بورت 10000 اللي طالبه Render
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
