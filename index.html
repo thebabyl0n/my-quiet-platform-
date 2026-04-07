@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بارنيز - المنيو الذكي</title>
+    <title>بارنيز - المنيو الذكي HD</title>
     <style>
         :root { --primary-color: #006a4d; --accent-color: #c8a27c; --bg-color: #f8f9fa; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: #333; }
         #welcome-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-color); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; }
         .logo-welcome { width: 150px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 2px solid white; }
         .btn-start { background-color: var(--accent-color); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 20px; cursor: pointer; font-weight: bold; }
-        #table-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); z-index: 1001; width: 80%; max-width: 350px; text-align: center; }
+        #table-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); z-index: 1001; width: 85%; max-width: 350px; text-align: center; }
         select { width: 100%; padding: 12px; margin: 20px 0; border-radius: 10px; border: 2px solid var(--primary-color); font-size: 18px; }
         .header { background: white; padding: 15px; position: sticky; top: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; display: flex; justify-content: space-between; align-items: center; }
         .logo-small { width: 50px; border-radius: 5px; }
-        .menu-container { padding: 15px; padding-bottom: 100px; }
+        .menu-container { padding: 15px; padding-bottom: 110px; }
         .menu-item { background: white; margin-bottom: 15px; border-radius: 15px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; }
-        .item-img { width: 100px; height: 100px; object-fit: cover; background: #eee; }
+        .item-img { width: 100px; height: 100px; object-fit: contain; background: #fff; padding: 5px; }
         .item-info { padding: 10px; flex-grow: 1; }
-        .item-name { font-weight: bold; font-size: 16px; color: #222; }
+        .item-name { font-weight: bold; font-size: 16px; }
         .item-price { color: var(--primary-color); font-weight: bold; }
-        .btn-add { background: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; margin-left: 10px; font-weight: bold; }
+        .btn-add { background: var(--primary-color); color: white; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: bold; }
         .cart-float { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; background: #25d366; color: white; padding: 15px; border-radius: 50px; font-size: 18px; font-weight: bold; border: none; display: flex; justify-content: center; align-items: center; gap: 10px; z-index: 200; }
     </style>
 </head>
@@ -50,51 +50,78 @@
         </div>
         <div class="menu-container">
             <div class="menu-item">
-                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/spanish.jpg" class="item-img" onerror="this.src='https://via.placeholder.com/100?text=Spanish'">
+                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/spanish.jpg" class="item-img">
                 <div class="item-info"><span class="item-name">سبانش لاتيه حار</span><br><span class="item-price">18 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('سبانش لاتيه حار', 18)">إضافة</button>
+                <button class="btn-add" onclick="addToCart('سبانش لاتيه حار')">إضافة</button>
             </div>
             <div class="menu-item">
-                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/v60.jpg" class="item-img" onerror="this.src='https://via.placeholder.com/100?text=V60'">
+                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/v60.jpg" class="item-img">
                 <div class="item-info"><span class="item-name">V60 حار</span><br><span class="item-price">22 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('V60 حار', 22)">إضافة</button>
+                <button class="btn-add" onclick="addToCart('V60 حار')">إضافة</button>
             </div>
             <div class="menu-item">
-                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/honey_cake.jpg" class="item-img" onerror="this.src='https://via.placeholder.com/100?text=Cake'">
+                <img src="https://raw.githubusercontent.com/thebabyl0n/my-quiet-platform-/main/honey_cake.jpg" class="item-img">
                 <div class="item-info"><span class="item-name">كيكة العسل</span><br><span class="item-price">15 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('كيكة العسل', 15)">إضافة</button>
+                <button class="btn-add" onclick="addToCart('كيكة العسل')">إضافة</button>
             </div>
         </div>
         <button class="cart-float" onclick="sendOrder()">إرسال الطلب (<span id="cart-count">0</span>)</button>
     </div>
 
     <script>
-        let cart = []; let selectedTable = "";
+        let cart = []; 
+        let selectedTable = "";
+
+        // ضبط إعدادات الصوت HD
         function speak(text) {
-            const msg = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance();
+            msg.text = text;
             msg.lang = 'ar-SA';
+            msg.volume = 1;      // أعلى مستوى صوت
+            msg.rate = 0.85;     // سرعة كلام رصينة وفخمة
+            msg.pitch = 1.1;     // نبرة واضحة ومريحة
+
+            // محاولة اختيار أفضل صوت متاح في الجهاز (HD)
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(v => v.lang.includes('ar') && v.name.includes('Natural'));
+            if (preferredVoice) msg.voice = preferredVoice;
+
             window.speechSynthesis.speak(msg);
         }
-        function showTableModal() { document.getElementById('table-modal').style.display = 'block'; speak("من فضلك اختر رقم الطاولة"); }
+
+        function showTableModal() {
+            document.getElementById('table-modal').style.display = 'block';
+            speak("أهلاً بك في بارنيز.. من فضلك اختر رقم الطاولة");
+        }
+
         function startMenu() {
             selectedTable = document.getElementById('table-select').value;
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('table-modal').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
             document.getElementById('table-display').innerText = "طاولة: " + selectedTable;
-            speak("تفضل المنيو");
+            speak("تفضل المنيو.. نتمنى لك وقتاً سعيداً");
         }
-        function addToCart(name, price) {
+
+        function addToCart(name) {
             cart.push(name);
             document.getElementById('cart-count').innerText = cart.length;
-            speak("تم إضافة " + name + " لسلّتك.. تأمرني بشيء ثاني؟");
+            speak("تم إضافة " + name + ".. تأمرني بشيء ثاني؟");
         }
+
         function sendOrder() {
             if(cart.length === 0) return;
             const phone = "966579747707";
-            let text = `*طلب جديد من بارنيز*\nالطاولة: ${selectedTable}\nالطلبات:\n- ${cart.join('\n- ')}`;
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+            let text = `*طلب جديد من بارنيز ☕*\n📍 *الطاولة:* ${selectedTable}\n📋 *الطلبات:*\n- ${cart.join('\n- ')}`;
+            speak("شكراً لطلبك.. جاري توجيهك للواتساب");
+            setTimeout(() => {
+                window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+            }, 1000);
         }
+
+        // تفعيل محرك الصوت بمجرد التفاعل مع الصفحة
+        window.speechSynthesis.onvoiceschanged = () => {};
     </script>
 </body>
 </html>
