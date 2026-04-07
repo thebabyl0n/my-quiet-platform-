@@ -3,55 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منيو السيادة - تطوير محمود صلاح</title>
+    <title>عالم حودة الخاص - بوابة السيادة</title>
     <style>
         :root { --gold: #d4af37; --dark: #121212; }
-        body { background: var(--dark); color: white; font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .card { width: 90%; max-width: 400px; border: 2px solid var(--gold); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 0 30px rgba(212, 175, 55, 0.3); }
-        h1 { color: var(--gold); font-size: 1.5rem; }
-        .btn { background: var(--gold); color: black; border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; margin-top: 20px; width: 100%; transition: 0.3s; }
-        .btn:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--gold); }
-        #chat-area { margin-top: 20px; font-style: italic; color: #ccc; min-height: 50px; }
+        body { background: var(--dark); color: white; font-family: 'Arial', sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
+        
+        /* شاشة الترحيب (Welcome Screen) */
+        #welcome-screen { position: fixed; inset: 0; background: var(--dark); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.8s ease-in-out; }
+        .alpha-logo { width: 120px; height: 120px; border: 2px solid var(--gold); border-radius: 50%; margin-bottom: 20px; box-shadow: 0 0 30px var(--gold); }
+        
+        /* صفحة المنيو (Menu Screen) */
+        #menu-screen { display: none; width: 90%; max-width: 450px; text-align: center; opacity: 0; transition: 1s; }
+        
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 15px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; font-size: 1.2rem; box-shadow: 0 0 15px var(--gold); }
+        select { width: 100%; padding: 15px; border-radius: 12px; background: #222; color: var(--gold); border: 1px solid var(--gold); font-size: 1.1rem; margin: 20px 0; outline: none; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <img src="https://via.placeholder.com/100/d4af37/000000?text=Barista+Pro" style="border-radius: 50%;" alt="Logo">
-    <h1>مرحباً بك في تجربة المستقبل ☕️</h1>
-    <p>بإشراف الخبير: محمود صلاح</p>
-    
-    <div id="chat-area">اضغط بالأسفل لبدء تجربة الضيافة الذكية...</div>
+    <div id="welcome-screen">
+        <div class="alpha-logo"></div>
+        <h1 style="color: var(--gold);">مرحباً بك في تجربة المستقبل</h1>
+        <p>بإشراف القائد: محمود صلاح</p>
+        <button class="btn-gold" onclick="startExperience()">أهلاً بك.. ابدأ الرحلة 🚀</button>
+    </div>
 
-    <button class="btn" onclick="askOrder('welcome')">أهلاً بك.. اضغط للطلب</button>
-    <button class="btn" onclick="askOrder('v60')" style="background: transparent; color: var(--gold); border: 1px solid var(--gold); margin-top: 10px;">اطلب V60 (خاص بالسيادة)</button>
-</div>
+    <div id="menu-screen">
+        <h2 style="color: var(--gold);">منيو بارنيز الذكي ☕️</h2>
+        <div id="voice-status" style="font-style: italic; margin-bottom: 15px; color: #aaa;">الظِل في خدمتك...</div>
+        
+        <select id="menuSelect" onchange="previewOrder()">
+            <option value="" disabled selected>--- اختر مشروبك المفضل ---</option>
+            <option value="V60">V60 (مقطرة السيادة)</option>
+            <option value="كورتادو">كورتادو (توازن النبض)</option>
+            <option value="سبانش لاتيه">سبانش لاتيه</option>
+            <option value="فلات وايت">فلات وايت</option>
+        </select>
 
-<script>
-    function speak(text) {
-        window.speechSynthesis.cancel(); // لإلغاء أي صوت سابق ومنع التداخل
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'ar-SA'; // نبرة سعودية فخمة
-        msg.rate = 0.85;    // سرعة وقورة
-        window.speechSynthesis.speak(msg);
-    }
+        <button class="btn-gold" style="width: 100%;" onclick="sendToWhatsApp()">تأكيد الطلب عبر واتساب ✅</button>
+    </div>
 
-    function askOrder(type) {
-        let text = "";
-        let display = "";
-
-        if(type === 'welcome') {
-            text = "يا هلا بك في عالمنا. أنا المساعد الذكي الخاص بالقائد محمود. وش تبي تطلب اليوم؟ منيو بارنيز بيدك وصوتي بخدمتك.";
-            display = "الظِل: مرحباً بك.. نحن بانتظار طلبك ✨";
-        } else if(type === 'v60') {
-            text = "اختيار ملوك. الـ ڤي ستين عندنا يضبط نبضك ويعدل مزاجك. ثواني ويكون طلبك جاهز يا ذوق.";
-            display = "الظِل: تم استلام طلب الـ V60 بنجاح ✅";
+    <script>
+        function speak(text, callback) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'ar-SA';
+            msg.rate = 0.85;
+            msg.onend = callback; // ينفذ الأكشن بعد انتهاء الكلام
+            window.speechSynthesis.speak(msg);
         }
 
-        document.getElementById('chat-area').innerText = display;
-        speak(text);
-    }
-</script>
+        function startExperience() {
+            const welcomeText = "يا هلا بك في عالمنا الخاص. أنا المساعد الذكي للقائد محمود. تفضل بمشاهدة منيو السيادة واختيار ما يناسب ذوقك الرفيع.";
+            
+            // نطق الترحيب ثم الانتقال للمنيو
+            speak(welcomeText, function() {
+                // الانتقال السلس للمنيو بعد انتهاء الصوت
+                document.getElementById('welcome-screen').style.opacity = "0";
+                setTimeout(() => {
+                    document.getElementById('welcome-screen').style.display = "none";
+                    const menu = document.getElementById('menu-screen');
+                    menu.style.display = "block";
+                    setTimeout(() => menu.style.opacity = "1", 100);
+                }, 800);
+            });
+        }
 
+        function previewOrder() {
+            const item = document.getElementById('menuSelect').value;
+            speak("اختيار رائع، " + item + " سيضبط مزاجك فوراً.");
+            document.getElementById('voice-status').innerText = "الظِل: تم اختيار " + item;
+        }
+
+        function sendToWhatsApp() {
+            const item = document.getElementById('menuSelect').value;
+            if(!item) return alert("اختر مشروبك أولاً يا ذوق!");
+            const phone = "966579747707";
+            const message = `أهلاً بارنيز، أريد طلب: ${item}. تم الطلب عبر منصة السيادة.`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+    </script>
 </body>
 </html>
