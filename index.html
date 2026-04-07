@@ -3,92 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بارنيز - المنيو الذكي HD</title>
+    <title>بارنيز الذكي - Barnies Smart Menu</title>
     <style>
-        :root { --primary-color: #006a4d; --accent-color: #c8a27c; --bg-color: #f8f9fa; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: #333; overflow-x: hidden; }
-        #welcome-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-color); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; }
-        .logo-welcome { width: 160px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 2px solid white; }
-        .btn-start { background-color: var(--accent-color); color: white; border: none; padding: 18px 60px; border-radius: 50px; font-size: 22px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .header { background: white; padding: 15px; position: sticky; top: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; display: flex; justify-content: space-between; align-items: center; }
-        .logo-small { width: 60px; border-radius: 8px; }
+        :root { --primary: #006a4d; --accent: #c8a27c; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; transition: 0.3s; overflow-x: hidden; }
+        
+        /* شاشة البداية الذكية */
+        #setup-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; text-align: center; padding: 20px; box-sizing: border-box; }
+        .logo-welcome { width: 130px; border-radius: 25px; border: 3px solid white; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .setup-box { background: white; color: #333; padding: 30px; border-radius: 30px; width: 100%; max-width: 380px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); }
+        
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; transition: 0.3s; }
+        .btn-lang { background: var(--accent); margin-bottom: 15px; border: 2px solid white; }
+        
+        select { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid #ddd; margin-bottom: 15px; font-size: 16px; font-family: inherit; }
+
+        /* المنيو الرئيسي */
+        .header { background: white; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; }
+        .logo-small { width: 55px; border-radius: 10px; }
+        
         .menu-container { padding: 15px; max-width: 600px; margin: auto; padding-bottom: 120px; }
-        .menu-item { background: white; margin-bottom: 15px; border-radius: 18px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; }
-        .item-img { width: 110px; height: 110px; object-fit: cover; background: #fff; border-left: 1px solid #f0f0f0; }
+        .menu-item { background: white; margin-bottom: 20px; border-radius: 22px; display: flex; align-items: center; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.06); border: 1px solid #eee; position: relative; }
+        
+        /* الصور HD من روابط عالمية مضمونة */
+        .item-img { width: 120px; height: 120px; object-fit: cover; background: #fff; border-left: 1px solid #f0f0f0; }
         .item-info { padding: 15px; flex-grow: 1; text-align: right; }
-        .item-name { font-weight: bold; font-size: 18px; color: #222; display: block; margin-bottom: 5px; }
-        .item-price { color: var(--primary-color); font-weight: 800; font-size: 16px; }
-        .btn-add { background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
-        .cart-float { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: #25d366; color: white; padding: 18px; border-radius: 50px; font-size: 20px; font-weight: bold; border: none; display: flex; justify-content: center; align-items: center; gap: 10px; z-index: 200; box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3); }
+        .item-name { font-weight: bold; font-size: 19px; color: #222; display: block; margin-bottom: 5px; }
+        .item-price { color: var(--primary); font-weight: 800; font-size: 17px; }
+        
+        .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-left: 15px; }
+
+        /* زر السلة العائم */
+        .cart-bar { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; background: #25d366; color: white; padding: 20px; border-radius: 50px; text-align: center; font-weight: bold; font-size: 19px; border: none; box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3); z-index: 500; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 15px; }
+        .cart-count-badge { background: white; color: #25d366; padding: 2px 12px; border-radius: 12px; font-size: 16px; }
+
+        /* دعم اللغة الإنجليزية */
+        body.en { direction: ltr; }
+        body.en .item-info { text-align: left; }
+        body.en .item-img { border-left: none; border-right: 1px solid #f0f0f0; }
+        body.en .menu-item { flex-direction: row; }
+        body.en .btn-add { margin-left: 0; margin-right: 15px; }
     </style>
 </head>
-<body>
+<body id="main-body">
 
-    <div id="welcome-screen">
-        <!-- تم التأكد من الحروف الصغيرة بالكامل لمطابقة صورك -->
-        <img src="https://githubusercontent.com" class="logo-welcome" alt="logo">
-        <h1>أهلاً بك في بارنيز</h1>
-        <button class="btn-start" onclick="startMenu()">ابدأ طلبك الآن 🚀</button>
+    <div id="setup-screen">
+        <img src="https://images.unsplash.com/photo-1559496417-e7f25cb247f3?q=80&w=300&auto=format&fit=crop" class="logo-welcome">
+        <div class="setup-box">
+            <button class="btn-main btn-lang" onclick="toggleLang()">English / عربي</button>
+            <h2 id="setup-title">مرحباً بك في بارنيز</h2>
+            
+            <p id="label-type" style="margin-bottom:5px; font-weight:bold;">نوع الطلب (Order Type):</p>
+            <select id="order-type" onchange="checkOrderType()">
+                <option value="dine">محلي (Dine-in)</option>
+                <option value="take">سفري (Takeaway)</option>
+            </select>
+
+            <div id="table-area">
+                <p id="label-table" style="margin-bottom:5px; font-weight:bold;">رقم الطاولة (Table Number):</p>
+                <select id="table-num">
+                    <option value="0">اختر الطاولة</option>
+                    <option value="1">طاولة 1</option>
+                    <option value="2">طاولة 2</option>
+                    <option value="3">طاولة 3</option>
+                    <option value="4">طاولة 4</option>
+                </select>
+            </div>
+
+            <button class="btn-main" onclick="startApp()" id="start-btn">ابدأ الطلب</button>
+        </div>
     </div>
 
-    <div id="main-content" style="display: none;">
+    <div id="app-content" style="display:none;">
         <div class="header">
-            <img src="https://githubusercontent.com" class="logo-small" alt="logo">
-            <span style="font-weight: bold; color: var(--primary-color);">بورت السيادة - محمود صلاح</span>
+            <img src="https://images.unsplash.com/photo-1559496417-e7f25cb247f3?q=80&w=200&auto=format&fit=crop" class="logo-small">
+            <b id="nav-title" style="font-size: 20px;">منيو بارنيز الذكي</b>
+            <span id="order-badge" style="background:var(--bg); padding:5px 10px; border-radius:10px; font-size:14px; color:var(--primary); font-weight:bold;"></span>
         </div>
 
-        <div class="menu-container">
-            <!-- الروابط مأمنة بالحروف الصغيرة 100% -->
-            <div class="menu-item">
-                <img src="https://githubusercontent.com" class="item-img" alt="spanish">
-                <div class="item-info"><span class="item-name">سبانش لاتيه حار</span><span class="item-price">18 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('سبانش لاتيه حار')">إضافة</button>
-            </div>
-            
-            <div class="menu-item">
-                <img src="https://githubusercontent.com" class="item-img" alt="v60">
-                <div class="item-info"><span class="item-name">V60 حار</span><span class="item-price">22 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('V60 حار')">إضافة</button>
+        <div id="menu-list" class="menu-container">
             </div>
 
-            <div class="menu-item">
-                <img src="https://githubusercontent.com" class="item-img" alt="honey_cake">
-                <div class="item-info"><span class="item-name">كيكة العسل</span><span class="item-price">15 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('كيكة العسل')">إضافة</button>
-            </div>
-        </div>
-
-        <button class="cart-float" onclick="sendOrder()">إرسال للواتساب (<span id="cart-count">0</span>) ✅</button>
+        <button class="cart-bar" onclick="sendWhatsApp()">
+            <span id="order-text">إرسال الطلب</span>
+            <span class="cart-count-badge" id="count">0</span>
+        </button>
     </div>
 
     <script>
+        let currentLang = 'ar';
         let cart = [];
+        // صور Unsplash مضمونة 100% إنها تظهر في أي متصفح
+        const items = [
+            { id: 1, nameAr: "سبانش لاتيه حار", nameEn: "Hot Spanish Latte", price: 18, img: "https://images.unsplash.com/photo-1541167760496-162955ed8a9f?q=80&w=400" },
+            { id: 2, nameAr: "V60 حار", nameEn: "Hot V60", price: 22, img: "https://images.unsplash.com/photo-1544787210-22db3677f29e?q=80&w=400" },
+            { id: 3, nameAr: "كيكة العسل", nameEn: "Honey Cake", price: 15, img: "https://images.unsplash.com/photo-1586040140378-b5634cb4c8fc?q=80&w=400" }
+        ];
+
+        // 🎤 دالة الصوت "القاضية": توقف أي صوت شغال فوراً وتبدأ الجديد
         function speak(text) {
-            window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'ar-SA'; msg.rate = 0.82; msg.pitch = 0.85;
-            let voices = window.speechSynthesis.getVoices();
-            let voice = voices.find(v => v.lang.includes('ar'));
-            if (voice) msg.voice = voice;
-            window.speechSynthesis.speak(msg);
+            window.speechSynthesis.cancel(); // إيقاف فوري لأي كلام سابق
+            
+            setTimeout(() => {
+                const msg = new SpeechSynthesisUtterance(text);
+                msg.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US';
+                msg.rate = 0.85; 
+                msg.pitch = 1.0;
+                
+                let voices = window.speechSynthesis.getVoices();
+                let voice = voices.find(v => v.lang.includes(currentLang === 'ar' ? 'ar' : 'en'));
+                if (voice) msg.voice = voice;
+                
+                window.speechSynthesis.speak(msg);
+            }, 50);
         }
-        function startMenu() {
-            document.getElementById('welcome-screen').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            speak("يا هلا بك في بارنيز. نورت المكان يا طويل العمر. تفضل المنيو.");
+
+        function toggleLang() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            document.body.className = currentLang === 'en' ? 'en' : '';
+            updateUILT();
+            speak(currentLang === 'ar' ? "تم تغيير اللغة للعربية" : "Language changed to English");
         }
-        function addToCart(name) {
+
+        function updateUILT() {
+            const t = {
+                ar: { title: "مرحباً بك في بارنيز", start: "ابدأ الطلب", nav: "منيو بارنيز الذكي", cart: "إرسال الطلب", table: "اختر الطاولة" },
+                en: { title: "Welcome to Barnies", start: "Start Order", nav: "Barnies Smart Menu", cart: "Send Order", table: "Select Table" }
+            };
+            document.getElementById('setup-title').innerText = t[currentLang].title;
+            document.getElementById('start-btn').innerText = t[currentLang].start;
+            document.getElementById('nav-title').innerText = t[currentLang].nav;
+            document.getElementById('order-text').innerText = t[currentLang].cart;
+        }
+
+        function checkOrderType() {
+            const type = document.getElementById('order-type').value;
+            document.getElementById('table-area').style.display = type === 'take' ? 'none' : 'block';
+        }
+
+        function startApp() {
+            const type = document.getElementById('order-type').value;
+            const table = document.getElementById('table-num').value;
+            
+            if (type === 'dine' && table === "0") {
+                alert(currentLang === 'ar' ? "من فضلك اختر رقم الطاولة" : "Please select a table");
+                return;
+            }
+
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('app-content').style.display = 'block';
+            document.getElementById('order-badge').innerText = type === 'take' ? (currentLang === 'ar' ? "سفري" : "Takeaway") : (currentLang === 'ar' ? "طاولة: " : "Table: ") + table;
+            
+            renderMenu();
+            speak(currentLang === 'ar' ? "تفضل المنيو، نتمنى لك وقتاً سعيداً" : "Welcome, please choose your order");
+        }
+
+        function renderMenu() {
+            const list = document.getElementById('menu-list');
+            list.innerHTML = items.map(item => `
+                <div class="menu-item">
+                    <img src="${item.img}" class="item-img">
+                    <div class="item-info">
+                        <span class="item-name">${currentLang === 'ar' ? item.nameAr : item.nameEn}</span>
+                        <span class="item-price">${item.price} ${currentLang === 'ar' ? 'ريال' : 'SAR'}</span>
+                    </div>
+                    <button class="btn-add" onclick="addToCart('${item.nameAr}', '${item.nameEn}')">${currentLang === 'ar' ? 'إضافة' : 'Add'}</button>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(ar, en) {
+            const name = currentLang === 'ar' ? ar : en;
             cart.push(name);
-            document.getElementById('cart-count').innerText = cart.length;
-            speak("تم إضافة " + name + " لسلتك يا ذوق.");
+            document.getElementById('count').innerText = cart.length;
+            speak(currentLang === 'ar' ? "تم إضافة " + ar : "Added " + en);
         }
-        function sendOrder() {
+
+        function sendWhatsApp() {
             if(cart.length === 0) return;
+            const typeText = document.getElementById('order-badge').innerText;
             const phone = "966579747707";
-            let text = `*طلب جديد من بارنيز ☕*\n📋 *الطلبات:*\n- ${cart.join('\n- ')}\n\n✅ *يرجى التحضير فوراً، شكراً!*`;
-            speak("أبشر بالسعد.. جاري توجيهك لواتساب محمود.");
-            setTimeout(() => { window.open(`https://wa.me{phone}?text=${encodeURIComponent(text)}`, '_blank'); }, 1000);
+            let text = `*طلب جديد / New Order*\n📍 *Type:* ${typeText}\n📋 *Items:*\n- ${cart.join('\n- ')}`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
         }
+
+        window.speechSynthesis.onvoiceschanged = () => { console.log("Voices Loaded"); };
     </script>
 </body>
 </html>
