@@ -36,7 +36,7 @@ def chat():
         return jsonify({"reply": "الفا: السيرفر مش شايف GOOGLE_API_KEY!"})
 
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
         prompt = f"أنت 'الظل' صديق حمادة المخلص، رد بلهجة مصرية ودودة: {user_msg}"
         response = model.generate_content(prompt)
         return jsonify({"reply": response.text})
