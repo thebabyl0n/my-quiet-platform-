@@ -3,53 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Shadow VIP</title>
+    <title>Alpha-Shadow VIP | Menu</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --primary: #0f172a; --accent: #22c55e; --gold: #c8a27c; --blue-dark: #004085; }
+        :root { --primary: #0f172a; --accent: #22c55e; --gold: #c8a27c; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; padding-bottom: 120px; }
-        
-        /* شاشة الاستقبال */
-        .hero { 
-            position: fixed; inset: 0; 
-            background: linear-gradient(rgba(15,23,42,0.85), rgba(15,23,42,0.85)), url('https://i.postimg.cc/kMQRJDQ3/xresch_blueprint_6944719_1920.jpg'); 
-            background-size: cover; background-position: center;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            z-index: 2000; color: white; text-align: center;
-        }
-
-        .btn-main { 
-            background: var(--gold); color: white; border: none; padding: 15px 40px; 
-            border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 10px; 
-            width: 280px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: 0.3s; 
-        }
-
-        .btn-main:active, .btn-add:active { transform: scale(0.95); }
+        .hero { position: fixed; inset: 0; background: linear-gradient(rgba(15,23,42,0.85), rgba(15,23,42,0.85)), url('https://i.postimg.cc/kMQRJDQ3/xresch_blueprint_6944719_1920.jpg'); background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; color: white; text-align: center; }
+        .btn-main { background: var(--gold); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 10px; width: 280px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: 0.3s; }
         .table-input { padding: 12px; border-radius: 10px; border: 1px solid var(--gold); width: 80%; margin-top: 10px; font-size: 16px; text-align: center; display: none; }
-        
         .card { background: white; margin: 15px; border-radius: 20px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; }
         .card img { width: 100px; height: 100px; object-fit: cover; margin: 5px; border-radius: 15px; }
         .card-info { padding: 10px; flex: 1; }
-        
-        .btn-add { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-add { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
         .cart-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #25d366; color: white; padding: 18px; border-radius: 50px; font-weight: bold; border: none; width: 90%; font-size: 18px; z-index: 1000; box-shadow: 0 10px 25px rgba(37,211,102,0.4); }
-
-        /* ستايل لوحة الباريستا (مخفية في البداية) */
-        #barista-panel { display: none; position: fixed; inset: 0; background: #f0f2f5; z-index: 3000; overflow-y: auto; text-align: right; }
-        .barista-header { background: var(--blue-dark); color: white; padding: 20px; text-align: center; position: sticky; top: 0; }
-        .order-card { background: white; border-radius: 15px; padding: 15px; margin: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .local-tag { border-right: 8px solid var(--accent); }
-        .away-tag { border-right: 8px solid #f97316; }
-        .items-list { font-size: 22px; font-weight: bold; color: #0f172a; list-style: none; padding: 0; margin: 10px 0; }
     </style>
 </head>
 <body>
-
     <div id="welcome-screen" class="hero">
-        <h1 style="font-size: 35px; margin-bottom: 5px;">Alpha-Shadow</h1>
-        <p style="color: var(--gold); font-size: 18px; margin-bottom: 30px;">The Barn's Code</p>
+        <h1 style="font-size: 35px;">Alpha-Shadow</h1>
+        <p style="color: var(--gold); font-size: 18px;">The Barn's Code</p>
         <button class="btn-main" id="localBtn" onclick="askTable()">📍 محلي / Dine-in</button>
-        <input type="number" id="tableNum" class="table-input" placeholder="أدخل رقم الطاولة / Table Number">
-        <button id="confirmTable" class="btn-main" style="display:none; background:var(--accent);" onclick="setMode('local')">تأكيد رقم الطاولة</button>
+        <input type="number" id="tableNum" class="table-input" placeholder="رقم الطاولة">
+        <button id="confirmTable" class="btn-main" style="display:none; background:var(--accent);" onclick="setMode('local')">تأكيد</button>
         <button id="awayBtn" class="btn-main" onclick="setMode('away')">🚗 سفري / Takeaway</button>
     </div>
 
@@ -59,48 +35,34 @@
             <span id="mode-badge" style="background:var(--gold); padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: bold;"></span>
         </div>
         <div id="menu-items"></div>
-        <button class="cart-btn" onclick="sendOrder()">إرسال الطلب / Send Order (<span id="count">0</span>)</button>
-        
-        <div onclick="showBarista()" style="text-align: center; padding: 20px; color: #ccc; font-size: 10px; cursor: pointer;">نظام الإدارة</div>
-    </div>
-
-    <div id="barista-panel">
-        <div class="barista-header">
-            <h2 style="margin:0;">لوحة طلبات الباريستا ☕</h2>
-            <button onclick="hideBarista()" style="background:none; border:1px solid white; color:white; border-radius:5px; margin-top:5px;">إغلاق اللوحة</button>
-        </div>
-        <div id="barista-orders-list"></div>
-        <audio id="bell" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
+        <button class="cart-btn" onclick="sendOrder()">إرسال الطلب (<span id="count">0</span>)</button>
     </div>
 
     <script>
+        // مفاتيحك الخاصة من الصورة
+        const firebaseConfig = {
+            apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
+            authDomain: "alphashadow-23689.firebaseapp.com",
+            projectId: "alphashadow-23689",
+            databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         let orderMode = ""; let cart = []; let tableNumber = "";
         const menu = [
-            { ar: "سبانش لاتيه بارد", en: "Iced Spanish Latte", price: 18, img: "https://i.postimg.cc/pVf5WyDG/FB_IMG_1775615731297.jpg" },
-            { ar: "V60 حار", en: "Hot V60 Coffee", price: 22, img: "https://i.postimg.cc/Y26Lrj1d/FB_IMG_1775615760389.jpg" },
-            { ar: "كيكة العسل الملكية", en: "Honey Cake", price: 15, img: "https://i.postimg.cc/bYxSydQ3/Screenshot_٢٠٢٦٠٤٠٨_٠٥٣٨٢٢_Brave.jpg" }
+            { ar: "سبانش لاتيه بارد", price: 18, img: "https://i.postimg.cc/pVf5WyDG/FB_IMG_1775615731297.jpg" },
+            { ar: "V60 حار", price: 22, img: "https://i.postimg.cc/Y26Lrj1d/FB_IMG_1775615760389.jpg" },
+            { ar: "كيكة العسل الملكية", price: 15, img: "https://i.postimg.cc/bYxSydQ3/Screenshot_٢٠٢٦٠٤٠٨_٠٥٣٨٤٢_Brave.jpg" }
         ];
 
-        function speak(text, speed = 1) {
-            window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'ar-SA'; msg.rate = speed;
-            window.speechSynthesis.speak(msg);
-        }
-
-        function askTable() {
-            document.getElementById('tableNum').style.display = 'block';
-            document.getElementById('confirmTable').style.display = 'inline-block';
-            document.getElementById('localBtn').style.display = 'none';
-            document.getElementById('awayBtn').style.display = 'none';
-        }
-
+        function askTable() { document.getElementById('tableNum').style.display = 'block'; document.getElementById('confirmTable').style.display = 'inline-block'; document.getElementById('localBtn').style.display = 'none'; document.getElementById('awayBtn').style.display = 'none'; }
+        
         function setMode(mode) {
             orderMode = mode;
             if(mode === 'local') tableNumber = document.getElementById('tableNum').value || "1";
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
-            mode === 'away' ? speak("أبشر.. طلبك سفري", 1.1) : speak("يا هلا بيك.. محلي على طاولة " + tableNumber, 1);
             document.getElementById('mode-badge').innerText = mode === 'local' ? `طاولة: ${tableNumber}` : "سفري";
             render();
         }
@@ -108,7 +70,7 @@
         function render() {
             let html = "";
             menu.forEach((item, i) => {
-                html += `<div class="card"><img src="${item.img}"><div class="card-info"><b>${item.ar}</b><br><small>${item.en}</small><br><span style="color:var(--accent); font-weight:bold;">${item.price} SAR</span></div><button class="btn-add" onclick="addToCart(${i})">إضافة +</button></div>`;
+                html += `<div class="card"><img src="${item.img}"><div class="card-info"><b>${item.ar}</b><br><span style="color:var(--accent); font-weight:bold;">${item.price} SAR</span></div><button class="btn-add" onclick="addToCart(${i})">إضافة +</button></div>`;
             });
             document.getElementById('menu-items').innerHTML = html;
         }
@@ -116,71 +78,25 @@
         function addToCart(i) {
             cart.push(menu[i]);
             document.getElementById('count').innerText = cart.length;
-            speak("تمت الإضافة", 1.2);
         }
 
         function sendOrder() {
-            if(cart.length === 0) return speak("السلة فارغة");
+            if(cart.length === 0) return;
             const typeStr = orderMode === 'local' ? `محلي (طاولة ${tableNumber})` : "سفري";
             
-            // تسجيل الطلب في الذاكرة للباريستا
-            const orderObj = {
-                id: Date.now(),
+            // إرسال الطلب للسحاب
+            database.ref('orders').push({
                 type: typeStr,
                 items: cart.map(i => i.ar),
-                time: new Date().toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'}),
+                time: new Date().toLocaleTimeString('ar-SA'),
                 isLocal: orderMode === 'local'
-            };
-            let orders = JSON.parse(localStorage.getItem('cafe_orders') || '[]');
-            orders.push(orderObj);
-            localStorage.setItem('cafe_orders', JSON.stringify(orders));
-
-            const itemsList = cart.map(i => "- " + i.ar).join("\n");
-            const msg = `*طلب جديد من Alpha-Shadow VIP*\n\n*النوع:* ${typeStr}\n*الطلبات:*\n${itemsList}`;
-            window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-        }
-
-        // وظائف الباريستا
-        function showBarista() { document.getElementById('barista-panel').style.display = 'block'; renderBaristaOrders(); }
-        function hideBarista() { document.getElementById('barista-panel').style.display = 'none'; }
-
-        function renderBaristaOrders() {
-            const container = document.getElementById('barista-orders-list');
-            const orders = JSON.parse(localStorage.getItem('cafe_orders') || '[]');
-            container.innerHTML = orders.length === 0 ? '<p style="text-align:center; margin-top:20px;">لا توجد طلبات حالياً</p>' : "";
-            
-            orders.slice().reverse().forEach((order, index) => {
-                const card = document.createElement('div');
-                card.className = `order-card ${order.isLocal ? 'local-tag' : 'away-tag'}`;
-                card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between;">
-                        <span style="font-weight:bold; color:${order.isLocal?'#22c55e':'#f97316'}">${order.type}</span>
-                        <span style="font-size:12px; color:#999;">${order.time}</span>
-                    </div>
-                    <ul class="items-list">${order.items.map(it => `<li>• ${it}</li>`).join('')}</ul>
-                    <button onclick="removeOrder(${orders.length - 1 - index})" style="width:100%; padding:10px; background:#004085; color:white; border:none; border-radius:5px;">تم التسليم ✅</button>
-                `;
-                container.appendChild(card);
             });
-        }
 
-        function removeOrder(index) {
-            let orders = JSON.parse(localStorage.getItem('cafe_orders') || '[]');
-            orders.splice(index, 1);
-            localStorage.setItem('cafe_orders', JSON.stringify(orders));
-            renderBaristaOrders();
+            // فتح الواتساب برضه كزيادة تأكيد
+            const msg = `*طلب جديد*\n*النوع:* ${typeStr}\n*الطلبات:*\n${cart.map(i => "- " + i.ar).join("\n")}`;
+            window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
+            cart = []; document.getElementById('count').innerText = "0"; // تصفير السلة
         }
-
-        // تحديث الطلبات وتفعيل الجرس
-        let lastCount = JSON.parse(localStorage.getItem('cafe_orders') || '[]').length;
-        setInterval(() => {
-            let currentOrders = JSON.parse(localStorage.getItem('cafe_orders') || '[]');
-            if(currentOrders.length > lastCount) {
-                document.getElementById('bell').play();
-                if(document.getElementById('barista-panel').style.display === 'block') renderBaristaOrders();
-            }
-            lastCount = currentOrders.length;
-        }, 3000);
     </script>
 </body>
 </html>
