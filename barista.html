@@ -3,30 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة الباريستا LIVE</title>
+    <title>Alpha-Shadow | Kitchen</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #0f172a; color: white; }
-        header { background: white; color: #0f172a; padding: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .order-card { background: white; color: black; border-radius: 15px; padding: 20px; margin: 15px; border-right: 12px solid; animation: pop 0.3s; }
-        @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .local { border-color: #22c55e; }
-        .away { border-color: #f97316; }
-        .items { font-size: 24px; font-weight: bold; list-style: none; padding: 0; margin: 15px 0; }
-        .btn-done { background: #22c55e; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        #status-bar { background: #1e293b; padding: 10px; text-align: center; font-size: 14px; color: #94a3b8; }
+        header { background: white; color: #0f172a; padding: 15px; text-align: center; }
+        .order-card { background: white; color: black; border-radius: 15px; padding: 20px; margin: 15px; border-right: 15px solid; position: relative; }
+        .local { border-color: #22c55e !important; background: #f0fdf4; } /* أخضر للمحلي */
+        .away { border-color: #f97316 !important; background: #fff7ed; }  /* برتقالي للسفري */
+        .status-ready { opacity: 0.6; border-style: dashed; }
+        .items { font-size: 24px; font-weight: bold; list-style: none; padding: 0; }
+        .btn-ready { background: #3b82f6; color: white; border: none; padding: 15px; border-radius: 10px; width: 48%; font-weight: bold; cursor: pointer; }
+        .btn-done { background: #22c55e; color: white; border: none; padding: 15px; border-radius: 10px; width: 48%; font-weight: bold; cursor: pointer; }
+        .ready-badge { position: absolute; top: 10px; left: 10px; background: #3b82f6; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>طلبات Alpha-Shadow ☕</h1>
-        <button id="enableAudio" style="background:#c8a27c; border:none; padding:5px 15px; border-radius:5px; color:white; cursor:pointer;">تفعيل صوت الجرس 🔔</button>
-    </header>
-    <div id="status-bar">متصل بالسحاب.. في انتظار الطلبات</div>
+    <header><h1>مطبخ Alpha-Shadow ☕</h1><button id="enableAudio">تفعيل الجرس 🔔</button></header>
     <div id="display"></div>
-    
-    <audio id="bell" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
+    <audio id="bell" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
     <script>
         const firebaseConfig = {
@@ -37,59 +33,39 @@
         };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        let lastCount = 0; let audioOn = false;
 
-        let lastOrderCount = 0;
-        let isAudioEnabled = false;
+        document.getElementById('enableAudio').onclick = () => { audioOn = true; alert("الجرس شغال!"); };
 
-        // تفعيل الصوت بلمسة مستخدم
-        document.getElementById('enableAudio').onclick = function() {
-            isAudioEnabled = true;
-            this.style.background = "#22c55e";
-            this.innerText = "الجرس يعمل الآن ✅";
-            // تشغيل صامت لتجهيز المتصفح
-            const bell = document.getElementById('bell');
-            bell.play().then(() => { bell.pause(); bell.currentTime = 0; });
-        };
-
-        database.ref('orders').on('value', snapshot => {
-            const data = snapshot.val();
+        database.ref('orders').on('value', snap => {
+            const data = snap.val();
             const display = document.getElementById('display');
             display.innerHTML = "";
-            
             if(data) {
-                const currentOrderCount = Object.keys(data).length;
-                
-                // رن الجرس فقط لو فيه طلب جديد زاد عن القديم
-                if(currentOrderCount > lastOrderCount && isAudioEnabled) {
-                    document.getElementById('bell').play().catch(e => console.log("Audio blocked"));
-                }
-                lastOrderCount = currentOrderCount;
+                if(Object.keys(data).length > lastCount && audioOn) document.getElementById('bell').play();
+                lastCount = Object.keys(data).length;
 
                 Object.keys(data).reverse().forEach(id => {
                     const o = data[id];
+                    const isReady = o.status === 'ready';
                     const card = document.createElement('div');
-                    card.className = `order-card ${o.isLocal ? 'local' : 'away'}`;
+                    card.className = `order-card ${o.isLocal ? 'local' : 'away'} ${isReady ? 'status-ready' : ''}`;
                     card.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px;">
-                            <b style="font-size:20px;">${o.type}</b> 
-                            <span style="color:#64748b;">${o.time}</span>
-                        </div>
+                        ${isReady ? '<span class="ready-badge">جاهز للاستلام ✨</span>' : ''}
+                        <div style="display:flex; justify-content:space-between;"><b>${o.type}</b> <span>${o.time}</span></div>
                         <ul class="items">${o.items.map(it => `<li>• ${it}</li>`).join('')}</ul>
-                        <button class="btn-done" onclick="removeOrder('${id}')">تم التسليم ✅</button>
+                        <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                            <button class="btn-ready" onclick="markReady('${id}')">تم التجهيز 📢</button>
+                            <button class="btn-done" onclick="removeOrder('${id}')">تم التسليم ✅</button>
+                        </div>
                     `;
                     display.appendChild(card);
                 });
-            } else {
-                lastOrderCount = 0;
-                display.innerHTML = "<h2 style='text-align:center; margin-top:50px; color:#94a3b8;'>في انتظار طلبات جديدة...</h2>";
             }
         });
 
-        function removeOrder(id) {
-            // تقليل العداد يدوياً عشان الجرس ميرنش لما نمسح طلب
-            lastOrderCount--; 
-            database.ref('orders').child(id).remove();
-        }
+        function markReady(id) { database.ref('orders').child(id).update({ status: 'ready' }); }
+        function removeOrder(id) { database.ref('orders').child(id).remove(); }
     </script>
 </body>
 </html>
