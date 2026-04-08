@@ -3,102 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Shadow VIP: The Barn's Code</title>
+    <title>Alpha-Shadow VIP</title>
     <style>
-        :root { --primary: #0f172a; --accent: #22c55e; --gold: #c8a27c; --bg: #f8fafc; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); transition: 0.3s; }
-        .header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
-        .lang-btn { background: var(--gold); border: none; padding: 8px 15px; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
+        :root { --primary: #0f172a; --accent: #22c55e; --gold: #c8a27c; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; overflow-x: hidden; padding-bottom: 100px; }
         
-        /* شاشات البداية */
-        .overlay { position: fixed; inset: 0; background: var(--primary); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; text-align: center; }
-        .btn-start { background: var(--gold); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 20px; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        
-        /* الكروت */
-        .card { background: white; margin: 15px; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.05); transition: 0.3s; display: flex; align-items: center; }
-        .card img { width: 120px; height: 120px; object-fit: cover; }
-        .card-body { padding: 15px; flex: 1; text-align: right; }
-        .btn-add { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; margin-left: 10px; }
-        
-        .cart-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #25d366; color: white; padding: 15px 40px; border-radius: 50px; font-weight: bold; border: none; box-shadow: 0 10px 30px rgba(37,211,102,0.4); z-index: 1000; }
+        /* شاشة الاستقبال بالخلفية الهيبة اللي اخترتها */
+        .hero { 
+            position: fixed; inset: 0; 
+            background: linear-gradient(rgba(15,23,42,0.85), rgba(15,23,42,0.85)), url('https://i.postimg.cc/kMQRJDQ3/xresch_blueprint_6944719_1920.jpg'); 
+            background-size: cover; background-position: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            z-index: 2000; color: white; text-align: center;
+        }
+
+        .btn-main { 
+            background: var(--gold); color: white; border: none; padding: 15px 40px; 
+            border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 10px;
+            width: 280px; transition: 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .card { background: white; margin: 15px; border-radius: 20px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; }
+        .card img { width: 100px; height: 100px; object-fit: cover; margin: 5px; border-radius: 15px; }
+        .card-info { padding: 10px; flex: 1; text-align: right; }
+        .btn-add { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+
+        .cart-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #25d366; color: white; padding: 18px 50px; border-radius: 50px; font-weight: bold; border: none; box-shadow: 0 10px 25px rgba(37,211,102,0.4); z-index: 1000; font-size: 18px; width: 90%; }
     </style>
 </head>
 <body>
 
-    <div id="welcome" class="overlay">
-        <h1 id="w-title">Alpha-Shadow</h1>
-        <p id="w-sub">The Barn's Code</p>
-        <button class="btn-start" onclick="startApp()">ابدأ التجربة ☕ Start</button>
+    <div id="welcome-screen" class="hero">
+        <h1 style="font-size: 35px; margin-bottom: 5px;">Alpha-Shadow</h1>
+        <p style="color: var(--gold); font-size: 18px; margin-bottom: 30px;">The Barn's Code</p>
+        <div id="step1">
+            <button class="btn-main" onclick="setMode('local')">📍 محلي / Dine-in</button><br>
+            <button class="btn-main" onclick="setMode('away')">🚗 سفري / Takeaway</button>
+        </div>
     </div>
 
-    <div class="header">
-        <span style="font-weight:900;">ALPHA SHADOW VIP</span>
-        <button class="lang-btn" onclick="toggleLang()">EN / عربي</button>
+    <div id="main-content" style="display:none;">
+        <div style="background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <b style="letter-spacing: 1px;">ALPHA SHADOW VIP</b>
+            <span id="mode-badge" style="background:var(--gold); padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: bold;"></span>
+        </div>
+        
+        <div id="menu-items"></div>
+
+        <button class="cart-btn" onclick="sendOrder()">
+            إرسال الطلب / Send Order (<span id="count">0</span>)
+        </button>
     </div>
-
-    <div id="menu-container" style="padding-bottom: 100px;"></div>
-
-    <button class="cart-btn" onclick="checkout()">
-        <span id="cart-text">إرسال الطلب</span> (<span id="count">0</span>)
-    </button>
 
     <script>
-        let lang = "ar";
+        let orderMode = "";
         let cart = [];
-        const items = [
-            { ar: "سبانش لاتيه بارد", en: "Iced Spanish Latte", price: 18, img: "https://images.unsplash.com/photo-1592663516240-203496458514?w=300" },
-            { ar: "V60 حار", en: "Hot V60 Coffee", price: 22, img: "https://images.unsplash.com/photo-1544787210-2827448b303c?w=300" },
-            { ar: "كيكة العسل الملكية", en: "Honey Cake", price: 15, img: "https://images.unsplash.com/photo-1527515848392-f076f80928a3?w=300" }
+
+        // قائمة الأصناف بالروابط المباشرة اللي رفعتها
+        const menu = [
+            { ar: "سبانش لاتيه بارد", en: "Iced Spanish Latte", price: 18, img: "https://i.postimg.cc/pVf5WyDG/FB_IMG_1775615731297.jpg" },
+            { ar: "V60 حار", en: "Hot V60 Coffee", price: 22, img: "https://i.postimg.cc/Y26Lrj1d/FB_IMG_1775615760389.jpg" },
+            { ar: "كيكة العسل الملكية", en: "Honey Cake", price: 15, img: "https://i.postimg.cc/bYxSydQ3/Screenshot_٢٠٢٦٠٤٠٨_٠٥٣٨٤٢_Brave.jpg" }
         ];
 
-        function speak(t) {
+        function speak(text, lang) {
             window.speechSynthesis.cancel();
-            const m = new SpeechSynthesisUtterance(t);
-            m.lang = lang === "ar" ? "ar-SA" : "en-US";
-            window.speechSynthesis.speak(m);
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = lang;
+            window.speechSynthesis.speak(msg);
         }
 
-        function startApp() {
-            document.getElementById('welcome').style.display = 'none';
-            speak(lang === "ar" ? "نورتنا في ألفا شادو.. اطلب اللي يروقك" : "Welcome to Alpha Shadow, enjoy your coffee");
-            render();
-        }
-
-        function toggleLang() {
-            lang = lang === "ar" ? "en" : "ar";
-            document.body.dir = lang === "ar" ? "rtl" : "ltr";
-            document.getElementById('cart-text').innerText = lang === "ar" ? "إرسال الطلب" : "Send Order";
+        function setMode(mode) {
+            orderMode = mode;
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            
+            // نطق ترحيبي ثنائي اللغة بالترتيب
+            const welcomeAr = mode === 'local' ? "يا هلا بيك.. تم اختيار محلي" : "أبشر.. طلبك سفري وعينك ما تشوف إلا النور";
+            const welcomeEn = mode === 'local' ? "Welcome! Dine-in mode activated." : "Sure! Takeaway mode activated.";
+            
+            speak(welcomeAr, 'ar-SA');
+            setTimeout(() => speak(welcomeEn, 'en-US'), 3500);
+            
+            document.getElementById('mode-badge').innerText = mode === 'local' ? "محلي | Dine-in" : "سفري | Takeaway";
             render();
         }
 
         function render() {
             let html = "";
-            items.forEach((item, i) => {
+            menu.forEach((item, i) => {
                 html += `
                 <div class="card">
-                    <img src="${item.img}">
-                    <div class="card-body">
-                        <b style="font-size:18px;">${lang === "ar" ? item.ar : item.en}</b><br>
-                        <span style="color:var(--accent); font-weight:bold;">${item.price} ${lang === "ar" ? "ريال" : "SAR"}</span>
+                    <img src="${item.img}" onerror="this.src='https://via.placeholder.com/100?text=Coffee'">
+                    <div class="card-info">
+                        <b style="font-size:17px;">${item.ar}</b><br>
+                        <small style="color:#64748b;">${item.en}</small><br>
+                        <span style="color:var(--accent); font-weight:bold; font-size:18px;">${item.price} SAR</span>
                     </div>
-                    <button class="btn-add" onclick="add(${i})">${lang === "ar" ? "إضافة" : "Add"}</button>
+                    <button class="btn-add" onclick="addToCart(${i})">إضافة / Add</button>
                 </div>`;
             });
-            document.getElementById("menu-container").innerHTML = html;
+            document.getElementById('menu-items').innerHTML = html;
         }
 
-        function add(i) {
-            cart.push(items[i]);
-            document.getElementById("count").innerText = cart.length;
-            speak(lang === "ar" ? "تمت إضافة " + items[i].ar : "Added " + items[i].en);
+        function addToCart(i) {
+            cart.push(menu[i]);
+            document.getElementById('count').innerText = cart.length;
+            speak("تمت الإضافة", 'ar-SA');
         }
 
-        function checkout() {
-            if (cart.length === 0) return speak(lang === "ar" ? "السلة فاضية" : "Cart is empty");
-            const phone = "966579747707";
-            let list = cart.map(i => "- " + (lang === "ar" ? i.ar : i.en)).join("\n");
-            let msg = `*Alpha-Shadow: The Barn's Code*\n\n${lang === 'ar' ? 'الطلبات' : 'Orders'}:\n${list}`;
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
+        function sendOrder() {
+            if(cart.length === 0) return;
+            const itemsList = cart.map(i => "- " + i.ar + " (" + i.en + ")").join("\n");
+            const type = orderMode === 'local' ? "محلي / Dine-in" : "سفري / Takeaway";
+            const msg = `*طلب جديد من Alpha-Shadow VIP*\n\n*النوع:* ${type}\n*الطلبات:*\n${itemsList}\n\n*شكراً لطلبكم!*`;
+            window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
         }
     </script>
 </body>
