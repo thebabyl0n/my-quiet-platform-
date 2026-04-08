@@ -7,20 +7,26 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #004085; color: white; }
-        header { background: white; color: #004085; padding: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #0f172a; color: white; }
+        header { background: white; color: #0f172a; padding: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .order-card { background: white; color: black; border-radius: 15px; padding: 20px; margin: 15px; border-right: 12px solid; animation: pop 0.3s; }
-        @keyframes pop { from { transform: scale(0.5); } to { transform: scale(1); } }
+        @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .local { border-color: #22c55e; }
         .away { border-color: #f97316; }
-        .items { font-size: 26px; font-weight: bold; list-style: none; padding: 0; }
-        .btn-done { background: #22c55e; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-size: 18px; font-weight: bold; }
+        .items { font-size: 24px; font-weight: bold; list-style: none; padding: 0; margin: 15px 0; }
+        .btn-done { background: #22c55e; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        #status-bar { background: #1e293b; padding: 10px; text-align: center; font-size: 14px; color: #94a3b8; }
     </style>
 </head>
 <body>
-    <header><h1>طلبات Alpha-Shadow ☕</h1></header>
+    <header>
+        <h1>طلبات Alpha-Shadow ☕</h1>
+        <button id="enableAudio" style="background:#c8a27c; border:none; padding:5px 15px; border-radius:5px; color:white; cursor:pointer;">تفعيل صوت الجرس 🔔</button>
+    </header>
+    <div id="status-bar">متصل بالسحاب.. في انتظار الطلبات</div>
     <div id="display"></div>
-    <audio id="bell" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
+    
+    <audio id="bell" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
 
     <script>
         const firebaseConfig = {
@@ -32,30 +38,58 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        let lastOrderCount = 0;
+        let isAudioEnabled = false;
+
+        // تفعيل الصوت بلمسة مستخدم
+        document.getElementById('enableAudio').onclick = function() {
+            isAudioEnabled = true;
+            this.style.background = "#22c55e";
+            this.innerText = "الجرس يعمل الآن ✅";
+            // تشغيل صامت لتجهيز المتصفح
+            const bell = document.getElementById('bell');
+            bell.play().then(() => { bell.pause(); bell.currentTime = 0; });
+        };
+
         database.ref('orders').on('value', snapshot => {
             const data = snapshot.val();
             const display = document.getElementById('display');
             display.innerHTML = "";
+            
             if(data) {
-                document.getElementById('bell').play();
+                const currentOrderCount = Object.keys(data).length;
+                
+                // رن الجرس فقط لو فيه طلب جديد زاد عن القديم
+                if(currentOrderCount > lastOrderCount && isAudioEnabled) {
+                    document.getElementById('bell').play().catch(e => console.log("Audio blocked"));
+                }
+                lastOrderCount = currentOrderCount;
+
                 Object.keys(data).reverse().forEach(id => {
                     const o = data[id];
                     const card = document.createElement('div');
                     card.className = `order-card ${o.isLocal ? 'local' : 'away'}`;
                     card.innerHTML = `
-                        <div style="display:flex; justify-content:space-between;"><b>${o.type}</b> <span>${o.time}</span></div>
+                        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px;">
+                            <b style="font-size:20px;">${o.type}</b> 
+                            <span style="color:#64748b;">${o.time}</span>
+                        </div>
                         <ul class="items">${o.items.map(it => `<li>• ${it}</li>`).join('')}</ul>
                         <button class="btn-done" onclick="removeOrder('${id}')">تم التسليم ✅</button>
                     `;
                     display.appendChild(card);
                 });
             } else {
-                display.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>في انتظار طلبات جديدة...</h2>";
+                lastOrderCount = 0;
+                display.innerHTML = "<h2 style='text-align:center; margin-top:50px; color:#94a3b8;'>في انتظار طلبات جديدة...</h2>";
             }
         });
 
-        function removeOrder(id) { database.ref('orders').child(id).remove(); }
+        function removeOrder(id) {
+            // تقليل العداد يدوياً عشان الجرس ميرنش لما نمسح طلب
+            lastOrderCount--; 
+            database.ref('orders').child(id).remove();
+        }
     </script>
 </body>
 </html>
-
