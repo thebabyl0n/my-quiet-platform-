@@ -23,6 +23,11 @@
         .cart-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #25d366; color: white; padding: 18px; border-radius: 50px; font-weight: bold; border: none; width: 90%; font-size: 18px; z-index: 1000; box-shadow: 0 10px 25px rgba(37,211,102,0.4); }
         #status-notif { position: fixed; top: 80px; width: 90%; left: 5%; background: var(--accent); color: white; padding: 15px; border-radius: 10px; text-align: center; display: none; z-index: 3000; font-weight: bold; animation: slideDown 0.5s; }
         @keyframes slideDown { from { transform: translateY(-100px); } to { transform: translateY(0); } }
+        
+        /* استايل التوقيع الهندسي */
+        .footer-signature { text-align: center; padding: 30px 10px; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; background: #fff; margin-top: 20px; }
+        .footer-signature b { color: var(--primary); }
+        .partnership-tag { color: var(--gold); font-weight: bold; letter-spacing: 2px; margin-top: 5px; display: block; }
     </style>
 </head>
 <body>
@@ -42,7 +47,14 @@
             <b style="letter-spacing: 1px;">ALPHA SHADOW VIP</b>
             <span id="mode-badge" style="background:var(--gold); padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: bold;"></span>
         </div>
+        
         <div id="menu-items"></div>
+
+        <div class="footer-signature">
+            <p style="margin: 0;">Developed with 💡 by <b>Shadow & Alpha</b></p>
+            <span class="partnership-tag">HAMADA ENGINEERING PARTNERSHIP</span>
+        </div>
+
         <button class="cart-btn" onclick="sendOrder()">
             إرسال الطلب | <span id="total-price">0</span> SAR
         </button>
@@ -137,7 +149,6 @@
                 status: 'pending'
             });
 
-            // مراقبة حالة الطلب
             newOrderRef.on('value', snap => {
                 if(snap.val() && snap.val().status === 'ready') {
                     document.getElementById('status-notif').style.display = 'block';
