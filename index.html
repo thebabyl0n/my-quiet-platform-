@@ -3,103 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بارنيز - منيو الجدة الذكي</title>
+    <title>Alpha-Shadow: The Barn's Code</title>
     <style>
-        :root { --primary-color: #006a4d; --accent-color: #c8a27c; --bg-color: #f8f9fa; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: #333; }
-        #welcome-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-color); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; }
-        .logo-welcome { width: 150px; border-radius: 20px; margin-bottom: 20px; border: 3px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .btn-start { background: var(--accent-color); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 20px; cursor: pointer; font-weight: bold; }
-        #order-type-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 25px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); z-index: 1001; width: 85%; max-width: 400px; text-align: center; }
-        .type-box { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-type { flex: 1; padding: 15px; border-radius: 12px; border: 2px solid var(--primary-color); background: white; font-weight: bold; cursor: pointer; }
-        .btn-type.active { background: var(--primary-color); color: white; }
-        select { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; }
-        .header { background: white; padding: 15px; position: sticky; top: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; display: flex; justify-content: space-between; align-items: center; }
-        .logo-small { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
-        .menu-container { padding: 15px; padding-bottom: 110px; }
-        .menu-item { background: white; margin-bottom: 15px; border-radius: 15px; overflow: hidden; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; }
-        .item-img { width: 110px; height: 110px; object-fit: cover; }
-        .item-info { padding: 12px; flex-grow: 1; }
-        .item-name { font-weight: bold; font-size: 17px; }
-        .item-price { color: var(--primary-color); font-weight: bold; display: block; margin-top: 5px; }
-        .btn-add { background: var(--primary-color); color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        .cart-float { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; background: #25d366; color: white; padding: 18px; border-radius: 50px; font-size: 18px; font-weight: bold; border: none; z-index: 200; display: flex; justify-content: center; gap: 10px; }
+        :root { --primary: #006a4d; --accent: #c8a27c; --bg: #fdfdfd; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; overflow-x: hidden; }
+        
+        /* شاشات التغطية */
+        .overlay { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; text-align: center; padding: 20px; transition: 0.5s; }
+        #welcome-screen { background: var(--primary); color: white; }
+        #order-modal { background: white; color: #333; display: none; box-shadow: 0 -10px 50px rgba(0,0,0,0.1); border-radius: 30px 30px 0 0; top: 15%; }
+        
+        .logo-large { width: 150px; border-radius: 25px; border: 4px solid white; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .btn-main { background: var(--accent); color: white; border: none; padding: 18px 50px; border-radius: 50px; font-size: 22px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 80%; max-width: 300px; }
+        
+        /* خيارات سفري/محلي */
+        .type-container { display: flex; gap: 15px; width: 100%; max-width: 400px; margin: 30px 0; }
+        .btn-type { flex: 1; padding: 20px; border-radius: 20px; border: 2px solid var(--primary); background: white; font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.3s; }
+        .btn-type.active { background: var(--primary); color: white; transform: scale(1.05); }
+
+        /* المنيو الرئيسي */
+        .header { background: white; padding: 15px 25px; position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 15px rgba(0,0,0,0.05); z-index: 100; }
+        .brand-name { font-weight: 900; color: var(--primary); font-size: 20px; letter-spacing: 1px; }
+        .menu-grid { padding: 20px; max-width: 600px; margin: auto; padding-bottom: 120px; }
+        
+        .card { background: white; border-radius: 25px; margin-bottom: 20px; display: flex; align-items: center; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; }
+        .card-img { width: 120px; height: 120px; object-fit: cover; }
+        .card-body { padding: 15px; flex: 1; text-align: right; }
+        .card-title { font-weight: bold; font-size: 18px; display: block; margin-bottom: 5px; }
+        .card-price { color: var(--primary); font-weight: 800; font-size: 16px; }
+        .btn-add { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 15px; font-weight: bold; margin-left: 15px; cursor: pointer; }
+
+        /* سلة الطلبات */
+        .footer-cart { position: fixed; bottom: 25px; left: 5%; width: 90%; background: #25d366; color: white; padding: 20px; border-radius: 50px; display: flex; justify-content: center; align-items: center; gap: 15px; font-size: 20px; font-weight: bold; border: none; box-shadow: 0 15px 40px rgba(37, 211, 102, 0.4); z-index: 500; cursor: pointer; }
+        .badge { background: white; color: #25d366; padding: 2px 12px; border-radius: 10px; font-size: 16px; }
     </style>
 </head>
 <body>
-    <div id="welcome-screen">
-        <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400" class="logo-welcome">
-        <h1>يا هلا بيك في بارنيز</h1>
-        <button class="btn-start" onclick="openOrderModal()">ابدأ طلبك يا بطل</button>
+
+    <div id="welcome-screen" class="overlay">
+        <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400" class="logo-large">
+        <h1 style="margin:0;">Alpha-Shadow</h1>
+        <p style="opacity:0.8; margin-bottom:30px;">The Barn's Code</p>
+        <button class="btn-main" onclick="openOrderType()">ابدأ التجربة ☕</button>
     </div>
 
-    <div id="order-type-modal">
-        <h3 style="color:var(--primary-color)">نورتنا.. كيف حابب طلبك؟</h3>
-        <div class="type-box">
-            <button class="btn-type" id="local-btn" onclick="setType('محلي')">📍 محلي</button>
-            <button class="btn-type" id="takeaway-btn" onclick="setType('سفري')">🚗 سفري</button>
+    <div id="order-modal" class="overlay">
+        <h2 style="color:var(--primary); margin:0;">نورتنا يا غالي</h2>
+        <p>كيف حابب تستمتع بقهوتك اليوم؟</p>
+        <div class="type-container">
+            <button id="btn-local" class="btn-type" onclick="selectOrderType('محلي')">📍 محلي</button>
+            <button id="btn-away" class="btn-type" onclick="selectOrderType('سفري')">🚗 سفري</button>
         </div>
-        <div id="table-selection" style="display:none;">
-            <p style="margin-top:15px; font-weight:bold;">اختار رقم الطاولة:</p>
-            <select id="table-select">
-                <option value="1">طاولة 1</option><option value="2">طاولة 2</option><option value="3">طاولة 3</option>
+        <div id="table-select-div" style="display:none; width:100%;">
+            <p>اختار طاولتك بعناية:</p>
+            <select id="table-num" style="width:80%; padding:15px; border-radius:15px; border:2px solid #ddd; font-size:18px;">
+                <option value="1">طاولة 1</option><option value="2">طاولة 2</option><option value="3">طاولة 3</option><option value="4">طاولة 4</option>
             </select>
         </div>
-        <button class="btn-start" style="width:100%; margin-top:20px;" onclick="goToMenu()">فتح المنيو</button>
+        <button class="btn-main" style="margin-top:30px;" onclick="launchMenu()">فتح المنيو</button>
     </div>
 
-    <div id="main-content" style="display: none;">
+    <div id="main-app" style="display:none;">
         <div class="header">
-            <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=200" class="logo-small">
-            <span id="order-info-display" style="font-weight: bold; color: var(--primary-color);"></span>
+            <div class="brand-name">ALPHA-SHADOW</div>
+            <div id="display-info" style="font-size:14px; font-weight:bold; color:#666;"></div>
         </div>
-        <div class="menu-container">
-            <div class="menu-item">
-                <img src="https://images.unsplash.com/photo-1592663516240-203496458514?w=400" class="item-img">
-                <div class="item-info"><span class="item-name">سبانش لاتيه بارد</span><span class="item-price">18 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('سبانش لاتيه بارد')">إضافة</button>
+
+        <div class="menu-grid">
+            <div class="card">
+                <img src="https://images.unsplash.com/photo-1592663516240-203496458514?w=300" class="card-img">
+                <div class="card-body">
+                    <span class="card-title">سبانش لاتيه بارد</span>
+                    <span class="card-price">18 ريال</span>
+                </div>
+                <button class="btn-add" onclick="addItem('سبانش لاتيه بارد')">إضافة</button>
             </div>
-            <div class="menu-item">
-                <img src="https://images.unsplash.com/photo-1544787210-2827448b303c?w=400" class="item-img">
-                <div class="item-info"><span class="item-name">V60 قهوة مختصة</span><span class="item-price">22 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('V60')">إضافة</button>
+
+            <div class="card">
+                <img src="https://images.unsplash.com/photo-1544787210-2827448b303c?w=300" class="card-img">
+                <div class="card-body">
+                    <span class="card-title">V60 حار (مختصة)</span>
+                    <span class="card-price">22 ريال</span>
+                </div>
+                <button class="btn-add" onclick="addItem('V60 حار')">إضافة</button>
             </div>
-            <div class="menu-item">
-                <img src="https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400" class="item-img">
-                <div class="item-info"><span class="item-name">كيكة العسل</span><span class="item-price">15 ريال</span></div>
-                <button class="btn-add" onclick="addToCart('كيكة العسل')">إضافة</button>
+
+            <div class="card">
+                <img src="https://images.unsplash.com/photo-1527515848392-f076f80928a3?w=300" class="card-img">
+                <div class="card-body">
+                    <span class="card-title">كيكة العسل الملكية</span>
+                    <span class="card-price">15 ريال</span>
+                </div>
+                <button class="btn-add" onclick="addItem('كيكة العسل')">إضافة</button>
             </div>
         </div>
-        <button class="cart-float" onclick="sendOrder()">إرسال الطلب (<span id="cart-count">0</span>)</button>
+
+        <button class="footer-cart" onclick="checkout()">
+            <span>إرسال الطلب للشباب</span>
+            <span class="badge" id="cart-count">0</span>
+        </button>
     </div>
 
     <script>
-        let cart = []; let orderType = ""; let tableNum = "";
-        function speak(t) { if('speechSynthesis' in window){ window.speechSynthesis.cancel(); const m=new SpeechSynthesisUtterance(t); m.lang='ar-SA'; m.rate=0.9; window.speechSynthesis.speak(m); }}
-        function openOrderModal() { document.getElementById('order-type-modal').style.display='block'; speak("يا هلا بيك في بارنيز.. نورتنا.. كيف حابب تطلب اليوم؟ سفري ولا محلي؟"); }
-        function setType(t) { 
-            orderType = t; 
-            document.getElementById('local-btn').className = t==='محلي' ? 'btn-type active' : 'btn-type';
-            document.getElementById('takeaway-btn').className = t==='سفري' ? 'btn-type active' : 'btn-type';
-            document.getElementById('table-selection').style.display = t==='محلي' ? 'block' : 'none';
-            speak(t==='محلي' ? "على راسي.. اختار طاولتك" : "أبشر.. سفري وعينك ما تشوف إلا النور");
+        let cart = []; let mode = ""; let table = "";
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const msg = new SpeechSynthesisUtterance(text);
+                msg.lang = 'ar-SA';
+                msg.rate = 0.9;
+                window.speechSynthesis.speak(msg);
+            }
         }
-        function goToMenu() {
-            if(!orderType) return speak("يا حبيب أخوك اختار سفري ولا محلي أول");
-            tableNum = orderType === 'محلي' ? document.getElementById('table-select').value : "سفري";
-            document.getElementById('welcome-screen').style.display='none';
-            document.getElementById('order-type-modal').style.display='none';
-            document.getElementById('main-content').style.display='block';
-            document.getElementById('order-info-display').innerText = orderType + (orderType==='محلي' ? " - طاولة " + tableNum : "");
-            speak("تفضل يا غالي المنيو قدامك.. تمنيت لو أصب لك القهوة بيدي والله");
+
+        function openOrderType() {
+            document.getElementById('order-modal').style.display = 'flex';
+            speak("يا هلا والله بيك في ألفا شادو.. نورت بارنيز.. كيف حابب تطلب اليوم؟ سفري ولا محلي؟");
         }
-        function addToCart(n) { cart.push(n); document.getElementById('cart-count').innerText = cart.length; speak("أبشر ضفنا " + n + ".. تبي شي ثاني؟"); }
-        function sendOrder() {
-            const p = "966579747707";
-            let msg = `*طلب جديد من بارنيز ☕*\nالنوع: ${orderType}\nالطاولة: ${tableNum}\nالطلبات:\n- ${cart.join('\n- ')}`;
+
+        function selectOrderType(t) {
+            mode = t;
+            document.getElementById('btn-local').className = t === 'محلي' ? 'btn-type active' : 'btn-type';
+            document.getElementById('btn-away').className = t === 'سفري' ? 'btn-type active' : 'btn-type';
+            document.getElementById('table-select-div').style.display = t === 'محلي' ? 'block' : 'none';
+            speak(t === 'محلي' ? "على راسي.. اختار طاولتك" : "أبشر.. سفري وعينك ما تشوف إلا النور");
+        }
+
+        function launchMenu() {
+            if(!mode) return speak("يا حبيب أخوك اختار سفري ولا محلي أول");
+            table = mode === 'محلي' ? document.getElementById('table-num').value : "سفري";
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('order-modal').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            document.getElementById('display-info').innerText = `${mode} | ${table === 'سفري' ? '🚗' : '📍 طاولة ' + table}`;
+            speak("تفضل يا غالي.. المنيو بين يديك.. اطلب وتدلع");
+        }
+
+        function addItem(name) {
+            cart.push(name);
+            document.getElementById('cart-count').innerText = cart.length;
+            speak("أبشر.. ضفنا " + name + " للسلة");
+        }
+
+        function checkout() {
+            if(cart.length === 0) return speak("السلة فاضية يا بعدي.. اختار شي يروقك");
+            const phone = "966579747707";
+            let msg = `*طلب جديد من Alpha-Shadow: The Barn's Code* ☕\n\n📍 *النوع:* ${mode}\n🪑 *الموقع:* ${table}\n📋 *الطلبات:*\n- ${cart.join('\n- ')}\n\n✅ *جاري الانتظار.. شكرًا لك!*`;
             speak("تسلم يمينك.. جاري إرسال الطلب ويوصلك لعندك فوراً");
-            setTimeout(() => { window.open(`https://wa.me/${p}?text=${encodeURIComponent(msg)}`, '_blank'); }, 1200);
+            setTimeout(() => { window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank'); }, 1200);
         }
     </script>
 </body>
