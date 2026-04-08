@@ -11,7 +11,7 @@
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; padding-bottom: 120px; }
         .hero { position: fixed; inset: 0; background: linear-gradient(rgba(15,23,42,0.85), rgba(15,23,42,0.85)), url('https://i.postimg.cc/kMQRJDQ3/xresch_blueprint_6944719_1920.jpg'); background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; color: white; text-align: center; }
         .btn-main { background: var(--gold); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 10px; width: 280px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: 0.3s; }
-        .table-input { padding: 12px; border-radius: 10px; border: 1px solid var(--gold); width: 80%; margin-top: 10px; font-size: 16px; text-align: center; display: none; }
+        .table-input { padding: 12px; border-radius: 10px; border: 1px solid var(--gold); width: 80%; margin-top: 10px; font-size: 16px; text-align: center; display: none; color: black; }
         .card { background: white; margin: 15px; border-radius: 20px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; }
         .card img { width: 100px; height: 100px; object-fit: cover; margin: 5px; border-radius: 15px; }
         .card-info { padding: 10px; flex: 1; }
@@ -39,7 +39,6 @@
     </div>
 
     <script>
-        // مفاتيحك الخاصة من الصورة
         const firebaseConfig = {
             apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
             authDomain: "alphashadow-23689.firebaseapp.com",
@@ -56,7 +55,20 @@
             { ar: "كيكة العسل الملكية", price: 15, img: "https://i.postimg.cc/bYxSydQ3/Screenshot_٢٠٢٦٠٤٠٨_٠٥٣٨٤٢_Brave.jpg" }
         ];
 
-        function askTable() { document.getElementById('tableNum').style.display = 'block'; document.getElementById('confirmTable').style.display = 'inline-block'; document.getElementById('localBtn').style.display = 'none'; document.getElementById('awayBtn').style.display = 'none'; }
+        // دالة النطق الصوتي
+        function speak(text) {
+            const msg = new SpeechSynthesisUtterance();
+            msg.text = text;
+            msg.lang = 'ar-SA';
+            window.speechSynthesis.speak(msg);
+        }
+
+        function askTable() { 
+            document.getElementById('tableNum').style.display = 'block'; 
+            document.getElementById('confirmTable').style.display = 'inline-block'; 
+            document.getElementById('localBtn').style.display = 'none'; 
+            document.getElementById('awayBtn').style.display = 'none'; 
+        }
         
         function setMode(mode) {
             orderMode = mode;
@@ -64,6 +76,9 @@
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
             document.getElementById('mode-badge').innerText = mode === 'local' ? `طاولة: ${tableNumber}` : "سفري";
+            
+            // نطق ترحيبي عند الدخول
+            speak("أهلاً بك في ألفا شادو، تصفح المنيو واطلب ما تحب");
             render();
         }
 
@@ -78,13 +93,14 @@
         function addToCart(i) {
             cart.push(menu[i]);
             document.getElementById('count').innerText = cart.length;
+            // نطق اسم المنتج عند الإضافة
+            speak("تم إضافة " + menu[i].ar);
         }
 
         function sendOrder() {
             if(cart.length === 0) return;
             const typeStr = orderMode === 'local' ? `محلي (طاولة ${tableNumber})` : "سفري";
             
-            // إرسال الطلب للسحاب
             database.ref('orders').push({
                 type: typeStr,
                 items: cart.map(i => i.ar),
@@ -92,10 +108,11 @@
                 isLocal: orderMode === 'local'
             });
 
-            // فتح الواتساب برضه كزيادة تأكيد
+            speak("شكراً لك، تم إرسال طلبك للباريستا");
+
             const msg = `*طلب جديد*\n*النوع:* ${typeStr}\n*الطلبات:*\n${cart.map(i => "- " + i.ar).join("\n")}`;
             window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-            cart = []; document.getElementById('count').innerText = "0"; // تصفير السلة
+            cart = []; document.getElementById('count').innerText = "0";
         }
     </script>
 </body>
