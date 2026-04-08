@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة الباريستا LIVE</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #004085; color: white; }
+        header { background: white; color: #004085; padding: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .order-card { background: white; color: black; border-radius: 15px; padding: 20px; margin: 15px; border-right: 12px solid; animation: pop 0.3s; }
+        @keyframes pop { from { transform: scale(0.5); } to { transform: scale(1); } }
+        .local { border-color: #22c55e; }
+        .away { border-color: #f97316; }
+        .items { font-size: 26px; font-weight: bold; list-style: none; padding: 0; }
+        .btn-done { background: #22c55e; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-size: 18px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <header><h1>طلبات Alpha-Shadow ☕</h1></header>
+    <div id="display"></div>
+    <audio id="bell" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
+            authDomain: "alphashadow-23689.firebaseapp.com",
+            projectId: "alphashadow-23689",
+            databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        database.ref('orders').on('value', snapshot => {
+            const data = snapshot.val();
+            const display = document.getElementById('display');
+            display.innerHTML = "";
+            if(data) {
+                document.getElementById('bell').play();
+                Object.keys(data).reverse().forEach(id => {
+                    const o = data[id];
+                    const card = document.createElement('div');
+                    card.className = `order-card ${o.isLocal ? 'local' : 'away'}`;
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between;"><b>${o.type}</b> <span>${o.time}</span></div>
+                        <ul class="items">${o.items.map(it => `<li>• ${it}</li>`).join('')}</ul>
+                        <button class="btn-done" onclick="removeOrder('${id}')">تم التسليم ✅</button>
+                    `;
+                    display.appendChild(card);
+                });
+            } else {
+                display.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>في انتظار طلبات جديدة...</h2>";
+            }
+        });
+
+        function removeOrder(id) { database.ref('orders').child(id).remove(); }
+    </script>
+</body>
+</html>
+
