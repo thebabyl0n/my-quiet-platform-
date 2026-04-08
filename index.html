@@ -12,23 +12,29 @@
         .hero { position: fixed; inset: 0; background: linear-gradient(rgba(15,23,42,0.85), rgba(15,23,42,0.85)), url('https://i.postimg.cc/kMQRJDQ3/xresch_blueprint_6944719_1920.jpg'); background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; color: white; text-align: center; }
         .btn-main { background: var(--gold); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 10px; width: 280px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: 0.3s; }
         .table-input { padding: 12px; border-radius: 10px; border: 1px solid var(--gold); width: 80%; margin-top: 10px; font-size: 16px; text-align: center; display: none; color: black; }
-        .card { background: white; margin: 15px; border-radius: 20px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; padding: 10px; }
-        .card img { width: 80px; height: 80px; object-fit: cover; border-radius: 15px; }
+        .card { background: white; margin: 15px; border-radius: 20px; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; padding: 15px; }
+        .card-top { display: flex; align-items: center; width: 100%; }
+        .card img { width: 70px; height: 70px; object-fit: cover; border-radius: 12px; }
         .card-info { padding: 0 15px; flex: 1; }
         .counter-box { display: flex; align-items: center; gap: 10px; background: #f1f5f9; padding: 5px 10px; border-radius: 50px; }
-        .btn-step { background: white; border: 1px solid #cbd5e1; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-step { background: white; border: 1px solid #cbd5e1; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; }
         .qty { font-weight: bold; min-width: 20px; text-align: center; color: var(--primary); }
+        .options-select { width: 100%; margin-top: 10px; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; background: #fff; }
         .cart-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #25d366; color: white; padding: 18px; border-radius: 50px; font-weight: bold; border: none; width: 90%; font-size: 18px; z-index: 1000; box-shadow: 0 10px 25px rgba(37,211,102,0.4); }
+        #status-notif { position: fixed; top: 80px; width: 90%; left: 5%; background: var(--accent); color: white; padding: 15px; border-radius: 10px; text-align: center; display: none; z-index: 3000; font-weight: bold; animation: slideDown 0.5s; }
+        @keyframes slideDown { from { transform: translateY(-100px); } to { transform: translateY(0); } }
     </style>
 </head>
 <body>
+    <div id="status-notif">طلبك جاهز! استلمه من الكاونتر ✨</div>
+
     <div id="welcome-screen" class="hero">
         <h1 style="font-size: 35px;">Alpha-Shadow</h1>
         <p style="color: var(--gold); font-size: 18px;">The Barn's Code</p>
-        <button class="btn-main" id="localBtn" onclick="askTable()">📍 محلي / Dine-in</button>
+        <button class="btn-main" onclick="askTable()">📍 محلي / Dine-in</button>
         <input type="number" id="tableNum" class="table-input" placeholder="رقم الطاولة">
         <button id="confirmTable" class="btn-main" style="display:none; background:var(--accent);" onclick="setMode('local')">تأكيد</button>
-        <button id="awayBtn" class="btn-main" onclick="setMode('away')">🚗 سفري / Takeaway</button>
+        <button class="btn-main" onclick="setMode('away')">🚗 سفري / Takeaway</button>
     </div>
 
     <div id="main-content" style="display:none;">
@@ -54,24 +60,21 @@
 
         let orderMode = ""; let tableNumber = "";
         const menu = [
-            { id: 0, ar: "سبانش لاتيه بارد", en: "Iced Spanish Latte", price: 18, img: "https://i.postimg.cc/pVf5WyDG/FB_IMG_1775615731297.jpg", qty: 0 },
-            { id: 1, ar: "V60 حار", en: "V 60 Hot Coffee", price: 22, img: "https://i.postimg.cc/Y26Lrj1d/FB_IMG_1775615760389.jpg", qty: 0 },
-            { id: 2, ar: "كيكة العسل الملكية", en: "Royal Honey Cake", price: 15, img: "https://i.postimg.cc/bYxSydQ3/Screenshot_٢٠٢٦٠٤٠٨_٠٥٣٨٤٢_Brave.jpg", qty: 0 }
+            { id: 0, ar: "سبانش لاتيه بارد", en: "Iced Spanish Latte", price: 18, img: "https://i.postimg.cc/pVf5WyDG/FB_IMG_1775615731297.jpg", qty: 0, opts: ["Standard", "No Sugar", "Almond Milk", "Double Shot"] },
+            { id: 1, ar: "V60 حار", en: "V 60 Hot Coffee", price: 22, img: "https://i.postimg.cc/Y26Lrj1d/FB_IMG_1775615760389.jpg", qty: 0, opts: ["Standard", "Extra Hot", "Black Coffee"] },
+            { id: 2, ar: "كيكة العسل الملكية", en: "Royal Honey Cake", price: 15, img: "https://i.postimg.cc/bYxSydQ3/Screenshot_٢٠٢٦٠٤٠٨_٠٥٣٨٤٢_Brave.jpg", qty: 0, opts: ["Fresh", "Extra Honey"] }
         ];
 
         function speak(text, lang = 'en-US') {
-            window.speechSynthesis.cancel(); // إيقاف أي صوت شغال حالياً
+            window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance();
-            msg.text = text;
-            msg.lang = lang;
+            msg.text = text; msg.lang = lang;
             window.speechSynthesis.speak(msg);
         }
 
         function askTable() { 
             document.getElementById('tableNum').style.display = 'block'; 
             document.getElementById('confirmTable').style.display = 'inline-block'; 
-            document.getElementById('localBtn').style.display = 'none'; 
-            document.getElementById('awayBtn').style.display = 'none'; 
         }
         
         function setMode(mode) {
@@ -80,29 +83,28 @@
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
             document.getElementById('mode-badge').innerText = mode === 'local' ? `طاولة: ${tableNumber}` : "سفري";
-            
-            // ترحيب شيق بالإنجليزي
             speak("Welcome to Alpha Shadow, Your coffee is being coded", 'en-US');
             render();
         }
 
         function render() {
-            let html = "";
-            let total = 0;
+            let html = ""; let total = 0;
             menu.forEach((item) => {
                 total += (item.qty * item.price);
                 html += `
                 <div class="card">
-                    <img src="${item.img}">
-                    <div class="card-info">
-                        <b>${item.ar}</b><br>
-                        <small style="color:gray;">${item.price} SAR</small>
+                    <div class="card-top">
+                        <img src="${item.img}">
+                        <div class="card-info"><b>${item.ar}</b><br><small>${item.price} SAR</small></div>
+                        <div class="counter-box">
+                            <button class="btn-step" onclick="updateQty(${item.id}, -1)">-</button>
+                            <span class="qty">${item.qty}</span>
+                            <button class="btn-step" onclick="updateQty(${item.id}, 1)">+</button>
+                        </div>
                     </div>
-                    <div class="counter-box">
-                        <button class="btn-step" onclick="updateQty(${item.id}, -1)">-</button>
-                        <span class="qty" id="qty-${item.id}">${item.qty}</span>
-                        <button class="btn-step" onclick="updateQty(${item.id}, 1)">+</button>
-                    </div>
+                    <select class="options-select" id="opt-${item.id}">
+                        ${item.opts.map(o => `<option value="${o}">${o}</option>`).join('')}
+                    </select>
                 </div>`;
             });
             document.getElementById('menu-items').innerHTML = html;
@@ -112,35 +114,42 @@
         function updateQty(id, step) {
             if (menu[id].qty + step < 0) return;
             menu[id].qty += step;
-            if (step > 0) {
-                // نطق العدد + الاسم بالإنجليزي
-                speak(menu[id].qty + " " + menu[id].en, 'en-US');
-            }
+            if (step > 0) speak(menu[id].qty + " " + menu[id].en);
             render();
         }
 
         function sendOrder() {
             const orderedItems = menu.filter(i => i.qty > 0);
-            if(orderedItems.length === 0) { speak("Please select an item first", 'en-US'); return; }
+            if(orderedItems.length === 0) { speak("Please select an item first"); return; }
             
             const typeStr = orderMode === 'local' ? `محلي (طاولة ${tableNumber})` : "سفري";
-            const itemsList = orderedItems.map(i => `${i.qty} x ${i.ar}`);
+            const itemsList = orderedItems.map(i => {
+                const opt = document.getElementById(`opt-${i.id}`).value;
+                return `${i.qty} x ${i.ar} (${opt})`;
+            });
 
-            database.ref('orders').push({
+            const newOrderRef = database.ref('orders').push();
+            newOrderRef.set({
                 type: typeStr,
                 items: itemsList,
                 time: new Date().toLocaleTimeString('ar-SA'),
-                isLocal: orderMode === 'local'
+                isLocal: orderMode === 'local',
+                status: 'pending'
+            });
+
+            // مراقبة حالة الطلب
+            newOrderRef.on('value', snap => {
+                if(snap.val() && snap.val().status === 'ready') {
+                    document.getElementById('status-notif').style.display = 'block';
+                    speak("Your order is ready! Please collect it from the counter", 'en-US');
+                }
             });
 
             speak("Order sent successfully. Enjoy!", 'en-US');
-            
-            const msg = `*طلب جديد من Alpha-Shadow*\n*النوع:* ${typeStr}\n*الطلبات:*\n${itemsList.join("\n")}\n*الإجمالي:* ${document.getElementById('total-price').innerText} SAR`;
+            const msg = `*طلب جديد*\n*النوع:* ${typeStr}\n*الطلبات:*\n${itemsList.join("\n")}`;
             window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-            
             menu.forEach(i => i.qty = 0); render();
         }
     </script>
 </body>
 </html>
-
