@@ -8,19 +8,29 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #0f172a; color: white; }
-        header { background: white; color: #0f172a; padding: 15px; text-align: center; }
-        .order-card { background: white; color: black; border-radius: 15px; padding: 20px; margin: 15px; border-right: 15px solid; position: relative; }
+        header { background: white; color: #0f172a; padding: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .order-card { background: white; color: black; border-radius: 15px; padding: 20px; margin: 15px; border-right: 15px solid; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .local { border-color: #22c55e !important; background: #f0fdf4; } /* أخضر للمحلي */
         .away { border-color: #f97316 !important; background: #fff7ed; }  /* برتقالي للسفري */
         .status-ready { opacity: 0.6; border-style: dashed; }
-        .items { font-size: 24px; font-weight: bold; list-style: none; padding: 0; }
-        .btn-ready { background: #3b82f6; color: white; border: none; padding: 15px; border-radius: 10px; width: 48%; font-weight: bold; cursor: pointer; }
-        .btn-done { background: #22c55e; color: white; border: none; padding: 15px; border-radius: 10px; width: 48%; font-weight: bold; cursor: pointer; }
+        .items { font-size: 24px; font-weight: bold; list-style: none; padding: 0; margin: 15px 0; }
+        
+        /* استايل الملاحظات الجديد */
+        .notes-box { background: #fff3cd; border-right: 5px solid #ffc107; padding: 10px; margin: 10px 0; border-radius: 8px; color: #856404; font-weight: bold; font-size: 18px; }
+        
+        .total-badge { background: #e2e8f0; padding: 5px 10px; border-radius: 8px; font-size: 14px; font-weight: bold; color: #475569; }
+        .btn-ready { background: #3b82f6; color: white; border: none; padding: 15px; border-radius: 10px; width: 48%; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .btn-done { background: #22c55e; color: white; border: none; padding: 15px; border-radius: 10px; width: 48%; font-weight: bold; cursor: pointer; font-size: 16px; }
         .ready-badge { position: absolute; top: 10px; left: 10px; background: #3b82f6; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; }
+        #enableAudio { background: #22c55e; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <header><h1>مطبخ Alpha-Shadow ☕</h1><button id="enableAudio">تفعيل الجرس 🔔</button></header>
+    <header>
+        <h1 style="margin:0;">👨‍🍳 مطبخ Alpha-Shadow</h1>
+        <button id="enableAudio">تفعيل الجرس 🔔</button>
+    </header>
+    
     <div id="display"></div>
     <audio id="bell" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
@@ -35,32 +45,55 @@
         const database = firebase.database();
         let lastCount = 0; let audioOn = false;
 
-        document.getElementById('enableAudio').onclick = () => { audioOn = true; alert("الجرس شغال!"); };
+        document.getElementById('enableAudio').onclick = () => { 
+            audioOn = true; 
+            document.getElementById('enableAudio').style.background = "#64748b";
+            document.getElementById('enableAudio').innerText = "الجرس يعمل ✅";
+        };
 
         database.ref('orders').on('value', snap => {
             const data = snap.val();
             const display = document.getElementById('display');
             display.innerHTML = "";
+            
             if(data) {
-                if(Object.keys(data).length > lastCount && audioOn) document.getElementById('bell').play();
-                lastCount = Object.keys(data).length;
+                const currentCount = Object.keys(data).length;
+                if(currentCount > lastCount && audioOn) {
+                    document.getElementById('bell').play().catch(e => console.log("Audio play deferred"));
+                }
+                lastCount = currentCount;
 
                 Object.keys(data).reverse().forEach(id => {
                     const o = data[id];
                     const isReady = o.status === 'ready';
+                    
+                    // تحضير الملاحظات لو موجودة
+                    const notesHtml = o.notes ? `<div class="notes-box">📝 ملاحظة: ${o.notes}</div>` : '';
+                    const priceHtml = o.totalPrice ? `<span class="total-badge">💰 ${o.totalPrice} SAR</span>` : '';
+
                     const card = document.createElement('div');
                     card.className = `order-card ${o.isLocal ? 'local' : 'away'} ${isReady ? 'status-ready' : ''}`;
                     card.innerHTML = `
                         ${isReady ? '<span class="ready-badge">جاهز للاستلام ✨</span>' : ''}
-                        <div style="display:flex; justify-content:space-between;"><b>${o.type}</b> <span>${o.time}</span></div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <b>${o.type}</b> 
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                ${priceHtml}
+                                <span>${o.time}</span>
+                            </div>
+                        </div>
                         <ul class="items">${o.items.map(it => `<li>• ${it}</li>`).join('')}</ul>
-                        <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                        
+                        ${notesHtml} <div style="display:flex; justify-content:space-between; margin-top:15px;">
                             <button class="btn-ready" onclick="markReady('${id}')">تم التجهيز 📢</button>
                             <button class="btn-done" onclick="removeOrder('${id}')">تم التسليم ✅</button>
                         </div>
                     `;
                     display.appendChild(card);
                 });
+            } else {
+                lastCount = 0;
+                display.innerHTML = "<h2 style='text-align:center; margin-top:50px; color:#64748b;'>لا توجد طلبات حالياً..</h2>";
             }
         });
 
