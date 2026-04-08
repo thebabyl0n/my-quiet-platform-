@@ -113,25 +113,32 @@
         }
 
         function sendOrder() {
+            // تصفية العناصر المختارة فقط (التي كميتها أكبر من صفر)
             const orderedItems = menu.filter(i => i.qty > 0);
             if(orderedItems.length === 0) { speak("من فضلك اختر مشروباً أولاً"); return; }
             
             const typeStr = orderMode === 'local' ? `محلي (طاولة ${tableNumber})` : "سفري";
+            
+            // تجميع العناصر في سطر واحد لكل صنف (العدد x الاسم)
             const itemsList = orderedItems.map(i => `${i.qty} x ${i.ar}`);
 
+            // إرسال الطلب مجمعاً لـ Firebase
             database.ref('orders').push({
                 type: typeStr,
-                items: itemsList,
+                items: itemsList, // هنا سيتم إرسال القائمة المجمعة
                 time: new Date().toLocaleTimeString('ar-SA'),
                 isLocal: orderMode === 'local'
             });
 
             speak("تم إرسال طلبك، شكراً لك");
             
+            // رسالة الواتساب
             const msg = `*طلب جديد من Alpha-Shadow*\n*النوع:* ${typeStr}\n*الطلبات:*\n${itemsList.join("\n")}\n*الإجمالي:* ${document.getElementById('total-price').innerText} SAR`;
             window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
             
-            menu.forEach(i => i.qty = 0); render(); // تصفير المنيو
+            // تصفير المنيو بعد الإرسال
+            menu.forEach(i => i.qty = 0); 
+            render();
         }
     </script>
 </body>
