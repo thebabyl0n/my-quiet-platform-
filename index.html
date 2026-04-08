@@ -7,13 +7,33 @@
     <style>
         :root { --primary: #0f172a; --accent: #22c55e; --gold: #c8a27c; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; padding-bottom: 120px; }
-        .hero { position: fixed; inset: 0; background: linear-gradient(rgba(15,23,42,0.85), rgba(15,23,42,0.85)), url('https://i.postimg.cc/kMQRJDQ3/xresch_blueprint_6944719_1920.jpg'); background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; color: white; text-align: center; }
-        .btn-main { background: var(--gold); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 10px; width: 280px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: 0.3s; }
+        
+        /* شاشة الاستقبال بالخلفية الهيبة */
+        .hero { 
+            position: fixed; inset: 0; 
+            background: linear-gradient(rgba(15,23,42,0.85), rgba(15,23,42,0.85)), url('https://i.postimg.cc/kMQRJDQ3/xresch_blueprint_6944719_1920.jpg'); 
+            background-size: cover; background-position: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            z-index: 2000; color: white; text-align: center;
+        }
+
+        .btn-main { 
+            background: var(--gold); color: white; border: none; padding: 15px 40px; 
+            border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 10px; 
+            width: 280px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: 0.3s; 
+        }
+
+        /* لمسة الظل: تأثير الضغط */
+        .btn-main:active, .btn-add:active { transform: scale(0.95); }
+
         .table-input { padding: 12px; border-radius: 10px; border: 1px solid var(--gold); width: 80%; margin-top: 10px; font-size: 16px; text-align: center; display: none; }
+        
         .card { background: white; margin: 15px; border-radius: 20px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; }
         .card img { width: 100px; height: 100px; object-fit: cover; margin: 5px; border-radius: 15px; }
         .card-info { padding: 10px; flex: 1; }
-        .btn-add { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        
+        .btn-add { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+
         .cart-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #25d366; color: white; padding: 18px; border-radius: 50px; font-weight: bold; border: none; width: 90%; font-size: 18px; z-index: 1000; box-shadow: 0 10px 25px rgba(37,211,102,0.4); }
     </style>
 </head>
@@ -39,6 +59,8 @@
 
     <script>
         let orderMode = ""; let cart = []; let tableNumber = "";
+        
+        // الأصناف بالروابط المباشرة اللي حللناها
         const menu = [
             { ar: "سبانش لاتيه بارد", en: "Iced Spanish Latte", price: 18, img: "https://i.postimg.cc/pVf5WyDG/FB_IMG_1775615731297.jpg" },
             { ar: "V60 حار", en: "Hot V60 Coffee", price: 22, img: "https://i.postimg.cc/Y26Lrj1d/FB_IMG_1775615760389.jpg" },
@@ -66,6 +88,7 @@
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
             
+            // النطق العربي الصافي
             if(mode === 'away') {
                 speak("أبشر.. طلبك سفري وعينك ما تشوف إلا النور", 1.1);
             } else {
