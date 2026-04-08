@@ -54,14 +54,16 @@
 
         let orderMode = ""; let tableNumber = "";
         const menu = [
-            { id: 0, ar: "سبانش لاتيه بارد", price: 18, img: "https://i.postimg.cc/pVf5WyDG/FB_IMG_1775615731297.jpg", qty: 0 },
-            { id: 1, ar: "V60 حار", price: 22, img: "https://i.postimg.cc/Y26Lrj1d/FB_IMG_1775615760389.jpg", qty: 0 },
-            { id: 2, ar: "كيكة العسل الملكية", price: 15, img: "https://i.postimg.cc/bYxSydQ3/Screenshot_٢٠٢٦٠٤٠٨_٠٥٣٨٤٢_Brave.jpg", qty: 0 }
+            { id: 0, ar: "سبانش لاتيه بارد", en: "Iced Spanish Latte", price: 18, img: "https://i.postimg.cc/pVf5WyDG/FB_IMG_1775615731297.jpg", qty: 0 },
+            { id: 1, ar: "V60 حار", en: "V 60 Hot Coffee", price: 22, img: "https://i.postimg.cc/Y26Lrj1d/FB_IMG_1775615760389.jpg", qty: 0 },
+            { id: 2, ar: "كيكة العسل الملكية", en: "Royal Honey Cake", price: 15, img: "https://i.postimg.cc/bYxSydQ3/Screenshot_٢٠٢٦٠٤٠٨_٠٥٣٨٤٢_Brave.jpg", qty: 0 }
         ];
 
-        function speak(text) {
+        function speak(text, lang = 'en-US') {
+            window.speechSynthesis.cancel(); // إيقاف أي صوت شغال حالياً
             const msg = new SpeechSynthesisUtterance();
-            msg.text = text; msg.lang = 'ar-SA';
+            msg.text = text;
+            msg.lang = lang;
             window.speechSynthesis.speak(msg);
         }
 
@@ -78,7 +80,9 @@
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
             document.getElementById('mode-badge').innerText = mode === 'local' ? `طاولة: ${tableNumber}` : "سفري";
-            speak("أهلاً بك، اختر الكميات التي تريدها");
+            
+            // ترحيب شيق بالإنجليزي
+            speak("Welcome to Alpha Shadow, Your coffee is being coded", 'en-US');
             render();
         }
 
@@ -108,38 +112,35 @@
         function updateQty(id, step) {
             if (menu[id].qty + step < 0) return;
             menu[id].qty += step;
-            if (step > 0) speak(menu[id].qty + " " + menu[id].ar);
+            if (step > 0) {
+                // نطق العدد + الاسم بالإنجليزي
+                speak(menu[id].qty + " " + menu[id].en, 'en-US');
+            }
             render();
         }
 
         function sendOrder() {
-            // تصفية العناصر المختارة فقط (التي كميتها أكبر من صفر)
             const orderedItems = menu.filter(i => i.qty > 0);
-            if(orderedItems.length === 0) { speak("من فضلك اختر مشروباً أولاً"); return; }
+            if(orderedItems.length === 0) { speak("Please select an item first", 'en-US'); return; }
             
             const typeStr = orderMode === 'local' ? `محلي (طاولة ${tableNumber})` : "سفري";
-            
-            // تجميع العناصر في سطر واحد لكل صنف (العدد x الاسم)
             const itemsList = orderedItems.map(i => `${i.qty} x ${i.ar}`);
 
-            // إرسال الطلب مجمعاً لـ Firebase
             database.ref('orders').push({
                 type: typeStr,
-                items: itemsList, // هنا سيتم إرسال القائمة المجمعة
+                items: itemsList,
                 time: new Date().toLocaleTimeString('ar-SA'),
                 isLocal: orderMode === 'local'
             });
 
-            speak("تم إرسال طلبك، شكراً لك");
+            speak("Order sent successfully. Enjoy!", 'en-US');
             
-            // رسالة الواتساب
             const msg = `*طلب جديد من Alpha-Shadow*\n*النوع:* ${typeStr}\n*الطلبات:*\n${itemsList.join("\n")}\n*الإجمالي:* ${document.getElementById('total-price').innerText} SAR`;
             window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
             
-            // تصفير المنيو بعد الإرسال
-            menu.forEach(i => i.qty = 0); 
-            render();
+            menu.forEach(i => i.qty = 0); render();
         }
     </script>
 </body>
 </html>
+
