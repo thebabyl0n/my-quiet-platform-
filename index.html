@@ -8,14 +8,16 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --primary: #0f172a; --accent: #22c55e; --gold: #c8a27c; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; padding-bottom: 120px; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; padding-bottom: 140px; }
         .hero { position: fixed; inset: 0; background: linear-gradient(rgba(15,23,42,0.85), rgba(15,23,42,0.85)), url('https://i.postimg.cc/kMQRJDQ3/xresch_blueprint_6944719_1920.jpg'); background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; color: white; text-align: center; }
         .btn-main { background: var(--gold); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 10px; width: 280px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: 0.3s; }
         .table-input { padding: 12px; border-radius: 10px; border: 1px solid var(--gold); width: 80%; margin-top: 10px; font-size: 16px; text-align: center; display: none; color: black; }
-        .card { background: white; margin: 15px; border-radius: 20px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; }
-        .card img { width: 100px; height: 100px; object-fit: cover; margin: 5px; border-radius: 15px; }
-        .card-info { padding: 10px; flex: 1; }
-        .btn-add { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        .card { background: white; margin: 15px; border-radius: 20px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; padding: 10px; }
+        .card img { width: 80px; height: 80px; object-fit: cover; border-radius: 15px; }
+        .card-info { padding: 0 15px; flex: 1; }
+        .counter-box { display: flex; align-items: center; gap: 10px; background: #f1f5f9; padding: 5px 10px; border-radius: 50px; }
+        .btn-step { background: white; border: 1px solid #cbd5e1; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .qty { font-weight: bold; min-width: 20px; text-align: center; color: var(--primary); }
         .cart-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #25d366; color: white; padding: 18px; border-radius: 50px; font-weight: bold; border: none; width: 90%; font-size: 18px; z-index: 1000; box-shadow: 0 10px 25px rgba(37,211,102,0.4); }
     </style>
 </head>
@@ -30,12 +32,14 @@
     </div>
 
     <div id="main-content" style="display:none;">
-        <div style="background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;">
             <b style="letter-spacing: 1px;">ALPHA SHADOW VIP</b>
             <span id="mode-badge" style="background:var(--gold); padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: bold;"></span>
         </div>
         <div id="menu-items"></div>
-        <button class="cart-btn" onclick="sendOrder()">إرسال الطلب (<span id="count">0</span>)</button>
+        <button class="cart-btn" onclick="sendOrder()">
+            إرسال الطلب | <span id="total-price">0</span> SAR
+        </button>
     </div>
 
     <script>
@@ -48,18 +52,16 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        let orderMode = ""; let cart = []; let tableNumber = "";
+        let orderMode = ""; let tableNumber = "";
         const menu = [
-            { ar: "سبانش لاتيه بارد", price: 18, img: "https://i.postimg.cc/pVf5WyDG/FB_IMG_1775615731297.jpg" },
-            { ar: "V60 حار", price: 22, img: "https://i.postimg.cc/Y26Lrj1d/FB_IMG_1775615760389.jpg" },
-            { ar: "كيكة العسل الملكية", price: 15, img: "https://i.postimg.cc/bYxSydQ3/Screenshot_٢٠٢٦٠٤٠٨_٠٥٣٨٤٢_Brave.jpg" }
+            { id: 0, ar: "سبانش لاتيه بارد", price: 18, img: "https://i.postimg.cc/pVf5WyDG/FB_IMG_1775615731297.jpg", qty: 0 },
+            { id: 1, ar: "V60 حار", price: 22, img: "https://i.postimg.cc/Y26Lrj1d/FB_IMG_1775615760389.jpg", qty: 0 },
+            { id: 2, ar: "كيكة العسل الملكية", price: 15, img: "https://i.postimg.cc/bYxSydQ3/Screenshot_٢٠٢٦٠٤٠٨_٠٥٣٨٤٢_Brave.jpg", qty: 0 }
         ];
 
-        // دالة النطق الصوتي
         function speak(text) {
             const msg = new SpeechSynthesisUtterance();
-            msg.text = text;
-            msg.lang = 'ar-SA';
+            msg.text = text; msg.lang = 'ar-SA';
             window.speechSynthesis.speak(msg);
         }
 
@@ -76,43 +78,60 @@
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
             document.getElementById('mode-badge').innerText = mode === 'local' ? `طاولة: ${tableNumber}` : "سفري";
-            
-            // نطق ترحيبي عند الدخول
-            speak("أهلاً بك في ألفا شادو، تصفح المنيو واطلب ما تحب");
+            speak("أهلاً بك، اختر الكميات التي تريدها");
             render();
         }
 
         function render() {
             let html = "";
-            menu.forEach((item, i) => {
-                html += `<div class="card"><img src="${item.img}"><div class="card-info"><b>${item.ar}</b><br><span style="color:var(--accent); font-weight:bold;">${item.price} SAR</span></div><button class="btn-add" onclick="addToCart(${i})">إضافة +</button></div>`;
+            let total = 0;
+            menu.forEach((item) => {
+                total += (item.qty * item.price);
+                html += `
+                <div class="card">
+                    <img src="${item.img}">
+                    <div class="card-info">
+                        <b>${item.ar}</b><br>
+                        <small style="color:gray;">${item.price} SAR</small>
+                    </div>
+                    <div class="counter-box">
+                        <button class="btn-step" onclick="updateQty(${item.id}, -1)">-</button>
+                        <span class="qty" id="qty-${item.id}">${item.qty}</span>
+                        <button class="btn-step" onclick="updateQty(${item.id}, 1)">+</button>
+                    </div>
+                </div>`;
             });
             document.getElementById('menu-items').innerHTML = html;
+            document.getElementById('total-price').innerText = total;
         }
 
-        function addToCart(i) {
-            cart.push(menu[i]);
-            document.getElementById('count').innerText = cart.length;
-            // نطق اسم المنتج عند الإضافة
-            speak("تم إضافة " + menu[i].ar);
+        function updateQty(id, step) {
+            if (menu[id].qty + step < 0) return;
+            menu[id].qty += step;
+            if (step > 0) speak(menu[id].qty + " " + menu[id].ar);
+            render();
         }
 
         function sendOrder() {
-            if(cart.length === 0) return;
-            const typeStr = orderMode === 'local' ? `محلي (طاولة ${tableNumber})` : "سفري";
+            const orderedItems = menu.filter(i => i.qty > 0);
+            if(orderedItems.length === 0) { speak("من فضلك اختر مشروباً أولاً"); return; }
             
+            const typeStr = orderMode === 'local' ? `محلي (طاولة ${tableNumber})` : "سفري";
+            const itemsList = orderedItems.map(i => `${i.qty} x ${i.ar}`);
+
             database.ref('orders').push({
                 type: typeStr,
-                items: cart.map(i => i.ar),
+                items: itemsList,
                 time: new Date().toLocaleTimeString('ar-SA'),
                 isLocal: orderMode === 'local'
             });
 
-            speak("شكراً لك، تم إرسال طلبك للباريستا");
-
-            const msg = `*طلب جديد*\n*النوع:* ${typeStr}\n*الطلبات:*\n${cart.map(i => "- " + i.ar).join("\n")}`;
+            speak("تم إرسال طلبك، شكراً لك");
+            
+            const msg = `*طلب جديد من Alpha-Shadow*\n*النوع:* ${typeStr}\n*الطلبات:*\n${itemsList.join("\n")}\n*الإجمالي:* ${document.getElementById('total-price').innerText} SAR`;
             window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-            cart = []; document.getElementById('count').innerText = "0";
+            
+            menu.forEach(i => i.qty = 0); render(); // تصفير المنيو
         }
     </script>
 </body>
