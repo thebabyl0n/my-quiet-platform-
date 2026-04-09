@@ -38,7 +38,14 @@
         .item-name { font-weight: bold; font-size: 16px; color: var(--dark); }
         .item-qty { background: var(--gold); color: white; padding: 2px 8px; border-radius: 6px; font-size: 14px; margin-left: 5px; }
         .extra-name { color: var(--gold); font-size: 13px; font-weight: 600; padding-right: 10px; }
-        .total-price { font-size: 22px; font-weight: 800; color: var(--dark); margin: 15px 0; text-align: center; }
+        
+        /* تنسيقات الخصم الجديدة */
+        .discount-row { display: flex; justify-content: space-between; color: #dc2626; font-weight: bold; margin-top: 10px; font-size: 14px; border-top: 1px solid #ddd; padding-top: 10px; }
+        .total-price { font-size: 22px; font-weight: 800; color: var(--dark); margin: 10px 0; text-align: center; }
+        .promo-container { display: flex; gap: 5px; margin-bottom: 15px; }
+        .promo-input { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #ddd; outline: none; }
+        .promo-btn { background: var(--gold); border: none; padding: 0 15px; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
+
         .send-btn { background: #22c55e; color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
@@ -65,7 +72,19 @@
     <div class="cart-box">
         <h3 style="margin:0 0 15px 0;">🛒 السلة (<span id="typeLbl"></span> <span id="tblLbl"></span>)</h3>
         <div id="cartList"></div>
+        
+        <div class="promo-container" style="margin-top:15px;">
+            <input type="text" id="promoCode" class="promo-input" placeholder="لديك كود خصم؟">
+            <button class="promo-btn" onclick="applyPromo()">تفعيل</button>
+        </div>
+
+        <div id="discountInfo" style="display:none;" class="discount-row">
+            <span>خصم الكوبون:</span>
+            <span id="discountVal">0</span>
+        </div>
+
         <div class="total-price">الإجمالي النهائي: <span id="total">0</span> ريال</div>
+        
         <textarea id="notes" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px; font-family:inherit;" rows="3" placeholder="ملاحظاتك الإضافية للباريستا..."></textarea>
         <button class="send-btn" onclick="submitOrder()">إرسال الطلب عبر واتساب ✅</button>
     </div>
@@ -83,6 +102,7 @@
 
     let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
     let oType = ""; let tNum = ""; let extras = ""; let currentOrderId = null;
+    let discountPercent = 0; let activePromo = "";
 
     database.ref('settings').on('value', snap => {
         const s = snap.val();
@@ -140,31 +160,41 @@
         }, 500);
     }
 
-    // --- المنطق الجديد: التجميع الذكي ---
     function addToCart(k, ar, en, p) {
         const s = document.getElementById('ex-'+k);
         const exEn = s.value; 
         const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
         const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
-
-        // البحث لو الصنف بنفس الإضافة موجود قبل كدة
         const existingItem = cart.find(i => i.k === k && i.exEn === exEn);
-
-        if (existingItem) {
-            existingItem.qty += 1;
-        } else {
-            cart.push({k, ar, en, p, exAr, exEn, exP, qty: 1});
-        }
-        
+        if (existingItem) { existingItem.qty += 1; } 
+        else { cart.push({k, ar, en, p, exAr, exEn, exP, qty: 1}); }
         talk(en + (exEn ? " with " + exEn : ""));
         renderCart();
     }
 
+    function applyPromo() {
+        const code = document.getElementById('promoCode').value.trim();
+        if(!code) return;
+        database.ref('coupons').orderByChild('code').equalTo(code).once('value', snap => {
+            if(snap.exists()) {
+                const couponData = Object.values(snap.val())[0];
+                discountPercent = parseFloat(couponData.discount);
+                activePromo = code;
+                showToast("تم تطبيق الخصم بنجاح! 🎉");
+                renderCart();
+            } else {
+                alert("كود الخصم غير صحيح أو منتهي");
+                discountPercent = 0; activePromo = "";
+                renderCart();
+            }
+        });
+    }
+
     function renderCart() {
-        let h = ""; let t = 0;
+        let h = ""; let subTotal = 0;
         cart.forEach((i, x) => {
             let itemTotal = (i.p + i.exP) * i.qty; 
-            t += itemTotal;
+            subTotal += itemTotal;
             h += `<div class="cart-item">
                     <div class="cart-row">
                         <span class="item-name"><span class="item-qty">${i.qty}x</span> ${i.ar}</span>
@@ -176,8 +206,19 @@
                     ${i.exAr ? `<div class="extra-name">+ إضافة: ${i.exAr}</div>` : ''}
                   </div>`;
         });
+        
+        let discountVal = (subTotal * discountPercent) / 100;
+        let finalTotal = subTotal - discountVal;
+
+        if(discountVal > 0) {
+            document.getElementById('discountInfo').style.display = 'flex';
+            document.getElementById('discountVal').innerText = `-${discountVal.toFixed(2)} ريال (${discountPercent}%)`;
+        } else {
+            document.getElementById('discountInfo').style.display = 'none';
+        }
+
         document.getElementById('cartList').innerHTML = h;
-        document.getElementById('total').innerText = t.toFixed(2);
+        document.getElementById('total').innerText = finalTotal.toFixed(2);
     }
 
     function updateQty(index, change) {
@@ -194,14 +235,18 @@
 
     function submitOrder() {
         if(!cart.length) return alert("السلة فارغة");
+        const finalTotal = document.getElementById('total').innerText;
         const newOrderRef = database.ref('orders').push();
         currentOrderId = newOrderRef.key;
         newOrderRef.set({
             items: cart, type: oType, table: tNum,
             notes: document.getElementById('notes').value,
-            total: document.getElementById('total').innerText,
+            promoUsed: activePromo,
+            discountAmount: ((parseFloat(document.getElementById('total').innerText) * discountPercent) / (100 - discountPercent)).toFixed(2),
+            total: finalTotal,
             status: 'قيد المراجعة ⏳', time: Date.now()
         });
+
         document.getElementById('order-status-bar').style.display = 'block';
         database.ref('orders/' + currentOrderId + '/status').on('value', s => {
             const status = s.val();
@@ -212,16 +257,14 @@
             }
         });
 
-        // رسالة الواتساب الاحترافية والمجمعة
         let msg = `*طلب جديد (${oType} ${tNum?'طاولة '+tNum:''})*:\n`;
-        cart.forEach(i => {
-            msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`;
-        });
+        cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
+        if(activePromo) msg += `\n*كود الخصم المستخدم*: ${activePromo} (${discountPercent}%)`;
         msg += `\n*الملاحظات*: ${document.getElementById('notes').value}`;
-        msg += `\n*الإجمالي*: ${document.getElementById('total').innerText} ريال`;
+        msg += `\n*الإجمالي النهائي*: ${finalTotal} ريال`;
 
         window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-        cart = []; renderCart();
+        cart = []; renderCart(); activePromo = ""; discountPercent = 0;
     }
 
     function showToast(m) {
