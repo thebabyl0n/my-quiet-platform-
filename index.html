@@ -39,7 +39,7 @@
         .item-qty { background: var(--gold); color: white; padding: 2px 8px; border-radius: 6px; font-size: 14px; margin-left: 5px; }
         .extra-name { color: var(--gold); font-size: 13px; font-weight: 600; padding-right: 10px; }
         
-        /* تنسيقات الخصم الجديدة */
+        /* تنسيقات الخصم */
         .discount-row { display: flex; justify-content: space-between; color: #dc2626; font-weight: bold; margin-top: 10px; font-size: 14px; border-top: 1px solid #ddd; padding-top: 10px; }
         .total-price { font-size: 22px; font-weight: 800; color: var(--dark); margin: 10px 0; text-align: center; }
         .promo-container { display: flex; gap: 5px; margin-bottom: 15px; }
@@ -172,14 +172,29 @@
         renderCart();
     }
 
+    // --- المنطق المصلح للربط مع لوحة التحكم (سحب الكود) ---
     function applyPromo() {
-        const code = document.getElementById('promoCode').value.trim();
-        if(!code) return;
-        database.ref('coupons').orderByChild('code').equalTo(code).once('value', snap => {
-            if(snap.exists()) {
-                const couponData = Object.values(snap.val())[0];
-                discountPercent = parseFloat(couponData.discount);
-                activePromo = code;
+        const inputCode = document.getElementById('promoCode').value.trim();
+        if(!inputCode) return;
+
+        database.ref('coupons').once('value', snap => {
+            const allCoupons = snap.val();
+            let found = false;
+
+            if (allCoupons) {
+                // بنلف على كل الكوبونات في الفايربيز
+                Object.keys(allCoupons).forEach(key => {
+                    const coupon = allCoupons[key];
+                    // التأكد من مطابقة الكود أياً كان اسم الخاصية (code أو العنوان نفسه)
+                    if (key === inputCode || coupon.code === inputCode) {
+                        discountPercent = parseFloat(coupon.discount);
+                        activePromo = inputCode;
+                        found = true;
+                    }
+                });
+            }
+
+            if(found) {
                 showToast("تم تطبيق الخصم بنجاح! 🎉");
                 renderCart();
             } else {
@@ -236,13 +251,16 @@
     function submitOrder() {
         if(!cart.length) return alert("السلة فارغة");
         const finalTotal = document.getElementById('total').innerText;
+        const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
+        const discountAmount = (subTotal * discountPercent) / 100;
+
         const newOrderRef = database.ref('orders').push();
         currentOrderId = newOrderRef.key;
         newOrderRef.set({
             items: cart, type: oType, table: tNum,
             notes: document.getElementById('notes').value,
             promoUsed: activePromo,
-            discountAmount: ((parseFloat(document.getElementById('total').innerText) * discountPercent) / (100 - discountPercent)).toFixed(2),
+            discountAmount: discountAmount.toFixed(2),
             total: finalTotal,
             status: 'قيد المراجعة ⏳', time: Date.now()
         });
