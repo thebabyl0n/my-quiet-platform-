@@ -178,20 +178,24 @@
         database.ref('coupons').once('value', snap => {
             const allCoupons = snap.val();
             let found = false;
+            let tempDiscount = 0;
 
             if (allCoupons) {
                 Object.keys(allCoupons).forEach(key => {
-                    const coupon = allCoupons[key];
-                    if (key === inputCode || (coupon && coupon.code === inputCode)) {
-                        // التعديل هنا لضمان تحويل النسبة لرقم صحيح
-                        discountPercent = parseFloat(coupon.discount) || 0;
-                        activePromo = inputCode;
+                    const couponData = allCoupons[key];
+                    // فحص لو الكود هو العنوان (Key) أو موجود كخاصية داخلية
+                    if (key === inputCode || (couponData && couponData.code === inputCode)) {
                         found = true;
+                        // محاولة سحب القيمة أياً كان مكانها
+                        let rawDiscount = (typeof couponData === 'object') ? (couponData.discount || couponData.value) : couponData;
+                        tempDiscount = parseFloat(rawDiscount) || 0;
                     }
                 });
             }
 
-            if(found && discountPercent > 0) {
+            if(found && tempDiscount > 0) {
+                discountPercent = tempDiscount;
+                activePromo = inputCode;
                 showToast("تم تطبيق الخصم بنجاح! 🎉");
                 renderCart();
             } else {
@@ -289,3 +293,4 @@
 </script>
 </body>
 </html>
+
