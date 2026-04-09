@@ -14,7 +14,8 @@
         .section { background: #f8fafc; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
         h3 { color: var(--primary); border-bottom: 2px solid var(--gold); padding-bottom: 5px; margin-top: 0; }
         label { display: block; margin: 10px 0 5px; font-weight: bold; font-size: 13px; color: #475569; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 14px; }
+        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 14px; }
+        textarea { resize: vertical; min-height: 80px; font-family: inherit; }
         .btn-save { background: var(--green); color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
         .btn-save:hover { opacity: 0.8; }
         .btn-gold { background: var(--gold); }
@@ -63,12 +64,14 @@
     </div>
 
     <div class="section">
-        <h3>🎙️ الإعدادات الصوتية (English)</h3>
-        <label>رسالة الترحيب عند الدخول</label>
+        <h3>🎙️ الإعدادات الصوتية والرسائل</h3>
+        <label>رسالة الترحيب الصوتية (EN)</label>
         <input type="text" id="welcomeVoice" placeholder="Welcome to [Name] Coffee">
-        <label>رسالة عند إرسال الطلب</label>
-        <input type="text" id="readyVoice" placeholder="Your order is ready, Enjoy!">
-        <button class="btn-save btn-gold" onclick="saveSettings('audio')">حفظ الأصوات 🎧</button>
+        <label>رسالة الصوت عند إرسال الطلب (EN)</label>
+        <input type="text" id="readyVoice" placeholder="Your order is ready!">
+        <label>نص رسالة استلام الطلب (Text Message)</label>
+        <textarea id="orderMsgText" placeholder="مثلاً: شكراً لطلبك من كافيه الظل، طلبك قيد التحضير الآن!"></textarea>
+        <button class="btn-save btn-gold" onclick="saveSettings('audio')">حفظ الإعدادات 🎧</button>
     </div>
 
     <div class="section">
@@ -122,7 +125,8 @@
         } else {
             database.ref('settings/audio').set({
                 welcome: document.getElementById('welcomeVoice').value,
-                ready: document.getElementById('readyVoice').value
+                ready: document.getElementById('readyVoice').value,
+                msgText: document.getElementById('orderMsgText').value
             });
         }
         alert("تم الحفظ بنجاح!");
@@ -187,6 +191,7 @@
                 if(s.audio) {
                     document.getElementById('welcomeVoice').value = s.audio.welcome || "";
                     document.getElementById('readyVoice').value = s.audio.ready || "";
+                    document.getElementById('orderMsgText').value = s.audio.msgText || "";
                 }
             }
         });
