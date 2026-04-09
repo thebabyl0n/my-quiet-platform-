@@ -3,145 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="dynamicTitle">جاري التحميل...</title>
+    <title id="pageTitle">Alpha Shadow Cafe</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --primary: #0f172a; --gold: #c8a27c; --green: #22c55e; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; padding-bottom: 180px; }
-        .hero { position: fixed; inset: 0; background-size: cover; background-position: center; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
-        .hero::before { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0.7); z-index: -1; }
-        .btn-main { background: var(--gold); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; margin: 10px; width: 250px; font-size: 18px; }
-        .card { background: white; margin: 12px; border-radius: 20px; padding: 12px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .card img { width: 80px; height: 80px; border-radius: 15px; object-fit: cover; margin-left: 12px; }
-        .qty-box { display: flex; align-items: center; gap: 10px; margin-right: auto; background: #f1f5f9; padding: 5px 10px; border-radius: 50px; }
-        .btn-step { background: white; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; }
-        .footer-cart { position: fixed; bottom: 0; width: 100%; background: white; padding: 20px; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.1); z-index: 1500; text-align: center; }
-        .cart-btn { width: 90%; background: var(--green); color: white; padding: 18px; border-radius: 50px; border: none; font-size: 20px; font-weight: bold; cursor: pointer; }
-        .status-ready { color: var(--green); font-size: 22px; font-weight: bold; display: none; margin-bottom: 10px; }
+        :root { --gold: #c8a27c; --dark: #0f172a; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-size: cover; background-position: center; background-attachment: fixed; color: white; transition: 0.5s; }
+        .overlay { background: rgba(15, 23, 42, 0.85); min-height: 100vh; padding: 20px; }
+        header { text-align: center; margin-bottom: 20px; }
+        #logo { max-width: 100px; border-radius: 50%; border: 2px solid var(--gold); }
+        
+        /* Slider العروض */
+        .slider-container { overflow-x: auto; display: flex; gap: 10px; margin-bottom: 20px; padding-bottom: 10px; }
+        .slider-img { width: 280px; height: 150px; border-radius: 15px; flex-shrink: 0; object-fit: cover; border: 1px solid var(--gold); }
+
+        /* المشروبات */
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .item-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(5px); border-radius: 15px; padding: 10px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .item-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 10px; }
+        .item-card h4 { margin: 10px 0 5px; font-size: 14px; }
+        .item-price { color: var(--gold); font-weight: bold; margin-bottom: 10px; display: block; }
+        
+        /* الإضافات (Dropdown) */
+        .extra-select { width: 100%; padding: 8px; border-radius: 8px; background: var(--dark); color: white; border: 1px solid var(--gold); font-size: 12px; margin-bottom: 10px; }
+        .btn-add { background: var(--gold); color: var(--dark); border: none; padding: 8px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
+
+        /* سلة الطلبات */
+        .cart-section { margin-top: 30px; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 20px; border: 1px dashed var(--gold); }
+        .notes-area { width: 100%; padding: 10px; border-radius: 10px; margin-top: 10px; box-sizing: border-box; }
+        .coupon-box { display: flex; gap: 5px; margin-top: 10px; }
+        .coupon-box input { flex: 1; padding: 10px; border-radius: 8px; border: none; }
+        .btn-send { background: #22c55e; color: white; width: 100%; padding: 15px; border-radius: 10px; border: none; font-size: 18px; font-weight: bold; margin-top: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="welcome-screen" class="hero">
-        <img id="storeLogo" src="" style="width: 130px; margin-bottom: 20px; border-radius: 20px; display: none;">
-        <h1 id="storeNameDisp">جاري التحميل...</h1>
-        <button class="btn-main" onclick="showTables()">📍 محلي / Dine-in</button>
-        <div id="tables-container" style="display:none;">
-            <select id="tableNum" style="padding:10px; border-radius:10px; margin-bottom:10px; width:180px;">
-                <option value="0">رقم الطاولة</option>
-                <script>for(let i=1; i<=20; i++) document.write(`<option value="${i}">طاولة ${i}</option>`);</script>
-            </select><br>
-            <button class="btn-main" style="width:120px; background:var(--green);" onclick="setMode('local')">دخول</button>
+<div class="overlay">
+    <header>
+        <img id="logo" src="" alt="Logo">
+        <h2 id="cafeNameDisplay">تحميل...</h2>
+    </header>
+
+    <div class="slider-container" id="offersSlider"></div>
+
+    <div class="menu-grid" id="menuItems"></div>
+
+    <div class="cart-section">
+        <h3>🛒 طلباتك</h3>
+        <div id="cartList"></div>
+        <hr>
+        <div class="coupon-box">
+            <input type="text" id="couponInput" placeholder="كود الخصم">
+            <button onclick="applyCoupon()" style="background:var(--gold); border:none; border-radius:8px; padding:0 10px;">تفعيل</button>
         </div>
-        <button class="btn-main" onclick="setMode('away')">🚗 سفري / Takeaway</button>
+        <textarea id="orderNotes" class="notes-area" placeholder="ملاحظاتك (السكر، المزاج، طلبات خاصة)..."></textarea>
+        <div style="margin-top:10px; font-size:18px;">الإجمالي: <span id="totalPrice">0</span> ريال</div>
+        <button class="btn-send" onclick="sendOrder()">إرسال الطلب عبر واتساب ✅</button>
     </div>
+</div>
 
-    <div id="main-content" style="display:none;">
-        <div id="menu-items"></div>
-        
-        <div class="footer-cart">
-            <div id="readyMsg" class="status-ready">✨ طَلَبُكَ جَاهِزٌ الآن ✨</div>
-            <p style="margin-bottom:10px; font-weight:bold;">الإجمالي: <span id="total-price">0</span> SAR</p>
-            <button class="cart-btn" onclick="sendOrder()">إرسال الطلب إلى الباريستا ☕</button>
-        </div>
-    </div>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
+        authDomain: "alphashadow-23689.firebaseapp.com",
+        projectId: "alphashadow-23689",
+        databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
-            authDomain: "alphashadow-23689.firebaseapp.com",
-            projectId: "alphashadow-23689",
-            databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+    let cart = [];
+    let discount = 0;
+    let welcomeVoice = "";
+    let readyVoice = "";
+    let extraOptionsHTML = "";
 
-        let menuData = []; let orderMode = ""; let branding = {}; let audio = {};
-
-        // 1. ربط الهوية والصوت بالأدمن
-        database.ref('settings').on('value', snap => {
-            const s = snap.val();
-            if(s) {
-                branding = s.branding || {};
-                audio = s.audio || {};
-                document.getElementById('storeNameDisp').innerText = branding.name || "Alpha-Shadow";
-                document.getElementById('dynamicTitle').innerText = branding.name || "Alpha-Shadow";
-                if(branding.logo) { document.getElementById('storeLogo').src = branding.logo; document.getElementById('storeLogo').style.display = 'block'; }
-                if(branding.bg) document.getElementById('welcome-screen').style.backgroundImage = `url('${branding.bg}')`;
+    // 1. تحميل الهوية والمظهر والأصوات
+    database.ref('settings').on('value', snap => {
+        const s = snap.val();
+        if(s) {
+            if(s.branding) {
+                document.getElementById('cafeNameDisplay').innerText = s.branding.name;
+                document.getElementById('pageTitle').innerText = s.branding.name;
+                document.getElementById('logo').src = s.branding.logo;
+                document.body.style.backgroundImage = `url('${s.branding.bg}')`;
             }
+            if(s.audio) {
+                welcomeVoice = s.audio.welcome;
+                readyVoice = s.audio.ready;
+                // نطق الترحيب عند أول لمسة للشاشة (سياسة المتصفح)
+                document.body.onclick = () => { if(welcomeVoice) { speak(welcomeVoice); document.body.onclick = null; } };
+            }
+        }
+    });
+
+    // 2. تحميل العروض (Slider)
+    database.ref('offers').on('value', snap => {
+        let h = "";
+        snap.forEach(c => h += `<img src="${c.val().img}" class="slider-img">`);
+        document.getElementById('offersSlider').innerHTML = h;
+    });
+
+    // 3. تحميل الإضافات (Dropdown)
+    database.ref('extras_options').on('value', snap => {
+        extraOptionsHTML = `<option value="">بدون إضافات</option>`;
+        snap.forEach(c => {
+            extraOptionsHTML += `<option value="${c.val().en}" data-ar="${c.val().ar}" data-price="${c.val().price}">${c.val().ar} (+${c.val().price})</option>`;
+        });
+        loadMenu(); // تحميل المنيو بعد الإضافات
+    });
+
+    // 4. تحميل المشروبات
+    function loadMenu() {
+        database.ref('menu_items').on('value', snap => {
+            let h = "";
+            snap.forEach(child => {
+                const item = child.val();
+                h += `
+                <div class="item-card">
+                    <img src="${item.img}">
+                    <h4>${item.ar}</h4>
+                    <span class="item-price">${item.price} ريال</span>
+                    <select class="extra-select" id="extra-${child.key}">${extraOptionsHTML}</select>
+                    <button class="btn-add" onclick="addToCart('${child.key}', '${item.ar}', '${item.en}', ${item.price})">إضافة +</button>
+                </div>`;
+            });
+            document.getElementById('menuItems').innerHTML = h;
+        });
+    }
+
+    function addToCart(key, ar, en, price) {
+        const extraSelect = document.getElementById('extra-'+key);
+        const extraEn = extraSelect.value;
+        const extraAr = extraSelect.options[extraSelect.selectedIndex].getAttribute('data-ar');
+        const extraPrice = parseFloat(extraSelect.options[extraSelect.selectedIndex].getAttribute('data-price') || 0);
+
+        cart.push({ ar, en, price, extraAr, extraEn, extraPrice });
+        speak(en + (extraEn ? " with " + extraEn : ""));
+        updateCart();
+    }
+
+    function updateCart() {
+        let h = "";
+        let total = 0;
+        cart.forEach((item, index) => {
+            const itemTotal = item.price + item.extraPrice;
+            total += itemTotal;
+            h += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span>${item.ar} ${item.extraAr ? '('+item.extraAr+')' : ''}</span>
+                    <span>${itemTotal} ريال <button onclick="cart.splice(${index},1); updateCart()" style="background:red; color:white; border:none; border-radius:5px;">X</button></span>
+                  </div>`;
+        });
+        
+        let finalTotal = total - (total * (discount / 100));
+        document.getElementById('cartList').innerHTML = h;
+        document.getElementById('totalPrice').innerText = finalTotal.toFixed(2);
+    }
+
+    function applyCoupon() {
+        const code = document.getElementById('couponInput').value.toUpperCase();
+        database.ref('coupons/' + code).once('value', snap => {
+            if(snap.exists()) {
+                discount = snap.val().pct;
+                alert("تم تطبيق خصم " + discount + "%");
+                updateCart();
+            } else { alert("كود غير صحيح!"); }
+        });
+    }
+
+    function speak(text) {
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'en-US';
+        window.speechSynthesis.speak(msg);
+    }
+
+    function sendOrder() {
+        if(cart.length === 0) return alert("السلة فاضية!");
+        if(readyVoice) speak(readyVoice);
+
+        let orderDetails = "طلب جديد:\n";
+        cart.forEach(i => {
+            orderDetails += `- ${i.ar} ${i.extraAr ? '['+i.extraAr+']' : ''}\n`;
+        });
+        orderDetails += `\nالملاحظات: ${document.getElementById('orderNotes').value}`;
+        orderDetails += `\nالإجمالي بعد الخصم: ${document.getElementById('totalPrice').innerText} ريال`;
+
+        // سجل الطلب في الداتابيز للباريستا
+        database.ref('orders').push({
+            items: cart,
+            notes: document.getElementById('orderNotes').value,
+            total: document.getElementById('totalPrice').innerText,
+            status: 'pending',
+            time: new Date().getTime()
         });
 
-        function showTables() { document.getElementById('tables-container').style.display = 'block'; }
-
-        function setMode(mode) {
-            if(mode === 'local' && document.getElementById('tableNum').value === "0") { alert("اختر الطاولة!"); return; }
-            orderMode = mode;
-            document.getElementById('welcome-screen').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            
-            // نطق الترحيب المخصص من الأدمن
-            speak(audio.welcome || "Welcome to our shop");
-            loadMenu();
-        }
-
-        function loadMenu() {
-            database.ref('menu_items').on('value', snap => {
-                menuData = []; snap.forEach(c => menuData.push({...c.val(), id: c.key, qty: 0}));
-                render();
-            });
-        }
-
-        function render() {
-            let h = ""; let t = 0;
-            menuData.forEach((item, i) => {
-                t += (item.qty * item.price);
-                h += `<div class="card"><img src="${item.img}"><div><b>${item.ar}</b><br><small>${item.price} SAR</small></div>
-                <div class="qty-box"><button class="btn-step" onclick="updateQty(${i},-1)">-</button><span>${item.qty}</span><button class="btn-step" onclick="updateQty(${i},1)">+</button></div></div>`;
-            });
-            document.getElementById('menu-items').innerHTML = h;
-            document.getElementById('total-price').innerText = t;
-        }
-
-        // نطق اسم المشروب عند الاختيار (EN)
-        function updateQty(i, s) { 
-            if(menuData[i].qty + s >= 0) { 
-                menuData[i].qty += s; 
-                if(s > 0) speak(menuData[i].en); 
-                render(); 
-            } 
-        }
-
-        function speak(text) {
-            let m = new SpeechSynthesisUtterance(text);
-            m.lang = 'en-US'; m.rate = 0.9;
-            window.speechSynthesis.speak(m);
-        }
-
-        // إرسال الطلب وربطه بالباريستا
-        function sendOrder() {
-            const items = menuData.filter(i => i.qty > 0).map(i => `${i.qty} x ${i.ar}`);
-            if(items.length === 0) return;
-
-            const table = document.getElementById('tableNum').value;
-            const orderId = Date.now();
-            
-            // إرسال الطلب لقاعدة البيانات (ليظهر عند الباريستا فوراً)
-            database.ref('live_orders/' + orderId).set({
-                items: items,
-                table: table,
-                type: orderMode,
-                status: 'pending'
-            });
-
-            // إظهار جملة "طلبك جاهز" ونطق الرسالة النهائية
-            document.getElementById('readyMsg').style.display = 'block';
-            speak(audio.ready || "Your order is being prepared, enjoy!");
-            
-            // فتح واتساب كنسخة إضافية
-            const msg = `طلب جديد: ${items.join(', ')}`;
-            setTimeout(() => { window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`); }, 2000);
-        }
-    </script>
+        const phone = "201027179831"; // رقمك أو رقم الكافيه
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(orderDetails)}`);
+        cart = [];
+        updateCart();
+    }
+</script>
 </body>
 </html>
