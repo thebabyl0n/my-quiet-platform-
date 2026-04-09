@@ -3,25 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام العرض المطور | Alpha Shadow</title>
+    <title>نظام العرض الاحترافي | Alpha Shadow</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --gold: #c8a27c; --text: #f1f5f9; --accent: #22c55e; --blue: #3b82f6; }
+        :root { --bg: #0f172a; --card: #1e293b; --gold: #c8a27c; --text: #f1f5f9; --accent: #22c55e; --blue: #3b82f6; --note: #fbbf24; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
-        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 2px solid #334155; transition: 0.3s; }
+        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 2px solid #334155; transition: 0.3s; position: relative; }
         .ready-border { border-color: var(--accent) !important; box-shadow: 0 0 15px rgba(34, 197, 94, 0.2); }
         .table-no { background: var(--gold); color: var(--bg); padding: 5px 15px; border-radius: 8px; font-weight: bold; font-size: 20px; }
-        .items-list { margin: 15px 0; border-top: 1px solid #334155; padding-top: 12px; min-height: 50px; }
-        .item { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dashed #475569; padding-bottom: 5px; }
-        .total { font-size: 20px; font-weight: bold; color: var(--accent); border-top: 2px solid #334155; padding-top: 10px; display: flex; justify-content: space-between; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 15px; transition: 0.3s; color: white; }
+        .items-list { margin: 15px 0; border-top: 1px solid #334155; padding-top: 12px; }
+        .item { margin-bottom: 12px; border-bottom: 1px dashed #475569; padding-bottom: 8px; }
+        .item-row { display: flex; justify-content: space-between; font-weight: bold; }
+        .extra-info { font-size: 14px; color: var(--gold); margin-top: 4px; display: block; }
+        .customer-note { background: rgba(251, 191, 36, 0.1); color: var(--note); padding: 10px; border-radius: 8px; border-right: 4px solid var(--note); margin-top: 10px; font-size: 14px; }
+        .total { font-size: 19px; font-weight: bold; color: var(--accent); border-top: 2px solid #334155; padding-top: 10px; display: flex; justify-content: space-between; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 15px; color: white; transition: 0.3s; }
         .btn-cashier { background: var(--accent); }
         .btn-dept { background: var(--blue); }
-        .btn-dept:disabled { background: #475569; cursor: not-allowed; }
-        audio { display: none; }
+        .btn:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
     </style>
 </head>
 <body>
@@ -54,7 +56,7 @@
 
     database.ref('live_orders').on('value', (snapshot) => {
         const grid = document.getElementById('ordersGrid');
-        const currentOrders = [];
+        grid.innerHTML = ''; 
         
         snapshot.forEach((child) => {
             const order = child.val();
@@ -63,52 +65,56 @@
             let hasMyItems = false;
 
             order.items.forEach(item => {
-                // الكاشير يشوف الكل، الأقسام تشوف قسمها فقط
                 if (isCashier || item.dept === screenType) {
                     hasMyItems = true;
-                    itemsHtml += `<div class="item"><span>${item.ar} × ${item.qty}</span></div>`;
+                    // عرض الصنف + الإضافات (لو موجودة)
+                    itemsHtml += `
+                        <div class="item">
+                            <div class="item-row">
+                                <span>${item.ar || item.name} × ${item.qty}</span>
+                                ${isCashier ? `<span>${(item.p * item.qty).toFixed(2)}</span>` : ''}
+                            </div>
+                            ${item.exAr ? `<span class="extra-info">+ إضافات: ${item.exAr}</span>` : ''}
+                        </div>`;
                 }
             });
 
             if (hasMyItems) {
                 const isReady = order.status === 'جاهز للاستلام ✅';
                 
-                // زر الكاشير يحذف نهائياً، زر القسم يحدث الحالة فقط دون حذف الكارت من الصفحة
+                // زر الكاشير يحذف، القسم يحدث الحالة
                 const btnHtml = isCashier 
                     ? `<button class="btn btn-cashier" onclick="deleteOrder('${orderId}')">تم المحاسبة والحذف ✅</button>`
-                    : `<button class="btn btn-dept" ${isReady ? 'disabled' : ''} onclick="markReady('${orderId}')">${isReady ? 'تم إرسال الجاهزية 🔔' : 'جاهز - إرسال تنبيه 📣'}</button>`;
+                    : `<button class="btn btn-dept" ${isReady ? 'disabled' : ''} onclick="markReady('${orderId}')">${isReady ? 'تم إرسال التنبيه 🔔' : 'جاهز للتسليم 📣'}</button>`;
 
-                currentOrders.push(`
-                    <div class="order-card ${isReady ? 'ready-border' : ''}" id="card-${orderId}">
-                        <div style="display:flex; justify-content:space-between;">
+                grid.innerHTML += `
+                    <div class="order-card ${isReady ? 'ready-border' : ''}">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span class="table-no">طاولة ${order.table}</span>
-                            <span style="color:var(--gold)">#${orderId.slice(-4)}</span>
+                            <span style="color:var(--gold); font-size:12px;">#${orderId.slice(-4)}</span>
                         </div>
+                        
                         <div class="items-list">${itemsHtml}</div>
+
+                        ${order.note ? `<div class="customer-note">📝 ملاحظة: ${order.note}</div>` : ''}
+
                         <div class="total">
                             <span>${isCashier ? 'الإجمالي:' : 'الحالة:'}</span>
-                            <span>${isCashier ? order.totalPrice + ' ريال' : (order.status || 'جاري التحضير')}</span>
+                            <span>${isCashier ? order.totalPrice + ' ريال' : (order.status || 'قيد التحضير')}</span>
                         </div>
                         ${btnHtml}
-                    </div>`);
+                    </div>`;
             }
         });
-        
-        // تحديث الشبكة بالكامل مع الحفاظ على العناصر الموجودة
-        grid.innerHTML = currentOrders.join('');
     });
 
-    // للمطبخ: تحديث الحالة فقط في الداتابيز
     function markReady(id) {
-        database.ref('live_orders/' + id).update({ 
-            status: 'جاهز للاستلام ✅' 
-        });
+        database.ref('live_orders/' + id).update({ status: 'جاهز للاستلام ✅' });
         document.getElementById('notifSound').play().catch(e => {});
     }
 
-    // للكاشير: حذف نهائي من الداتابيز (المكان الوحيد للاختفاء)
     function deleteOrder(id) {
-        if(confirm('تأكيد استلام المبلغ وحذف الطلب من جميع الشاشات؟')) {
+        if(confirm('تأكيد المحاسبة والحذف النهائي؟')) {
             database.ref('live_orders/' + id).remove();
         }
     }
