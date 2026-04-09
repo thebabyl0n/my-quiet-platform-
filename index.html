@@ -32,11 +32,11 @@
         .extra-sel { width: 100%; padding: 8px; border-radius: 10px; border: 1px solid #ddd; margin: 10px 0; font-size: 12px; background: #fafafa; }
         .add-btn { background: var(--dark); color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; }
 
-        /* سلة الطلبات بتنسيق فنان */
         .cart-box { margin-top: 30px; background: #f9fafb; padding: 20px; border-radius: 24px; border: 1px solid #eee; }
         .cart-item { display: flex; flex-direction: column; border-bottom: 1px solid #eee; padding: 10px 0; gap: 4px; }
         .cart-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .item-name { font-weight: bold; font-size: 16px; color: var(--dark); }
+        .item-qty { background: var(--gold); color: white; padding: 2px 8px; border-radius: 6px; font-size: 14px; margin-left: 5px; }
         .extra-name { color: var(--gold); font-size: 13px; font-weight: 600; padding-right: 10px; }
         .total-price { font-size: 22px; font-weight: 800; color: var(--dark); margin: 15px 0; text-align: center; }
         .send-btn { background: #22c55e; color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; }
@@ -65,7 +65,7 @@
     <div class="cart-box">
         <h3 style="margin:0 0 15px 0;">🛒 السلة (<span id="typeLbl"></span> <span id="tblLbl"></span>)</h3>
         <div id="cartList"></div>
-        <div class="total-price">الإجمالي: <span id="total">0</span> ريال</div>
+        <div class="total-price">الإجمالي النهائي: <span id="total">0</span> ريال</div>
         <textarea id="notes" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px; font-family:inherit;" rows="3" placeholder="ملاحظاتك الإضافية للباريستا..."></textarea>
         <button class="send-btn" onclick="submitOrder()">إرسال الطلب عبر واتساب ✅</button>
     </div>
@@ -140,12 +140,22 @@
         }, 500);
     }
 
+    // --- المنطق الجديد: التجميع الذكي ---
     function addToCart(k, ar, en, p) {
         const s = document.getElementById('ex-'+k);
         const exEn = s.value; 
-        const exAr = s.options[s.selectedIndex].getAttribute('data-ar');
+        const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
         const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
-        cart.push({ar, en, p, exAr, exEn, exP});
+
+        // البحث لو الصنف بنفس الإضافة موجود قبل كدة
+        const existingItem = cart.find(i => i.k === k && i.exEn === exEn);
+
+        if (existingItem) {
+            existingItem.qty += 1;
+        } else {
+            cart.push({k, ar, en, p, exAr, exEn, exP, qty: 1});
+        }
+        
         talk(en + (exEn ? " with " + exEn : ""));
         renderCart();
     }
@@ -153,17 +163,27 @@
     function renderCart() {
         let h = ""; let t = 0;
         cart.forEach((i, x) => {
-            let total = i.p + i.exP; t += total;
+            let itemTotal = (i.p + i.exP) * i.qty; 
+            t += itemTotal;
             h += `<div class="cart-item">
                     <div class="cart-row">
-                        <span class="item-name">${i.ar}</span>
-                        <span>${total} ريال <button onclick="cart.splice(${x},1);renderCart()" style="color:red;border:none;background:none;font-weight:bold;cursor:pointer;">✕</button></span>
+                        <span class="item-name"><span class="item-qty">${i.qty}x</span> ${i.ar}</span>
+                        <span>${itemTotal.toFixed(2)} ريال 
+                            <button onclick="updateQty(${x}, -1)" style="border:none;background:none;font-weight:bold;cursor:pointer;color:var(--gold);font-size:18px;">➖</button>
+                            <button onclick="updateQty(${x}, 1)" style="border:none;background:none;font-weight:bold;cursor:pointer;color:var(--gold);font-size:18px;">➕</button>
+                        </span>
                     </div>
                     ${i.exAr ? `<div class="extra-name">+ إضافة: ${i.exAr}</div>` : ''}
                   </div>`;
         });
         document.getElementById('cartList').innerHTML = h;
         document.getElementById('total').innerText = t.toFixed(2);
+    }
+
+    function updateQty(index, change) {
+        cart[index].qty += change;
+        if (cart[index].qty <= 0) cart.splice(index, 1);
+        renderCart();
     }
 
     function talk(t) {
@@ -191,10 +211,15 @@
                 if(readyAudio) talk(readyAudio);
             }
         });
+
+        // رسالة الواتساب الاحترافية والمجمعة
         let msg = `*طلب جديد (${oType} ${tNum?'طاولة '+tNum:''})*:\n`;
-        cart.forEach(i => msg += `- ${i.ar} ${i.exAr?'['+i.exAr+']':''}\n`);
+        cart.forEach(i => {
+            msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`;
+        });
         msg += `\n*الملاحظات*: ${document.getElementById('notes').value}`;
         msg += `\n*الإجمالي*: ${document.getElementById('total').innerText} ريال`;
+
         window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
         cart = []; renderCart();
     }
