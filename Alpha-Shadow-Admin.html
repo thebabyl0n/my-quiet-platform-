@@ -57,16 +57,13 @@
         <h3>🎟️ إدارة أكواد الخصم (نظام الجدة 🔥)</h3>
         <label>كود الخصم (مثلاً: OFF10)</label>
         <input type="text" id="couponCode" placeholder="رمز الكوبون">
-        
         <label>قيمة الخصم</label>
         <input type="number" id="couponPct" placeholder="10">
-        
         <label>نوع الخصم</label>
         <select id="couponType">
             <option value="percent">نسبة مئوية (%)</option>
             <option value="fixed">مبلغ ثابت (ريال)</option>
         </select>
-
         <button class="btn-save btn-gold" onclick="addCoupon()">إضافة كوبون جديد ✅</button>
         <div id="couponsList"></div>
     </div>
@@ -95,12 +92,18 @@
     </div>
 
     <div class="section">
-        <h3>☕ قائمة المشروبات</h3>
+        <h3>☕ إدارة قائمة الأصناف (توجيه الشاشات)</h3>
         <label>الاسم (عربي)</label><input type="text" id="itemAr">
         <label>الاسم (EN للنطق)</label><input type="text" id="itemEn">
         <label>السعر الأساسي</label><input type="number" id="itemPrice">
         <label>رابط الصورة</label><input type="text" id="itemImg">
-        <button class="btn-save" onclick="addItem()">إضافة مشروب جديد ☕</button>
+        <label>توجيه الطلب إلى (الشاشة)</label>
+        <select id="itemDept">
+            <option value="barista">☕ شاشة الباريستا (Barista)</option>
+            <option value="kitchen">🍔 شاشة المطبخ (Kitchen)</option>
+            <option value="sweets">🍰 شاشة الحلا (Sweets)</option>
+        </select>
+        <button class="btn-save" onclick="addItem()">إضافة الصنف وتوجيهه ✅</button>
         <div id="itemsList"></div>
     </div>
 </div>
@@ -149,12 +152,10 @@
         }
     }
 
-    // --- تعديل وظيفة الكوبونات لتتوافق مع الزبون (شغل الجدة) ---
     function addCoupon() {
         const code = document.getElementById('couponCode').value.toUpperCase().trim();
         const discountValue = document.getElementById('couponPct').value;
         const type = document.getElementById('couponType').value;
-
         if(code && discountValue) {
             database.ref('coupons/' + code).set({ 
                 discount: parseFloat(discountValue),
@@ -164,9 +165,7 @@
             });
             document.getElementById('couponCode').value = '';
             document.getElementById('couponPct').value = '';
-            alert("تم إضافة الكوبون بنجاح! سيتم الخصم الآن عند الزبون.");
-        } else {
-            alert("يرجى إدخال الكود والقيمة");
+            alert("تم إضافة الكوبون بنجاح!");
         }
     }
 
@@ -187,9 +186,10 @@
         const en = document.getElementById('itemEn').value;
         const price = document.getElementById('itemPrice').value;
         const img = document.getElementById('itemImg').value;
+        const dept = document.getElementById('itemDept').value;
         if(ar && price) {
-            database.ref('menu_items').push({ ar, en, price: parseFloat(price), img });
-            alert("تمت إضافة المشروب!");
+            database.ref('menu_items').push({ ar, en, price: parseFloat(price), img, dept });
+            alert("تمت إضافة الصنف بنجاح!");
             document.getElementById('itemAr').value = '';
             document.getElementById('itemEn').value = '';
             document.getElementById('itemPrice').value = '';
@@ -200,22 +200,20 @@
     function loadData() {
         database.ref('settings').on('value', snap => {
             const s = snap.val();
-            if(s) {
-                if(s.branding) {
-                    document.getElementById('cafeName').value = s.branding.name || "";
-                    document.getElementById('logoUrl').value = s.branding.logo || "";
-                    document.getElementById('bgUrl').value = s.branding.bg || "";
-                }
-                if(s.audio) {
-                    document.getElementById('welcomeVoice').value = s.audio.welcome || "";
-                    document.getElementById('readyVoice').value = s.audio.ready || "";
-                    document.getElementById('orderMsgText').value = s.audio.msgText || "";
-                }
+            if(s && s.branding) {
+                document.getElementById('cafeName').value = s.branding.name || "";
+                document.getElementById('logoUrl').value = s.branding.logo || "";
+                document.getElementById('bgUrl').value = s.branding.bg || "";
+            }
+            if(s && s.audio) {
+                document.getElementById('welcomeVoice').value = s.audio.welcome || "";
+                document.getElementById('readyVoice').value = s.audio.ready || "";
+                document.getElementById('orderMsgText').value = s.audio.msgText || "";
             }
         });
 
         database.ref('offers').on('value', snap => {
-            let h = "<strong>صور العروض (Slider):</strong>";
+            let h = "<strong>صور العروض:</strong>";
             snap.forEach(child => {
                 h += `<div class="item-row">عرض صورة <button class="btn-del" onclick="database.ref('offers/${child.key}').remove()">حذف</button></div>`;
             });
@@ -223,17 +221,15 @@
         });
 
         database.ref('coupons').on('value', snap => {
-            let h = "<strong>الكوبونات النشطة:</strong>";
+            let h = "<strong>الكوبونات:</strong>";
             snap.forEach(child => {
-                const c = child.val();
-                const typeText = (c.type === 'fixed') ? 'ريال' : '%';
-                h += `<div class="item-row">${child.key} (${c.discount}${typeText}) <button class="btn-del" onclick="database.ref('coupons/${child.key}').remove()">حذف</button></div>`;
+                h += `<div class="item-row">${child.key} <button class="btn-del" onclick="database.ref('coupons/${child.key}').remove()">حذف</button></div>`;
             });
             document.getElementById('couponsList').innerHTML = h;
         });
 
         database.ref('extras_options').on('value', snap => {
-            let h = "<strong>خيارات الـ Dropdown:</strong>";
+            let h = "<strong>الإضافات:</strong>";
             snap.forEach(child => {
                 h += `<div class="item-row">${child.val().ar} <button class="btn-del" onclick="database.ref('extras_options/${child.key}').remove()">حذف</button></div>`;
             });
@@ -241,9 +237,11 @@
         });
 
         database.ref('menu_items').on('value', snap => {
-            let h = "<strong>قائمة المشروبات:</strong>";
+            let h = "<strong>قائمة الأصناف:</strong>";
+            const deptNames = { 'barista': '☕', 'kitchen': '🍔', 'sweets': '🍰' };
             snap.forEach(child => {
-                h += `<div class="item-row">${child.val().ar} <button class="btn-del" onclick="database.ref('menu_items/${child.key}').remove()">حذف</button></div>`;
+                const item = child.val();
+                h += `<div class="item-row">${deptNames[item.dept] || ''} ${item.ar} <button class="btn-del" onclick="database.ref('menu_items/${child.key}').remove()">حذف</button></div>`;
             });
             document.getElementById('itemsList').innerHTML = h;
         });
@@ -251,3 +249,4 @@
 </script>
 </body>
 </html>
+
