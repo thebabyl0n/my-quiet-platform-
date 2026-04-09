@@ -3,24 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام العرض الاحترافي | Alpha Shadow</title>
+    <title>نظام العرض | Alpha Shadow</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --gold: #c8a27c; --text: #f1f5f9; --accent: #22c55e; --blue: #3b82f6; --red: #ef4444; }
+        :root { --bg: #0f172a; --card: #1e293b; --gold: #c8a27c; --text: #f1f5f9; --accent: #22c55e; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
-        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 2px solid #334155; position: relative; transition: 0.3s; }
-        .is-ready { border-color: var(--accent); opacity: 0.8; } /* تمييز الطلب الجاهز */
+        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #334155; position: relative; animation: fadeIn 0.4s ease-out; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .table-no { background: var(--gold); color: var(--bg); padding: 5px 15px; border-radius: 8px; font-weight: bold; font-size: 20px; }
+        .order-time { font-size: 13px; color: #94a3b8; margin-top: 8px; }
         .items-list { margin: 15px 0; border-top: 1px solid #334155; padding-top: 12px; }
-        .item { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dashed #475569; padding-bottom: 5px; }
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
-        .btn-ready { background: var(--blue); } /* زرار التنبيه */
-        .btn-done { background: var(--accent); }  /* زرار الحذف النهائي (للكاشير) */
-        .status-badge { font-size: 14px; padding: 4px 8px; border-radius: 5px; background: #334155; color: var(--gold); }
+        .item { display: flex; flex-direction: column; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #334155; }
+        .item-main { display: flex; justify-content: space-between; font-weight: 600; font-size: 16px; }
+        .item-extra { font-size: 13px; color: var(--gold); margin-top: 2px; }
+        .total { font-size: 22px; font-weight: bold; color: var(--accent); border-top: 2px solid #334155; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-done { background: var(--accent); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 15px; transition: 0.3s; }
+        .btn-done:hover { background: #16a34a; transform: translateY(-2px); }
+        audio { display: none; }
     </style>
 </head>
 <body>
@@ -28,8 +30,8 @@
 <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
 <div class="header">
-    <h2 id="screenTitle">جاري التعرف على القسم...</h2>
-    <div id="status">⏳</div>
+    <h2 id="screenTitle">🖥️ شاشة مراقبة الطلبات</h2>
+    <div id="status">جاري الاتصال... ⏳</div>
 </div>
 
 <div class="grid" id="ordersGrid"></div>
@@ -47,66 +49,80 @@
     const urlParams = new URLSearchParams(window.location.search);
     const screenType = urlParams.get('dept'); 
 
-    // ضبط العناوين
-    const titles = { 'barista': '☕ باريستا', 'kitchen': '🍔 مطبخ', 'dessert': '🍰 حلا', 'cashier': '💰 كاشير' };
-    const isCashier = (!screenType || screenType === 'cashier');
+    const titles = {
+        'barista': '☕ شاشة الباريستا (المشروبات)',
+        'kitchen': '🍔 شاشة المطبخ (الأكل)',
+        'dessert': '🍰 شاشة الحلا (الحلويات)',
+        'cashier': '💰 شاشة الكاشير (الكل)'
+    };
+
+    // تعديل العنوان: لو اللينك ملوش قسم (كاشير) يكتب "شاشة الكاشير"
     document.getElementById('screenTitle').innerText = titles[screenType] || titles['cashier'];
+
+    database.ref('.info/connected').on('value', (snap) => {
+        document.getElementById('status').innerText = snap.val() ? "متصل 🟢" : "منقطع 🔴";
+    });
 
     database.ref('live_orders').on('value', (snapshot) => {
         const grid = document.getElementById('ordersGrid');
         grid.innerHTML = ''; 
         
-        snapshot.forEach((child) => {
-            const order = child.val();
-            const orderId = child.key;
-            let itemsHtml = '';
-            let hasMyItems = false;
+        if (snapshot.exists()) {
+            snapshot.forEach((child) => {
+                const order = child.val();
+                const orderId = child.key;
+                let itemsHtml = '';
+                let hasItemsForThisScreen = false;
 
-            order.items.forEach(item => {
-                if (isCashier || item.dept === screenType) {
-                    hasMyItems = true;
-                    itemsHtml += `<div class="item"><span>${item.ar} × ${item.qty}</span><span>${(item.p * item.qty).toFixed(2)}</span></div>`;
+                order.items.forEach(item => {
+                    // شرط الفرز الأصلي: لو كاشير (null) اعرض كله، لو قسم اعرض قسمه بس
+                    const isGlobal = (!screenType || screenType === 'cashier');
+                    if (isGlobal || item.dept === screenType) {
+                        hasItemsForThisScreen = true;
+                        itemsHtml += `
+                            <div class="item">
+                                <div class="item-main">
+                                    <span>${item.ar || item.name} × ${item.qty}</span>
+                                    <span>${((item.p || item.price) * item.qty).toFixed(2)} ريال</span>
+                                </div>
+                                ${item.exAr ? `<div class="item-extra">+ إضافة: ${item.exAr}</div>` : ''}
+                            </div>`;
+                    }
+                });
+
+                if (hasItemsForThisScreen) {
+                    grid.innerHTML += `
+                        <div class="order-card">
+                            <div style="display:flex; justify-content:space-between; align-items:start;">
+                                <div>
+                                    <span class="table-no">طاولة ${order.table}</span>
+                                    <div class="order-time">🕒 ${order.time}</div>
+                                </div>
+                                <span style="color:var(--gold); font-family: monospace;">#${orderId.slice(-4)}</span>
+                            </div>
+                            <div class="items-list">${itemsHtml}</div>
+                            <div class="total">
+                                <span>الإجمالي:</span>
+                                <span>${order.totalPrice} ريال</span>
+                            </div>
+                            <button class="btn-done" onclick="completeOrder('${orderId}')">
+                                تم التنفيذ والحذف ✅
+                            </button>
+                        </div>`;
                 }
             });
-
-            if (hasMyItems) {
-                const readyClass = order.status === 'جاهز للاستلام ✅' ? 'is-ready' : '';
-                
-                let buttons = '';
-                if (isCashier) {
-                    // الكاشير عنده زرار الحذف النهائي فقط
-                    buttons = `<button class="btn btn-done" onclick="deleteOrder('${orderId}')">تم المحاسبة والحذف ✅</button>`;
-                } else {
-                    // الأقسام عندها زرار "جاهز" وزرار "إخفاء من شاشتي" (اختياري)
-                    buttons = `
-                        <button class="btn btn-ready" onclick="markReady('${orderId}')">📣 جاهز</button>
-                        <button class="btn" style="background:#475569" onclick="this.parentElement.parentElement.style.display='none'">❌ إخفاء</button>
-                    `;
-                }
-
-                grid.innerHTML += `
-                    <div class="order-card ${readyClass}">
-                        <div style="display:flex; justify-content:space-between;">
-                            <span class="table-no">طاولة ${order.table}</span>
-                            <span class="status-badge">${order.status || 'تحت التجهيز'}</span>
-                        </div>
-                        <div class="items-list">${itemsHtml}</div>
-                        <div class="btn-group">${buttons}</div>
-                    </div>`;
+            if (grid.innerHTML !== '') {
+                document.getElementById('notifSound').play().catch(e => {});
             }
-        });
+        } else {
+            grid.innerHTML = '<h3 style="grid-column: 1/-1; text-align:center; color:#64748b; margin-top:50px;">لا توجد طلبات حالياً ☕</h3>';
+        }
     });
 
-    // وظيفة "جاهز": تغير الحالة وترسل تنبيه بدون حذف
-    function markReady(id) {
-        database.ref('live_orders/' + id).update({ status: 'جاهز للاستلام ✅' });
-        // هنا ممكن تضيف كود يخلي الموبايل يصفر عند الزبون
-    }
-
-    // وظيفة الحذف (للكاشير فقط): تمسح من الداتابيز نهائياً
-    function deleteOrder(id) {
-        if(confirm('تأكيد المحاسبة وحذف الطلب نهائياً؟')) {
+    function completeOrder(id) {
+        if(confirm('تأكيد حذف الطلب من جميع الشاشات؟')) {
             database.ref('live_orders/' + id).remove();
+            database.ref('orders/' + id).update({ status: 'جاهز للاستلام ✅' });
         }
     }
 </script>
