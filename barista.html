@@ -10,26 +10,31 @@
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #0f172a; color: white; padding-bottom: 50px; }
         header { background: white; color: #0f172a; padding: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.4); position: sticky; top: 0; z-index: 1000; }
         .order-card { background: white; color: black; border-radius: 20px; padding: 25px; margin: 20px; border-right: 15px solid; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: 0.3s; }
+        
+        /* ألوان التمييز (محلي / سفري) */
         .local { border-color: #22c55e !important; background: #f0fdf4; } 
         .away { border-color: #f97316 !important; background: #fff7ed; }  
-        .status-ready { opacity: 0.5; border-style: dashed; transform: scale(0.98); }
-        .items { font-size: 26px; font-weight: 900; list-style: none; padding: 0; margin: 20px 0; color: #1e293b; }
-        .items li { border-bottom: 1px dashed #cbd5e1; padding: 10px 0; }
         
-        /* استايل الملاحظات العبقري */
-        .notes-box { background: #fef3c7; border: 2px solid #f59e0b; padding: 15px; margin: 15px 0; border-radius: 12px; color: #92400e; font-weight: bold; font-size: 20px; animation: pulse 2s infinite; }
+        .status-ready { opacity: 0.6; border-style: dashed; transform: scale(0.98); }
+        .items { font-size: 26px; font-weight: 900; list-style: none; padding: 0; margin: 20px 0; color: #1e293b; }
+        .items li { border-bottom: 1px dashed #cbd5e1; padding: 15px 0; position: relative; }
+        
+        /* تنسيق الإضافة عشان تكون واضحة جداً للباريستا */
+        .extra-info { color: #c8a27c; font-size: 20px; display: block; margin-top: 5px; background: #fff3e6; padding: 5px 10px; border-radius: 8px; width: fit-content; }
+
+        .notes-box { background: #fef3c7; border: 2px solid #f59e0b; padding: 15px; margin: 15px 0; border-radius: 12px; color: #92400e; font-weight: bold; font-size: 22px; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
         
         .total-badge { background: #1e293b; padding: 8px 15px; border-radius: 10px; font-size: 16px; font-weight: bold; color: #f8fafc; }
-        .btn-ready { background: #3b82f6; color: white; border: none; padding: 18px; border-radius: 12px; width: 48%; font-weight: bold; cursor: pointer; font-size: 18px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
-        .btn-done { background: #22c55e; color: white; border: none; padding: 18px; border-radius: 12px; width: 48%; font-weight: bold; cursor: pointer; font-size: 18px; box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3); }
-        .ready-badge { position: absolute; top: -10px; left: 20px; background: #3b82f6; color: white; padding: 8px 15px; border-radius: 50px; font-size: 14px; font-weight: bold; }
+        .btn-ready { background: #3b82f6; color: white; border: none; padding: 18px; border-radius: 12px; width: 48%; font-weight: bold; cursor: pointer; font-size: 18px; }
+        .btn-done { background: #22c55e; color: white; border: none; padding: 18px; border-radius: 12px; width: 48%; font-weight: bold; cursor: pointer; font-size: 18px; }
+        .ready-badge { position: absolute; top: -15px; left: 20px; background: #3b82f6; color: white; padding: 8px 20px; border-radius: 50px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         #enableAudio { background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; }
     </style>
 </head>
 <body>
     <header>
-        <h1 style="margin:0;">👨‍🍳 نظام مطبخ Alpha-Shadow</h1>
+        <h1 style="margin:0;">👨‍🍳 مطبخ Alpha-Shadow</h1>
         <button id="enableAudio">تشغيل التنبيه الصوتي 🔔</button>
     </header>
     
@@ -51,11 +56,12 @@
             audioOn = true; 
             document.getElementById('enableAudio').style.background = "#64748b";
             document.getElementById('enableAudio').innerText = "النظام الصوتي يعمل ✅";
-            speak("Welcome back, Alpha Kitchen is ready", "en-US");
+            speak("Welcome back, Kitchen is active", "en-US");
         };
 
         function speak(text, lang = 'ar-SA') {
             if (!audioOn) return;
+            window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance();
             msg.text = text; msg.lang = lang;
             window.speechSynthesis.speak(msg);
@@ -68,41 +74,47 @@
             
             if(data) {
                 const keys = Object.keys(data);
-                const currentCount = keys.length;
-
-                // تنبيه ناطق عند وصول طلب جديد
-                if(currentCount > lastCount && audioOn) {
+                if(keys.length > lastCount && audioOn) {
                     document.getElementById('bell').play();
-                    const newestId = keys[currentCount - 1];
-                    const newestOrder = data[newestId];
+                    const newest = data[keys[keys.length - 1]];
+                    // قراءة الطلب صوتياً مع الإضافات
+                    let speakText = "طلب جديد: ";
+                    newest.items.forEach(it => speakText += it.ar + (it.exAr ? " مع إضافة " + it.exAr : "") + " .. ");
                     setTimeout(() => {
-                        speak("طلب جديد: " + newestOrder.items.join(" و "));
-                        if(newestOrder.notes) speak("تنبيه، يوجد ملاحظة من الزبون");
-                    }, 1000);
+                        speak(speakText);
+                        if(newest.notes) speak("تنبيه، توجد ملاحظة من الزبون");
+                    }, 1200);
                 }
-                lastCount = currentCount;
+                lastCount = keys.length;
 
                 keys.reverse().forEach(id => {
                     const o = data[id];
-                    const isReady = o.status === 'ready';
-                    const notesHtml = o.notes ? `<div class="notes-box">⚠️ ملاحظة الزبون: ${o.notes}</div>` : '';
-                    const priceHtml = o.totalPrice ? `<span class="total-badge">💰 ${o.totalPrice} SAR</span>` : '';
+                    const isReady = o.status === 'جاهز للاستلام ✅';
+                    const notesHtml = o.notes ? `<div class="notes-box">⚠️ ملاحظة: ${o.notes}</div>` : '';
+                    
+                    // تحويل مصفوفة الأصناف لشكل مرتب فيه الإضافات
+                    const itemsList = o.items.map(it => `
+                        <li>
+                            <span>${it.ar}</span>
+                            ${it.exAr ? `<span class="extra-info">+ ${it.exAr}</span>` : ''}
+                        </li>
+                    `).join('');
 
                     const card = document.createElement('div');
-                    card.className = `order-card ${o.isLocal ? 'local' : 'away'} ${isReady ? 'status-ready' : ''}`;
+                    card.className = `order-card ${o.type === 'محلي' ? 'local' : 'away'} ${isReady ? 'status-ready' : ''}`;
                     card.innerHTML = `
-                        ${isReady ? '<span class="ready-badge">انتظار الاستلام ✨</span>' : ''}
+                        ${isReady ? '<span class="ready-badge">✨ انتظار الاستلام</span>' : ''}
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <b style="font-size:20px;">${o.type}</b> 
+                            <b style="font-size:24px;">${o.type} ${o.table ? '(طاولة '+o.table+')' : ''}</b> 
                             <div style="display:flex; align-items:center; gap:10px;">
-                                ${priceHtml}
-                                <span style="color:#64748b;">${o.time}</span>
+                                <span class="total-badge">💰 ${o.total} SAR</span>
+                                <span style="color:#64748b; font-size:14px;">${new Date(o.time).toLocaleTimeString('ar-SA')}</span>
                             </div>
                         </div>
-                        <ul class="items">${o.items.map(it => `<li>${it}</li>`).join('')}</ul>
+                        <ul class="items">${itemsList}</ul>
                         ${notesHtml}
                         <div style="display:flex; justify-content:space-between; margin-top:20px;">
-                            <button class="btn-ready" onclick="markReady('${id}')">إرسال تنبيه جاهز 📢</button>
+                            <button class="btn-ready" onclick="markReady('${id}')">جاهز 📢</button>
                             <button class="btn-done" onclick="removeOrder('${id}')">تم التسليم ✅</button>
                         </div>
                     `;
@@ -114,8 +126,8 @@
             }
         });
 
-        function markReady(id) { database.ref('orders').child(id).update({ status: 'ready' }); }
-        function removeOrder(id) { database.ref('orders').child(id).remove(); }
+        function markReady(id) { database.ref('orders').child(id).update({ status: 'جاهز للاستلام ✅' }); }
+        function removeOrder(id) { if(confirm('هل تم تسليم الطلب نهائياً؟')) database.ref('orders').child(id).remove(); }
     </script>
 </body>
 </html>
