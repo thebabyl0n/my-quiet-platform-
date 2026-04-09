@@ -39,7 +39,6 @@
         .item-qty { background: var(--gold); color: white; padding: 2px 8px; border-radius: 6px; font-size: 14px; margin-left: 5px; }
         .extra-name { color: var(--gold); font-size: 13px; font-weight: 600; padding-right: 10px; }
         
-        /* تنسيقات الخصم */
         .discount-row { display: flex; justify-content: space-between; color: #dc2626; font-weight: bold; margin-top: 10px; font-size: 14px; border-top: 1px solid #ddd; padding-top: 10px; }
         .total-price { font-size: 22px; font-weight: 800; color: var(--dark); margin: 10px 0; text-align: center; }
         .promo-container { display: flex; gap: 5px; margin-bottom: 15px; }
@@ -172,7 +171,6 @@
         renderCart();
     }
 
-    // --- المنطق المصلح للربط مع لوحة التحكم (سحب الكود) ---
     function applyPromo() {
         const inputCode = document.getElementById('promoCode').value.trim();
         if(!inputCode) return;
@@ -182,19 +180,18 @@
             let found = false;
 
             if (allCoupons) {
-                // بنلف على كل الكوبونات في الفايربيز
                 Object.keys(allCoupons).forEach(key => {
                     const coupon = allCoupons[key];
-                    // التأكد من مطابقة الكود أياً كان اسم الخاصية (code أو العنوان نفسه)
-                    if (key === inputCode || coupon.code === inputCode) {
-                        discountPercent = parseFloat(coupon.discount);
+                    if (key === inputCode || (coupon && coupon.code === inputCode)) {
+                        // التعديل هنا لضمان تحويل النسبة لرقم صحيح
+                        discountPercent = parseFloat(coupon.discount) || 0;
                         activePromo = inputCode;
                         found = true;
                     }
                 });
             }
 
-            if(found) {
+            if(found && discountPercent > 0) {
                 showToast("تم تطبيق الخصم بنجاح! 🎉");
                 renderCart();
             } else {
@@ -292,4 +289,3 @@
 </script>
 </body>
 </html>
-
