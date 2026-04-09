@@ -14,11 +14,11 @@
         .table-input { padding: 12px; border-radius: 10px; border: 1px solid var(--gold); width: 80%; margin-top: 10px; font-size: 16px; text-align: center; display: none; color: black; outline: none; }
         .card { background: white; margin: 15px; border-radius: 20px; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; padding: 15px; }
         .card-top { display: flex; align-items: center; width: 100%; }
-        .card img { width: 70px; height: 70px; object-fit: cover; border-radius: 12px; }
+        .card img { width: 75px; height: 75px; object-fit: cover; border-radius: 15px; }
         .card-info { padding: 0 15px; flex: 1; }
         .counter-box { display: flex; align-items: center; gap: 10px; background: #f1f5f9; padding: 5px 10px; border-radius: 50px; }
-        .btn-step { background: white; border: 1px solid #cbd5e1; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; }
-        .qty { font-weight: bold; min-width: 20px; text-align: center; color: var(--primary); }
+        .btn-step { background: white; border: 1px solid #cbd5e1; width: 35px; height: 35px; border-radius: 50%; font-weight: bold; cursor: pointer; }
+        .qty { font-weight: bold; min-width: 25px; text-align: center; color: var(--primary); font-size: 18px; }
         .options-select { width: 100%; margin-top: 10px; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 14px; background: #f8fafc; outline: none; }
         .notes-area { width: 90%; margin: 15px auto; display: block; padding: 12px; border-radius: 15px; border: 1px solid #cbd5e1; font-family: inherit; resize: none; outline: none; }
         .cart-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 18px; border-radius: 50px; font-weight: bold; border: none; width: 90%; font-size: 18px; z-index: 1000; box-shadow: 0 10px 25px rgba(34,197,94,0.4); }
@@ -45,7 +45,9 @@
             <span id="mode-badge" style="background:var(--gold); padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: bold;"></span>
         </div>
         
-        <div id="menu-items"></div>
+        <div id="menu-items">
+            <p style="text-align:center; padding:20px; color:#64748b;">جاري تحميل المنيو السيادي...</p>
+        </div>
 
         <textarea id="order-notes" class="notes-area" rows="3" placeholder="اكتب هنا ملاحظاتك (مثلاً: السكر، تقسيم الطلب، إلخ...)"></textarea>
 
@@ -70,15 +72,7 @@
         const database = firebase.database();
 
         let orderMode = ""; let tableNumber = "";
-        
-        const menu = [
-            { id: 0, ar: "سبانش لاتيه بارد", en: "Iced Spanish Latte", price: 18, img: "https://i.postimg.cc/pVf5WyDG/FB_IMG_1775615731297.jpg", qty: 0, 
-              opts: [{name: "Standard", price: 0}, {name: "No Sugar", price: 0}, {name: "Almond Milk", price: 2}, {name: "Double Shot", price: 2}]},
-            { id: 1, ar: "V60 حار", en: "V 60 Hot Coffee", price: 22, img: "https://i.postimg.cc/Y26Lrj1d/FB_IMG_1775615760389.jpg", qty: 0, 
-              opts: [{name: "Standard", price: 0}, {name: "Extra Hot", price: 0}]},
-            { id: 2, ar: "كيكة العسل الملكية", en: "Royal Honey Cake", price: 15, img: "https://i.postimg.cc/bYxSydQ3/Screenshot_٢٠٢٦٠٤٠٨_٠٥٣٨٤٢_Brave.jpg", qty: 0, 
-              opts: [{name: "Fresh", price: 0}, {name: "Extra Honey", price: 2}]}
-        ];
+        let dynamicMenu = [];
 
         function speak(text, lang = 'en-US') {
             window.speechSynthesis.cancel();
@@ -86,6 +80,29 @@
             msg.text = text; msg.lang = lang;
             window.speechSynthesis.speak(msg);
         }
+
+        // جلب المنيو من الفايربيز
+        database.ref('menu_items').on('value', snap => {
+            const data = snap.val();
+            dynamicMenu = [];
+            for(let id in data) {
+                dynamicMenu.push({
+                    fbId: id,
+                    ar: data[id].ar,
+                    en: data[id].en,
+                    price: data[id].price,
+                    img: data[id].img,
+                    qty: 0,
+                    opts: [
+                        {name: "Standard", price: 0},
+                        {name: "No Sugar", price: 0},
+                        {name: "Almond Milk", price: 2},
+                        {name: "Double Shot", price: 2}
+                    ]
+                });
+            }
+            if(orderMode !== "") render(); // تحديث الشاشة لو الزبون دخل فعلاً
+        });
 
         function askTable() { 
             document.getElementById('tableNum').style.display = 'block'; 
@@ -104,24 +121,29 @@
 
         function render() {
             let html = ""; let total = 0;
-            menu.forEach((item) => {
-                const optElement = document.getElementById(`opt-${item.id}`);
+            if(dynamicMenu.length === 0) {
+                html = "<p style='text-align:center; padding:20px;'>المنيو فارغ حالياً، أضف أصنافاً من لوحة المدير.</p>";
+            }
+
+            dynamicMenu.forEach((item, index) => {
+                const optElement = document.getElementById(`opt-${index}`);
                 const selectedOptIndex = optElement ? optElement.value : 0;
                 const optPrice = item.opts[selectedOptIndex].price;
                 total += (item.qty * (item.price + optPrice));
+                
                 html += `
                 <div class="card">
                     <div class="card-top">
-                        <img src="${item.img}">
+                        <img src="${item.img}" onerror="this.src='https://via.placeholder.com/75?text=Alpha'">
                         <div class="card-info"><b>${item.ar}</b><br><small>${item.price} SAR</small></div>
                         <div class="counter-box">
-                            <button class="btn-step" onclick="updateQty(${item.id}, -1)">-</button>
+                            <button class="btn-step" onclick="updateQty(${index}, -1)">-</button>
                             <span class="qty">${item.qty}</span>
-                            <button class="btn-step" onclick="updateQty(${item.id}, 1)">+</button>
+                            <button class="btn-step" onclick="updateQty(${index}, 1)">+</button>
                         </div>
                     </div>
-                    <select class="options-select" id="opt-${item.id}" onchange="render()">
-                        ${item.opts.map((o, index) => `<option value="${index}">${o.name} ${o.price > 0 ? '(+'+o.price+' SAR)' : ''}</option>`).join('')}
+                    <select class="options-select" id="opt-${index}" onchange="render()">
+                        ${item.opts.map((o, i) => `<option value="${i}">${o.name} ${o.price > 0 ? '(+'+o.price+' SAR)' : ''}</option>`).join('')}
                     </select>
                 </div>`;
             });
@@ -129,24 +151,25 @@
             document.getElementById('total-price').innerText = total;
         }
 
-        function updateQty(id, step) {
-            if (menu[id].qty + step < 0) return;
-            menu[id].qty += step;
-            if (step > 0) speak(menu[id].qty + " " + menu[id].en, 'en-US');
+        function updateQty(index, step) {
+            if (dynamicMenu[index].qty + step < 0) return;
+            dynamicMenu[index].qty += step;
+            if (step > 0) speak(dynamicMenu[index].qty + " " + dynamicMenu[index].en, 'en-US');
             render();
         }
 
         function sendOrder() {
-            const orderedItems = menu.filter(i => i.qty > 0);
+            const orderedItems = dynamicMenu.filter(i => i.qty > 0);
             if(orderedItems.length === 0) { speak("Please select an item first", 'en-US'); return; }
             
             const notes = document.getElementById('order-notes').value;
             const typeStr = orderMode === 'local' ? `محلي (طاولة ${tableNumber})` : "سفري";
             
-            const itemsList = orderedItems.map(i => {
-                const optIndex = document.getElementById(`opt-${i.id}`).value;
-                const optName = i.opts[optIndex].name;
-                return `${i.qty} x ${i.ar} (${optName})`;
+            const itemsList = orderedItems.map((item, index) => {
+                const originalIndex = dynamicMenu.indexOf(item);
+                const optIndex = document.getElementById(`opt-${originalIndex}`).value;
+                const optName = item.opts[optIndex].name;
+                return `${item.qty} x ${item.ar} (${optName})`;
             });
 
             const newOrderRef = database.ref('orders').push();
@@ -158,7 +181,6 @@
                 status: 'pending'
             });
 
-            // الجملة اللي "تجنن" مدمجة هنا
             newOrderRef.on('value', snap => {
                 if(snap.val() && snap.val().status === 'ready') {
                     document.getElementById('status-notif').style.display = 'block';
@@ -171,7 +193,7 @@
             const msg = `*طلب جديد من Alpha-Shadow*\n*النوع:* ${typeStr}\n*الطلبات:*\n${itemsList.join("\n")}\n*ملاحظات:* ${notes}\n*الإجمالي:* ${document.getElementById('total-price').innerText} SAR`;
             window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
             
-            menu.forEach(i => i.qty = 0); 
+            dynamicMenu.forEach(i => i.qty = 0); 
             document.getElementById('order-notes').value = "";
             render();
         }
