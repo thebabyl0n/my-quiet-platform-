@@ -20,7 +20,7 @@
         .btn-save:hover { opacity: 0.8; }
         .btn-gold { background: var(--gold); }
         .item-row { background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-del { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .btn-del { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; margin-right: 5px; }
     </style>
 </head>
 <body>
@@ -32,7 +32,7 @@
 </div>
 
 <div class="container" id="adminContent">
-    <h2 style="text-align: center; color: var(--primary);">⚙️ نظام إدارة الكافيه (White Label)</h2>
+    <h2 style="text-align: center; color: var(--primary);">⚙️ نظام إدارة الكافيه (Alpha Shadow)</h2>
 
     <div class="section">
         <h3>🎨 براند الكافيه والمظهر</h3>
@@ -40,59 +40,13 @@
         <input type="text" id="cafeName" placeholder="مثلاً: قهوة الظل">
         <label>رابط اللوجو</label>
         <input type="text" id="logoUrl">
-        <label>رابط صورة الخلفية (الصفحة الزرقاء)</label>
+        <label>رابط صورة الخلفية</label>
         <input type="text" id="bgUrl">
         <button class="btn-save btn-gold" onclick="saveSettings('branding')">تحديث البراند 💾</button>
     </div>
 
     <div class="section">
-        <h3>🖼️ إدارة العروض (Slider Images)</h3>
-        <label>رابط صورة العرض (Banner)</label>
-        <input type="text" id="offerImgUrl" placeholder="ضع رابط صورة العرض هنا">
-        <button class="btn-save" onclick="addOffer()">إضافة عرض جديد للمنيو 🖼️</button>
-        <div id="offersList"></div>
-    </div>
-
-    <div class="section">
-        <h3>🎟️ إدارة أكواد الخصم (نظام الجدة 🔥)</h3>
-        <label>كود الخصم (مثلاً: OFF10)</label>
-        <input type="text" id="couponCode" placeholder="رمز الكوبون">
-        <label>قيمة الخصم</label>
-        <input type="number" id="couponPct" placeholder="10">
-        <label>نوع الخصم</label>
-        <select id="couponType">
-            <option value="percent">نسبة مئوية (%)</option>
-            <option value="fixed">مبلغ ثابت (ريال)</option>
-        </select>
-        <button class="btn-save btn-gold" onclick="addCoupon()">إضافة كوبون جديد ✅</button>
-        <div id="couponsList"></div>
-    </div>
-
-    <div class="section">
-        <h3>🎙️ الإعدادات الصوتية والرسائل</h3>
-        <label>رسالة الترحيب الصوتية (EN)</label>
-        <input type="text" id="welcomeVoice" placeholder="Welcome to [Name] Coffee">
-        <label>رسالة الصوت عند إرسال الطلب (EN)</label>
-        <input type="text" id="readyVoice" placeholder="Your order is ready!">
-        <label>نص رسالة استلام الطلب (Text Message)</label>
-        <textarea id="orderMsgText" placeholder="مثلاً: شكراً لطلبك من كافيه الظل، طلبك قيد التحضير الآن!"></textarea>
-        <button class="btn-save btn-gold" onclick="saveSettings('audio')">حفظ الإعدادات 🎧</button>
-    </div>
-
-    <div class="section">
-        <h3>➕ إدارة الإضافات (Dropdown Options)</h3>
-        <label>اسم الإضافة (عربي)</label>
-        <input type="text" id="extAr" placeholder="مثلاً: حليب لوز">
-        <label>اسم الإضافة (EN للنطق)</label>
-        <input type="text" id="extEn" placeholder="e.g. Almond Milk">
-        <label>السعر الإضافي (0 لو مجاني)</label>
-        <input type="number" id="extPrice" value="0">
-        <button class="btn-save" onclick="addExtra()">إضافة للـ Dropdown ✅</button>
-        <div id="extrasList"></div>
-    </div>
-
-    <div class="section">
-        <h3>☕ إدارة قائمة الأصناف (توجيه الشاشات)</h3>
+        <h3>☕ إضافة صنف جديد وتوجيه الشاشة</h3>
         <label>الاسم (عربي)</label><input type="text" id="itemAr">
         <label>الاسم (EN للنطق)</label><input type="text" id="itemEn">
         <label>السعر الأساسي</label><input type="number" id="itemPrice">
@@ -101,10 +55,23 @@
         <select id="itemDept">
             <option value="barista">☕ شاشة الباريستا (Barista)</option>
             <option value="kitchen">🍔 شاشة المطبخ (Kitchen)</option>
-            <option value="sweets">🍰 شاشة الحلا (Sweets)</option>
+            <option value="dessert">🍰 شاشة الحلا (Dessert)</option>
         </select>
-        <button class="btn-save" onclick="addItem()">إضافة الصنف وتوجيهه ✅</button>
+        <button class="btn-save" onclick="addItem()">إضافة الصنف للمنيو ✅</button>
+    </div>
+
+    <div class="section">
+        <h3>📋 قائمة الأصناف الحالية</h3>
         <div id="itemsList"></div>
+    </div>
+
+    <div class="section">
+        <h3>➕ إدارة الإضافات</h3>
+        <label>اسم الإضافة (عربي)</label><input type="text" id="extAr">
+        <label>اسم الإضافة (EN)</label><input type="text" id="extEn">
+        <label>السعر</label><input type="number" id="extPrice" value="0">
+        <button class="btn-save" onclick="addExtra()">إضافة خيار جديد ✅</button>
+        <div id="extrasList"></div>
     </div>
 </div>
 
@@ -126,46 +93,16 @@
         } else { alert("كلمة السر خطأ يا فنان!"); }
     }
 
-    function saveSettings(type) {
-        if(type === 'branding') {
-            database.ref('settings/branding').set({
-                name: document.getElementById('cafeName').value,
-                logo: document.getElementById('logoUrl').value,
-                bg: document.getElementById('bgUrl').value
-            });
-        } else {
-            database.ref('settings/audio').set({
-                welcome: document.getElementById('welcomeVoice').value,
-                ready: document.getElementById('readyVoice').value,
-                msgText: document.getElementById('orderMsgText').value
-            });
-        }
-        alert("تم الحفظ بنجاح!");
-    }
-
-    function addOffer() {
-        const url = document.getElementById('offerImgUrl').value;
-        if(url) {
-            database.ref('offers').push({ img: url });
-            document.getElementById('offerImgUrl').value = '';
-            alert("تمت إضافة العرض!");
-        }
-    }
-
-    function addCoupon() {
-        const code = document.getElementById('couponCode').value.toUpperCase().trim();
-        const discountValue = document.getElementById('couponPct').value;
-        const type = document.getElementById('couponType').value;
-        if(code && discountValue) {
-            database.ref('coupons/' + code).set({ 
-                discount: parseFloat(discountValue),
-                type: type,
-                active: true,
-                createdAt: Date.now()
-            });
-            document.getElementById('couponCode').value = '';
-            document.getElementById('couponPct').value = '';
-            alert("تم إضافة الكوبون بنجاح!");
+    function addItem() {
+        const ar = document.getElementById('itemAr').value;
+        const en = document.getElementById('itemEn').value;
+        const price = document.getElementById('itemPrice').value;
+        const img = document.getElementById('itemImg').value;
+        const dept = document.getElementById('itemDept').value;
+        if(ar && price) {
+            database.ref('menu_items').push({ ar, en, price: parseFloat(price), img, dept });
+            alert("تم إضافة " + ar + " بنجاح!");
+            document.getElementById('itemAr').value = ''; document.getElementById('itemPrice').value = '';
         }
     }
 
@@ -175,75 +112,56 @@
         const price = document.getElementById('extPrice').value;
         if(ar && en) {
             database.ref('extras_options').push({ ar, en, price: parseFloat(price) });
-            document.getElementById('extAr').value = '';
-            document.getElementById('extEn').value = '';
-            alert("تمت إضافة الخيار!");
+            alert("تمت إضافة الإضافة!");
         }
     }
 
-    function addItem() {
-        const ar = document.getElementById('itemAr').value;
-        const en = document.getElementById('itemEn').value;
-        const price = document.getElementById('itemPrice').value;
-        const img = document.getElementById('itemImg').value;
-        const dept = document.getElementById('itemDept').value;
-        if(ar && price) {
-            database.ref('menu_items').push({ ar, en, price: parseFloat(price), img, dept });
-            alert("تمت إضافة الصنف بنجاح!");
-            document.getElementById('itemAr').value = '';
-            document.getElementById('itemEn').value = '';
-            document.getElementById('itemPrice').value = '';
-            document.getElementById('itemImg').value = '';
+    function saveSettings(type) {
+        if(type === 'branding') {
+            database.ref('settings/branding').set({
+                name: document.getElementById('cafeName').value,
+                logo: document.getElementById('logoUrl').value,
+                bg: document.getElementById('bgUrl').value
+            });
+            alert("تم تحديث البراند!");
         }
     }
 
     function loadData() {
-        database.ref('settings').on('value', snap => {
-            const s = snap.val();
-            if(s && s.branding) {
-                document.getElementById('cafeName').value = s.branding.name || "";
-                document.getElementById('logoUrl').value = s.branding.logo || "";
-                document.getElementById('bgUrl').value = s.branding.bg || "";
-            }
-            if(s && s.audio) {
-                document.getElementById('welcomeVoice').value = s.audio.welcome || "";
-                document.getElementById('readyVoice').value = s.audio.ready || "";
-                document.getElementById('orderMsgText').value = s.audio.msgText || "";
-            }
-        });
-
-        database.ref('offers').on('value', snap => {
-            let h = "<strong>صور العروض:</strong>";
+        // تحميل المنيو مع إمكانية حذف الأصناف
+        database.ref('menu_items').on('value', snap => {
+            let h = "";
+            const icons = { 'barista': '☕', 'kitchen': '🍔', 'dessert': '🍰' };
             snap.forEach(child => {
-                h += `<div class="item-row">عرض صورة <button class="btn-del" onclick="database.ref('offers/${child.key}').remove()">حذف</button></div>`;
+                const item = child.val();
+                h += `
+                <div class="item-row">
+                    <span>${icons[item.dept] || '❓'} ${item.ar}</span>
+                    <div>
+                        <button class="btn-del" onclick="database.ref('menu_items/${child.key}').remove()">حذف</button>
+                    </div>
+                </div>`;
             });
-            document.getElementById('offersList').innerHTML = h;
+            document.getElementById('itemsList').innerHTML = h || "لا يوجد أصناف حالياً";
         });
 
-        database.ref('coupons').on('value', snap => {
-            let h = "<strong>الكوبونات:</strong>";
-            snap.forEach(child => {
-                h += `<div class="item-row">${child.key} <button class="btn-del" onclick="database.ref('coupons/${child.key}').remove()">حذف</button></div>`;
-            });
-            document.getElementById('couponsList').innerHTML = h;
-        });
-
+        // تحميل الإضافات
         database.ref('extras_options').on('value', snap => {
-            let h = "<strong>الإضافات:</strong>";
+            let h = "";
             snap.forEach(child => {
                 h += `<div class="item-row">${child.val().ar} <button class="btn-del" onclick="database.ref('extras_options/${child.key}').remove()">حذف</button></div>`;
             });
             document.getElementById('extrasList').innerHTML = h;
         });
 
-        database.ref('menu_items').on('value', snap => {
-            let h = "<strong>قائمة الأصناف:</strong>";
-            const deptNames = { 'barista': '☕', 'kitchen': '🍔', 'sweets': '🍰' };
-            snap.forEach(child => {
-                const item = child.val();
-                h += `<div class="item-row">${deptNames[item.dept] || ''} ${item.ar} <button class="btn-del" onclick="database.ref('menu_items/${child.key}').remove()">حذف</button></div>`;
-            });
-            document.getElementById('itemsList').innerHTML = h;
+        // تحميل البراند
+        database.ref('settings/branding').once('value', snap => {
+            const s = snap.val();
+            if(s) {
+                document.getElementById('cafeName').value = s.name || "";
+                document.getElementById('logoUrl').value = s.logo || "";
+                document.getElementById('bgUrl').value = s.bg || "";
+            }
         });
     }
 </script>
