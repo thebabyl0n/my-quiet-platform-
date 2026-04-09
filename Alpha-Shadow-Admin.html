@@ -35,13 +35,31 @@
 
     <div class="section">
         <h3>🎨 براند الكافيه والمظهر</h3>
-        <label>اسم الكافيه (بدل Alpha-Shadow)</label>
+        <label>اسم الكافيه</label>
         <input type="text" id="cafeName" placeholder="مثلاً: قهوة الظل">
         <label>رابط اللوجو</label>
         <input type="text" id="logoUrl">
         <label>رابط صورة الخلفية (الصفحة الزرقاء)</label>
         <input type="text" id="bgUrl">
         <button class="btn-save btn-gold" onclick="saveSettings('branding')">تحديث البراند 💾</button>
+    </div>
+
+    <div class="section">
+        <h3>🖼️ إدارة العروض (Slider Images)</h3>
+        <label>رابط صورة العرض</label>
+        <input type="text" id="offerImgUrl" placeholder="ضع رابط الصورة هنا">
+        <button class="btn-save" onclick="addOffer()">إضافة عرض جديد 🖼️</button>
+        <div id="offersList"></div>
+    </div>
+
+    <div class="section">
+        <h3>🎟️ إدارة أكواد الخصم</h3>
+        <label>كود الخصم (مثلاً: OFF10)</label>
+        <input type="text" id="couponCode" placeholder="رمز الكوبون">
+        <label>نسبة الخصم (%)</label>
+        <input type="number" id="couponPct" placeholder="10">
+        <button class="btn-save btn-gold" onclick="addCoupon()">إضافة كوبون ✅</button>
+        <div id="couponsList"></div>
     </div>
 
     <div class="section">
@@ -107,7 +125,25 @@
                 ready: document.getElementById('readyVoice').value
             });
         }
-        alert("تم الحفظ بنجاح!");
+        alert("تم الحفظ!");
+    }
+
+    function addOffer() {
+        const url = document.getElementById('offerImgUrl').value;
+        if(url) {
+            database.ref('offers').push({ img: url });
+            document.getElementById('offerImgUrl').value = '';
+        }
+    }
+
+    function addCoupon() {
+        const code = document.getElementById('couponCode').value.toUpperCase();
+        const pct = document.getElementById('couponPct').value;
+        if(code && pct) {
+            database.ref('coupons/' + code).set({ pct: parseInt(pct) });
+            document.getElementById('couponCode').value = '';
+            document.getElementById('couponPct').value = '';
+        }
     }
 
     function addExtra() {
@@ -128,42 +164,45 @@
         const img = document.getElementById('itemImg').value;
         if(ar && price) {
             database.ref('menu_items').push({ ar, en, price: parseFloat(price), img });
-            alert("تمت إضافة المشروب!");
+            alert("تمت الإضافة!");
         }
     }
 
     function loadData() {
-        // تحميل الإعدادات الحالية
         database.ref('settings').on('value', snap => {
             const s = snap.val();
-            if(s) {
-                if(s.branding) {
-                    document.getElementById('cafeName').value = s.branding.name || "";
-                    document.getElementById('logoUrl').value = s.branding.logo || "";
-                    document.getElementById('bgUrl').value = s.branding.bg || "";
-                }
-                if(s.audio) {
-                    document.getElementById('welcomeVoice').value = s.audio.welcome || "";
-                    document.getElementById('readyVoice').value = s.audio.ready || "";
-                }
+            if(s && s.branding) {
+                document.getElementById('cafeName').value = s.branding.name || "";
+                document.getElementById('logoUrl').value = s.branding.logo || "";
+                document.getElementById('bgUrl').value = s.branding.bg || "";
+            }
+            if(s && s.audio) {
+                document.getElementById('welcomeVoice').value = s.audio.welcome || "";
+                document.getElementById('readyVoice').value = s.audio.ready || "";
             }
         });
 
-        // عرض قائمة الإضافات للحذف
+        database.ref('offers').on('value', snap => {
+            let h = "<strong>صور العروض:</strong>";
+            snap.forEach(c => h += `<div class="item-row">عرض صورة <button class="btn-del" onclick="database.ref('offers/${c.key}').remove()">حذف</button></div>`);
+            document.getElementById('offersList').innerHTML = h;
+        });
+
+        database.ref('coupons').on('value', snap => {
+            let h = "<strong>الكوبونات الحالية:</strong>";
+            snap.forEach(c => h += `<div class="item-row">${c.key} (${c.val().pct}%) <button class="btn-del" onclick="database.ref('coupons/${c.key}').remove()">حذف</button></div>`);
+            document.getElementById('couponsList').innerHTML = h;
+        });
+
         database.ref('extras_options').on('value', snap => {
-            let h = "<strong>الإضافات الحالية:</strong>";
-            snap.forEach(child => {
-                h += `<div class="item-row">${child.val().ar} (+${child.val().price}) <button class="btn-del" onclick="database.ref('extras_options/${child.key}').remove()">حذف</button></div>`;
-            });
+            let h = "<strong>الإضافات:</strong>";
+            snap.forEach(c => h += `<div class="item-row">${c.val().ar} <button class="btn-del" onclick="database.ref('extras_options/${c.key}').remove()">حذف</button></div>`);
             document.getElementById('extrasList').innerHTML = h;
         });
 
-        // عرض قائمة المشروبات للحذف
         database.ref('menu_items').on('value', snap => {
-            let h = "<strong>المشروبات الحالية:</strong>";
-            snap.forEach(child => {
-                h += `<div class="item-row">${child.val().ar} <button class="btn-del" onclick="database.ref('menu_items/${child.key}').remove()">حذف</button></div>`;
-            });
+            let h = "<strong>المشروبات:</strong>";
+            snap.forEach(c => h += `<div class="item-row">${c.val().ar} <button class="btn-del" onclick="database.ref('menu_items/${c.key}').remove()">حذف</button></div>`);
             document.getElementById('itemsList').innerHTML = h;
         });
     }
