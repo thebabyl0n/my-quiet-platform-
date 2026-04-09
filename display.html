@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام العرض | Alpha Shadow</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --gold: #c8a27c; --text: #f1f5f9; --accent: #22c55e; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #334155; position: relative; animation: fadeIn 0.4s ease-out; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .table-no { background: var(--gold); color: var(--bg); padding: 5px 15px; border-radius: 8px; font-weight: bold; font-size: 20px; }
+        .order-time { font-size: 13px; color: #94a3b8; margin-top: 8px; }
+        .items-list { margin: 15px 0; border-top: 1px solid #334155; padding-top: 12px; }
+        .item { display: flex; flex-direction: column; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #334155; }
+        .item-main { display: flex; justify-content: space-between; font-weight: 600; font-size: 16px; }
+        .item-extra { font-size: 13px; color: var(--gold); margin-top: 2px; }
+        .total { font-size: 22px; font-weight: bold; color: var(--accent); border-top: 2px solid #334155; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-done { background: var(--accent); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 15px; transition: 0.3s; }
+        .btn-done:hover { background: #16a34a; transform: translateY(-2px); }
+        audio { display: none; }
+        .hidden-item { display: none; } /* لإخفاء الأصناف اللي مش تبع القسم */
+    </style>
+</head>
+<body>
+
+<audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
+<div class="header">
+    <h2 id="screenTitle">🖥️ شاشة مراقبة الطلبات</h2>
+    <div id="status">جاري الاتصال... ⏳</div>
+</div>
+
+<div class="grid" id="ordersGrid"></div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
+        authDomain: "alphashadow-23689.firebaseapp.com",
+        projectId: "alphashadow-23689",
+        databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // --- اكتشاف نوع الشاشة من الرابط ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const screenType = urlParams.get('dept'); // بياخد القيمة من ?dept=...
+
+    // تحديث العنوان بناءً على القسم
+    const titles = {
+        'barista': '☕ شاشة الباريستا (المشروبات)',
+        'kitchen': '🍔 شاشة المطبخ (الأكل)',
+        'dessert': '🍰 شاشة الحلا (الحلويات)',
+        'cashier': '💰 شاشة الكاشير (الكل)'
+    };
+    if(screenType && titles[screenType]) {
+        document.getElementById('screenTitle').innerText = titles[screenType];
+    }
+
+    database.ref('.info/connected').on('value', (snap) => {
+        document.getElementById('status').innerText = snap.val() ? "متصل 🟢" : "منقطع 🔴";
+    });
+
+    database.ref('live_orders').on('value', (snapshot) => {
+        const grid = document.getElementById('ordersGrid');
+        grid.innerHTML = ''; 
+        
+        if (snapshot.exists()) {
+            snapshot.forEach((child) => {
+                const order = child.val();
+                const orderId = child.key;
+                
+                let itemsHtml = '';
+                let hasItemsForThisScreen = false;
+
+                order.items.forEach(item => {
+                    // شرط الفلترة: 
+                    // لو إحنا في الكاشير (screenType نال) هنعرض كله.
+                    // لو في قسم محدد، هنعرض بس اللي الـ dept بتاعه زيه.
+                    const isMyDept = !screenType || screenType === 'cashier' || item.dept === screenType;
+
+                    if (isMyDept) {
+                        hasItemsForThisScreen = true;
+                        itemsHtml += `
+                            <div class="item">
+                                <div class="item-main">
+                                    <span>${item.ar || item.name} × ${item.qty}</span>
+                                    <span>${((item.p || item.price) * item.qty).toFixed(2)} ريال</span>
+                                </div>
+                                ${item.exAr ? `<div class="item-extra">+ إضافة: ${item.exAr}</div>` : ''}
+                            </div>`;
+                    }
+                });
+
+                // لو الأوردر فيه أصناف تخص الشاشة دي، نعرض الكارت
+                if (hasItemsForThisScreen) {
+                    grid.innerHTML += `
+                        <div class="order-card">
+                            <div style="display:flex; justify-content:space-between; align-items:start;">
+                                <div>
+                                    <span class="table-no">طاولة ${order.table}</span>
+                                    <div class="order-time">🕒 ${order.time}</div>
+                                </div>
+                                <span style="color:var(--gold); font-family: monospace;">#${orderId.slice(-4)}</span>
+                            </div>
+                            
+                            <div class="items-list">
+                                ${itemsHtml}
+                            </div>
+
+                            <div class="total">
+                                <span>${screenType === 'cashier' || !screenType ? 'الإجمالي:' : 'حالة الطلب:'}</span>
+                                <span>${screenType === 'cashier' || !screenType ? order.totalPrice + ' ريال' : 'قيد التنفيذ'}</span>
+                            </div>
+
+                            <button class="btn-done" onclick="completeOrder('${orderId}')">
+                                ${screenType === 'cashier' || !screenType ? 'تم المحاسبة والتسليم ✅' : 'جاهز للتسليم 🔔'}
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+            // تشغيل الصوت فقط لو فيه أوردرات ظهرت فعلاً في القسم ده
+            if (grid.innerHTML !== '') {
+                document.getElementById('notifSound').play().catch(e => {});
+            }
+        } else {
+            grid.innerHTML = '<h3 style="grid-column: 1/-1; text-align:center; color:#64748b; margin-top:50px;">لا توجد طلبات حالياً.. الشغل واقف! ☕</h3>';
+        }
+    });
+
+    function completeOrder(id) {
+        let msg = (screenType === 'cashier' || !screenType) ? 'تأكيد المحاسبة وحذف الطلب؟' : 'تأكيد جاهزية الأصناف في قسمك؟';
+        
+        if(confirm(msg)) {
+            // لو كاشير يحذف الأوردر خالص، لو مطبخ/باريستا ممكن نعدل حالته بس (حسب رغبتك)
+            // حالياً هنخليه يحذف عشان نسهل الشغل
+            database.ref('live_orders/' + id).once('value').then(snap => {
+                database.ref('history_orders').push({...snap.val(), completedAt: new Date().toLocaleTimeString('ar-SA')});
+                database.ref('live_orders/' + id).remove();
+                database.ref('orders/' + id).update({ status: 'جاهز للاستلام ✅' });
+            });
+        }
+    }
+</script>
+</body>
+</html>
+
