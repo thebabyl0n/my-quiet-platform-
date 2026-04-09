@@ -3,23 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="dynamicTitle">Alpha-Shadow</title>
+    <title id="dynamicTitle">جاري التحميل...</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --primary: #0f172a; --gold: #c8a27c; --green: #22c55e; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; padding-bottom: 180px; }
-        .hero { position: fixed; inset: 0; background-size: cover; background-position: center; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; transition: 0.5s; }
-        .hero::before { content: ""; position: absolute; inset: 0; background: rgba(15,23,42,0.8); z-index: -1; }
+        .hero { position: fixed; inset: 0; background-size: cover; background-position: center; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
+        .hero::before { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0.7); z-index: -1; }
         .btn-main { background: var(--gold); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; margin: 10px; width: 250px; font-size: 18px; }
-        .offer-slider { width: 100%; overflow-x: auto; display: flex; gap: 10px; padding: 10px; background: #fff; border-bottom: 2px solid var(--gold); }
-        .offer-slider img { height: 150px; border-radius: 15px; flex-shrink: 0; }
         .card { background: white; margin: 12px; border-radius: 20px; padding: 12px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .card img { width: 80px; height: 80px; border-radius: 15px; object-fit: cover; margin-left: 12px; }
         .qty-box { display: flex; align-items: center; gap: 10px; margin-right: auto; background: #f1f5f9; padding: 5px 10px; border-radius: 50px; }
         .btn-step { background: white; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; }
         .footer-cart { position: fixed; bottom: 0; width: 100%; background: white; padding: 20px; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.1); z-index: 1500; text-align: center; }
         .cart-btn { width: 90%; background: var(--green); color: white; padding: 18px; border-radius: 50px; border: none; font-size: 20px; font-weight: bold; cursor: pointer; }
+        .status-ready { color: var(--green); font-size: 22px; font-weight: bold; display: none; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -39,17 +38,12 @@
     </div>
 
     <div id="main-content" style="display:none;">
-        <div class="offer-slider" id="offerSlider"></div>
         <div id="menu-items"></div>
-        <div style="text-align:center; padding:15px;">
-            <input type="text" id="couponInput" placeholder="كود خصم" style="padding:10px; border-radius:10px; border:1px solid #ddd; width:50%;">
-            <button onclick="applyCoupon()" style="padding:10px; background:var(--gold); border:none; border-radius:10px; color:white;">خصم</button>
-            <p id="discountMsg" style="color:var(--green); font-weight:bold;"></p>
-        </div>
-        <textarea id="order-notes" style="width:90%; margin:10px 5%; padding:10px; border-radius:15px; border:1px solid #ddd;" placeholder="ملاحظاتك..."></textarea>
+        
         <div class="footer-cart">
-            <p style="margin-bottom:10px; font-weight:bold;">طلبك جاهز؟ إرسال 👇</p>
-            <button class="cart-btn" onclick="sendOrder()">إرسال الطلب | <span id="total-price">0</span> SAR</button>
+            <div id="readyMsg" class="status-ready">✨ طَلَبُكَ جَاهِزٌ الآن ✨</div>
+            <p style="margin-bottom:10px; font-weight:bold;">الإجمالي: <span id="total-price">0</span> SAR</p>
+            <button class="cart-btn" onclick="sendOrder()">إرسال الطلب إلى الباريستا ☕</button>
         </div>
     </div>
 
@@ -63,20 +57,18 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        let menuData = []; let orderMode = ""; let discount = 0;
-        let identity = {}; let audio = {};
+        let menuData = []; let orderMode = ""; let branding = {}; let audio = {};
 
-        // تحميل الإعدادات من Admin
+        // 1. ربط الهوية والصوت بالأدمن
         database.ref('settings').on('value', snap => {
             const s = snap.val();
             if(s) {
-                identity = s.identity || {};
+                branding = s.branding || {};
                 audio = s.audio || {};
-                
-                document.getElementById('storeNameDisp').innerText = identity.nameAr || "Alpha-Shadow";
-                document.getElementById('dynamicTitle').innerText = identity.nameAr || "Alpha-Shadow";
-                if(identity.logo) { document.getElementById('storeLogo').src = identity.logo; document.getElementById('storeLogo').style.display = 'block'; }
-                if(identity.bg) document.getElementById('welcome-screen').style.backgroundImage = `url('${identity.bg}')`;
+                document.getElementById('storeNameDisp').innerText = branding.name || "Alpha-Shadow";
+                document.getElementById('dynamicTitle').innerText = branding.name || "Alpha-Shadow";
+                if(branding.logo) { document.getElementById('storeLogo').src = branding.logo; document.getElementById('storeLogo').style.display = 'block'; }
+                if(branding.bg) document.getElementById('welcome-screen').style.backgroundImage = `url('${branding.bg}')`;
             }
         });
 
@@ -88,18 +80,14 @@
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
             
-            // نطق الترحيب المخصص من Admin
-            speak(audio.welcome || "Welcome to our coffee shop");
+            // نطق الترحيب المخصص من الأدمن
+            speak(audio.welcome || "Welcome to our shop");
             loadMenu();
         }
 
         function loadMenu() {
-            database.ref('offers').on('value', snap => {
-                let h = ""; snap.forEach(c => h += `<img src="${c.val().img}">`);
-                document.getElementById('offerSlider').innerHTML = h;
-            });
             database.ref('menu_items').on('value', snap => {
-                menuData = []; snap.forEach(c => menuData.push({...c.val(), qty: 0}));
+                menuData = []; snap.forEach(c => menuData.push({...c.val(), id: c.key, qty: 0}));
                 render();
             });
         }
@@ -111,43 +99,47 @@
                 h += `<div class="card"><img src="${item.img}"><div><b>${item.ar}</b><br><small>${item.price} SAR</small></div>
                 <div class="qty-box"><button class="btn-step" onclick="updateQty(${i},-1)">-</button><span>${item.qty}</span><button class="btn-step" onclick="updateQty(${i},1)">+</button></div></div>`;
             });
-            let final = t - (t * (discount/100));
             document.getElementById('menu-items').innerHTML = h;
-            document.getElementById('total-price').innerText = final.toFixed(2);
+            document.getElementById('total-price').innerText = t;
         }
 
+        // نطق اسم المشروب عند الاختيار (EN)
         function updateQty(i, s) { 
-            if(menuData[i].qty+s >= 0) { 
-                menuData[i].qty+=s; 
-                if(s > 0) speak("Ready"); 
+            if(menuData[i].qty + s >= 0) { 
+                menuData[i].qty += s; 
+                if(s > 0) speak(menuData[i].en); 
                 render(); 
             } 
         }
 
         function speak(text) {
             let m = new SpeechSynthesisUtterance(text);
-            m.lang = 'en-US'; window.speechSynthesis.speak(m);
+            m.lang = 'en-US'; m.rate = 0.9;
+            window.speechSynthesis.speak(m);
         }
 
-        function applyCoupon() {
-            const code = document.getElementById('couponInput').value.toUpperCase();
-            database.ref('coupons').child(code).once('value', snap => {
-                if(snap.exists()) { discount = snap.val().pct; document.getElementById('discountMsg').innerText = `خصم ${discount}%`; render(); }
-                else alert("كود خطأ");
-            });
-        }
-
+        // إرسال الطلب وربطه بالباريستا
         function sendOrder() {
             const items = menuData.filter(i => i.qty > 0).map(i => `${i.qty} x ${i.ar}`);
             if(items.length === 0) return;
-            
-            // نطق رسالة النهاية المخصصة من Admin
-            speak(audio.done || "Your order is ready, Enjoy");
 
             const table = document.getElementById('tableNum').value;
-            const type = orderMode === 'local' ? `📍 محلي (طاولة ${table})` : `🚗 سفري`;
-            const msg = `*طلب جديد*\nالنوع: ${type}\nالطلبات:\n${items.join('\n')}\nالإجمالي: ${document.getElementById('total-price').innerText} SAR`;
+            const orderId = Date.now();
             
+            // إرسال الطلب لقاعدة البيانات (ليظهر عند الباريستا فوراً)
+            database.ref('live_orders/' + orderId).set({
+                items: items,
+                table: table,
+                type: orderMode,
+                status: 'pending'
+            });
+
+            // إظهار جملة "طلبك جاهز" ونطق الرسالة النهائية
+            document.getElementById('readyMsg').style.display = 'block';
+            speak(audio.ready || "Your order is being prepared, enjoy!");
+            
+            // فتح واتساب كنسخة إضافية
+            const msg = `طلب جديد: ${items.join(', ')}`;
             setTimeout(() => { window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`); }, 2000);
         }
     </script>
