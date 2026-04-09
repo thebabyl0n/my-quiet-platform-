@@ -8,57 +8,65 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --gold: #c8a27c; --dark: #0f172a; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-size: cover; background-position: center; background-attachment: fixed; color: white; transition: 0.5s; }
-        .overlay { background: rgba(15, 23, 42, 0.85); min-height: 100vh; padding: 20px; }
-        header { text-align: center; margin-bottom: 20px; }
-        #logo { max-width: 100px; border-radius: 50%; border: 2px solid var(--gold); }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--dark); background-size: cover; background-position: center; background-attachment: fixed; color: white; overflow-x: hidden; }
         
-        /* Slider العروض */
-        .slider-container { overflow-x: auto; display: flex; gap: 10px; margin-bottom: 20px; padding-bottom: 10px; }
+        /* شاشة البداية */
+        #welcome-screen { position: fixed; inset: 0; background: var(--dark); z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: 0.5s; }
+        .welcome-logo { max-width: 150px; margin-bottom: 20px; border-radius: 50%; border: 3px solid var(--gold); }
+        .order-type-btn { background: var(--gold); color: var(--dark); border: none; padding: 15px 40px; border-radius: 12px; font-size: 20px; font-weight: bold; margin: 10px; cursor: pointer; width: 200px; transition: 0.3s; }
+        .order-type-btn:hover { transform: scale(1.05); }
+
+        /* الصفحة الرئيسية */
+        .overlay { background: rgba(15, 23, 42, 0.85); min-height: 100vh; padding: 20px; display: none; }
+        header { text-align: center; margin-bottom: 20px; }
+        #main-logo { max-width: 80px; border-radius: 50%; border: 2px solid var(--gold); }
+        
+        .slider-container { display: flex; overflow-x: auto; gap: 10px; margin-bottom: 20px; padding-bottom: 10px; }
         .slider-img { width: 280px; height: 150px; border-radius: 15px; flex-shrink: 0; object-fit: cover; border: 1px solid var(--gold); }
 
-        /* المشروبات */
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .item-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(5px); border-radius: 15px; padding: 10px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
         .item-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 10px; }
-        .item-card h4 { margin: 10px 0 5px; font-size: 14px; }
-        .item-price { color: var(--gold); font-weight: bold; margin-bottom: 10px; display: block; }
         
-        /* الإضافات (Dropdown) */
-        .extra-select { width: 100%; padding: 8px; border-radius: 8px; background: var(--dark); color: white; border: 1px solid var(--gold); font-size: 12px; margin-bottom: 10px; }
-        .btn-add { background: var(--gold); color: var(--dark); border: none; padding: 8px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
+        .extra-select { width: 100%; padding: 8px; border-radius: 8px; background: var(--dark); color: white; border: 1px solid var(--gold); font-size: 12px; margin: 10px 0; }
+        .btn-add { background: var(--gold); color: var(--dark); border: none; padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
 
-        /* سلة الطلبات */
         .cart-section { margin-top: 30px; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 20px; border: 1px dashed var(--gold); }
         .notes-area { width: 100%; padding: 10px; border-radius: 10px; margin-top: 10px; box-sizing: border-box; }
-        .coupon-box { display: flex; gap: 5px; margin-top: 10px; }
-        .coupon-box input { flex: 1; padding: 10px; border-radius: 8px; border: none; }
         .btn-send { background: #22c55e; color: white; width: 100%; padding: 15px; border-radius: 10px; border: none; font-size: 18px; font-weight: bold; margin-top: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="overlay">
+<div id="welcome-screen">
+    <img id="welcomeLogo" class="welcome-logo" src="" alt="">
+    <h1 id="welcomeCafeName" style="color: var(--gold);">تحميل...</h1>
+    <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+        <button class="order-type-btn" onclick="startApp('سفري')">🚗 سفري</button>
+        <button class="order-type-btn" onclick="startApp('محلي')">☕ محلي</button>
+    </div>
+</div>
+
+<div class="overlay" id="mainApp">
     <header>
-        <img id="logo" src="" alt="Logo">
-        <h2 id="cafeNameDisplay">تحميل...</h2>
+        <img id="main-logo" src="" alt="">
+        <h2 id="cafeNameDisplay"></h2>
     </header>
 
     <div class="slider-container" id="offersSlider"></div>
-
     <div class="menu-grid" id="menuItems"></div>
 
     <div class="cart-section">
-        <h3>🛒 طلباتك</h3>
+        <h3>🛒 طلباتك (<span id="orderTypeLabel"></span>)</h3>
         <div id="cartList"></div>
         <hr>
-        <div class="coupon-box">
-            <input type="text" id="couponInput" placeholder="كود الخصم">
-            <button onclick="applyCoupon()" style="background:var(--gold); border:none; border-radius:8px; padding:0 10px;">تفعيل</button>
+        <div style="display: flex; gap: 5px; margin-top: 10px;">
+            <input type="text" id="couponInput" placeholder="كود الخصم" style="flex:1; padding:10px; border-radius:8px; border:none;">
+            <button onclick="applyCoupon()" style="background:var(--gold); border:none; border-radius:8px; padding:0 15px; font-weight:bold;">تفعيل</button>
         </div>
         <textarea id="orderNotes" class="notes-area" placeholder="ملاحظاتك (السكر، المزاج، طلبات خاصة)..."></textarea>
-        <div style="margin-top:10px; font-size:18px;">الإجمالي: <span id="totalPrice">0</span> ريال</div>
-        <button class="btn-send" onclick="sendOrder()">إرسال الطلب عبر واتساب ✅</button>
+        <div style="margin-top:15px; font-size:20px; text-align: center;">الإجمالي: <span id="totalPrice" style="color:var(--gold)">0</span> ريال</div>
+        <button class="btn-send" onclick="sendOrder()">تأكيد وإرسال الطلب ✅</button>
     </div>
 </div>
 
@@ -76,44 +84,43 @@
     let discount = 0;
     let welcomeVoice = "";
     let readyVoice = "";
+    let orderType = "";
     let extraOptionsHTML = "";
 
-    // 1. تحميل الهوية والمظهر والأصوات
+    // 1. ربط الهوية والأصوات بالأدمن
     database.ref('settings').on('value', snap => {
         const s = snap.val();
         if(s) {
             if(s.branding) {
+                document.getElementById('welcomeCafeName').innerText = s.branding.name;
                 document.getElementById('cafeNameDisplay').innerText = s.branding.name;
                 document.getElementById('pageTitle').innerText = s.branding.name;
-                document.getElementById('logo').src = s.branding.logo;
+                document.getElementById('welcomeLogo').src = s.branding.logo;
+                document.getElementById('main-logo').src = s.branding.logo;
                 document.body.style.backgroundImage = `url('${s.branding.bg}')`;
             }
             if(s.audio) {
                 welcomeVoice = s.audio.welcome;
                 readyVoice = s.audio.ready;
-                // نطق الترحيب عند أول لمسة للشاشة (سياسة المتصفح)
-                document.body.onclick = () => { if(welcomeVoice) { speak(welcomeVoice); document.body.onclick = null; } };
             }
         }
     });
 
-    // 2. تحميل العروض (Slider)
+    // جلب العروض والإضافات والمنيو من الأدمن
     database.ref('offers').on('value', snap => {
         let h = "";
         snap.forEach(c => h += `<img src="${c.val().img}" class="slider-img">`);
         document.getElementById('offersSlider').innerHTML = h;
     });
 
-    // 3. تحميل الإضافات (Dropdown)
     database.ref('extras_options').on('value', snap => {
         extraOptionsHTML = `<option value="">بدون إضافات</option>`;
         snap.forEach(c => {
             extraOptionsHTML += `<option value="${c.val().en}" data-ar="${c.val().ar}" data-price="${c.val().price}">${c.val().ar} (+${c.val().price})</option>`;
         });
-        loadMenu(); // تحميل المنيو بعد الإضافات
+        loadMenu();
     });
 
-    // 4. تحميل المشروبات
     function loadMenu() {
         database.ref('menu_items').on('value', snap => {
             let h = "";
@@ -123,7 +130,7 @@
                 <div class="item-card">
                     <img src="${item.img}">
                     <h4>${item.ar}</h4>
-                    <span class="item-price">${item.price} ريال</span>
+                    <span style="color:var(--gold); display:block; margin-bottom:5px;">${item.price} ريال</span>
                     <select class="extra-select" id="extra-${child.key}">${extraOptionsHTML}</select>
                     <button class="btn-add" onclick="addToCart('${child.key}', '${item.ar}', '${item.en}', ${item.price})">إضافة +</button>
                 </div>`;
@@ -132,32 +139,42 @@
         });
     }
 
-    function addToCart(key, ar, en, price) {
-        const extraSelect = document.getElementById('extra-'+key);
-        const extraEn = extraSelect.value;
-        const extraAr = extraSelect.options[extraSelect.selectedIndex].getAttribute('data-ar');
-        const extraPrice = parseFloat(extraSelect.options[extraSelect.selectedIndex].getAttribute('data-price') || 0);
+    // تشغيل التطبيق ونطق الترحيب
+    function startApp(type) {
+        orderType = type;
+        document.getElementById('orderTypeLabel').innerText = type;
+        document.getElementById('welcome-screen').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            if(welcomeVoice) speak(welcomeVoice);
+        }, 500);
+    }
 
-        cart.push({ ar, en, price, extraAr, extraEn, extraPrice });
-        speak(en + (extraEn ? " with " + extraEn : ""));
+    function addToCart(key, ar, en, price) {
+        const sel = document.getElementById('extra-'+key);
+        const exEn = sel.value;
+        const exAr = sel.options[sel.selectedIndex].getAttribute('data-ar');
+        const exPrice = parseFloat(sel.options[sel.selectedIndex].getAttribute('data-price') || 0);
+
+        cart.push({ ar, en, price, exAr, exEn, exPrice });
+        speak(en + (exEn ? " with " + exEn : "")); // نطق المشروب والإضافة بالإنجليزية
         updateCart();
     }
 
     function updateCart() {
-        let h = "";
-        let total = 0;
+        let h = ""; let total = 0;
         cart.forEach((item, index) => {
-            const itemTotal = item.price + item.extraPrice;
+            let itemTotal = item.price + item.exPrice;
             total += itemTotal;
-            h += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span>${item.ar} ${item.extraAr ? '('+item.extraAr+')' : ''}</span>
-                    <span>${itemTotal} ريال <button onclick="cart.splice(${index},1); updateCart()" style="background:red; color:white; border:none; border-radius:5px;">X</button></span>
+            h += `<div style="display:flex; justify-content:space-between; margin-bottom:10px; background:rgba(255,255,255,0.05); padding:8px; border-radius:8px;">
+                    <span>${item.ar} ${item.exAr ? '<small>('+item.exAr+')</small>' : ''}</span>
+                    <span>${itemTotal} ريال <button onclick="cart.splice(${index},1); updateCart()" style="background:#ff4d4d; color:white; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer; margin-right:5px;">X</button></span>
                   </div>`;
         });
-        
-        let finalTotal = total - (total * (discount / 100));
+        let final = total - (total * (discount / 100));
         document.getElementById('cartList').innerHTML = h;
-        document.getElementById('totalPrice').innerText = finalTotal.toFixed(2);
+        document.getElementById('totalPrice').innerText = final.toFixed(2);
     }
 
     function applyCoupon() {
@@ -165,9 +182,9 @@
         database.ref('coupons/' + code).once('value', snap => {
             if(snap.exists()) {
                 discount = snap.val().pct;
-                alert("تم تطبيق خصم " + discount + "%");
+                alert("تم تفعيل خصم " + discount + "%");
                 updateCart();
-            } else { alert("كود غير صحيح!"); }
+            } else { alert("كود الخصم غير صحيح!"); }
         });
     }
 
@@ -177,30 +194,28 @@
         window.speechSynthesis.speak(msg);
     }
 
+    // إرسال الطلب للباريستا والواتساب
     function sendOrder() {
-        if(cart.length === 0) return alert("السلة فاضية!");
+        if(cart.length === 0) return alert("السلة فارغة!");
         if(readyVoice) speak(readyVoice);
 
-        let orderDetails = "طلب جديد:\n";
-        cart.forEach(i => {
-            orderDetails += `- ${i.ar} ${i.extraAr ? '['+i.extraAr+']' : ''}\n`;
-        });
-        orderDetails += `\nالملاحظات: ${document.getElementById('orderNotes').value}`;
-        orderDetails += `\nالإجمالي بعد الخصم: ${document.getElementById('totalPrice').innerText} ريال`;
+        let details = `*طلب جديد (${orderType})*:\n`;
+        cart.forEach(i => details += `- ${i.ar} ${i.exAr ? '['+i.exAr+']' : ''}\n`);
+        details += `\n*الملاحظات*: ${document.getElementById('orderNotes').value}`;
+        details += `\n*الإجمالي*: ${document.getElementById('totalPrice').innerText} ريال`;
 
-        // سجل الطلب في الداتابيز للباريستا
+        // إرسال للباريستا
         database.ref('orders').push({
             items: cart,
+            type: orderType,
             notes: document.getElementById('orderNotes').value,
             total: document.getElementById('totalPrice').innerText,
             status: 'pending',
-            time: new Date().getTime()
+            time: Date.now()
         });
 
-        const phone = "201027179831"; // رقمك أو رقم الكافيه
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(orderDetails)}`);
-        cart = [];
-        updateCart();
+        window.open(`https://wa.me/201027179831?text=${encodeURIComponent(details)}`);
+        cart = []; updateCart();
     }
 </script>
 </body>
