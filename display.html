@@ -3,35 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha Shadow | Smart Display</title>
+    <title>Alpha Shadow | Professional Display</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --gold: #c8a27c; --text: #f1f5f9; --accent: #22c55e; --blue: #3b82f6; --note-bg: #451a03; --note-text: #fbbf24; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; text-align: right; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
-        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 2px solid #334155; transition: 0.3s; position: relative; }
-        .ready-border { border-color: var(--accent) !important; box-shadow: 0 0 15px rgba(34, 197, 94, 0.2); }
+        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 2px solid #334155; position: relative; }
+        .ready-border { border-color: var(--accent) !important; }
         .table-no { background: var(--gold); color: var(--bg); padding: 5px 15px; border-radius: 8px; font-weight: bold; font-size: 20px; }
         .items-list { margin: 15px 0; border-top: 1px solid #334155; padding-top: 12px; }
-        .item { margin-bottom: 12px; border-bottom: 1px dashed #475569; padding-bottom: 8px; }
-        .item-row { display: flex; justify-content: space-between; font-weight: bold; }
-        .extra-info { font-size: 14px; color: var(--gold); margin-top: 4px; display: block; }
-        .customer-note { background: var(--note-bg); color: var(--note-text); padding: 12px; border-radius: 8px; border: 2px solid var(--note-text); margin-top: 10px; font-weight: bold; font-size: 15px; animation: blink 2s infinite; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-        .total { font-size: 19px; font-weight: bold; color: var(--accent); border-top: 2px solid #334155; padding-top: 10px; display: flex; justify-content: space-between; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 15px; color: white; transition: 0.3s; }
-        .btn-cashier { background: var(--accent); }
-        .btn-dept { background: var(--blue); }
-        .btn:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
+        .item { margin-bottom: 10px; border-bottom: 1px dashed #475569; padding-bottom: 5px; }
+        .customer-note { background: var(--note-bg); color: var(--note-text); padding: 12px; border-radius: 8px; border: 2px solid var(--note-text); margin-top: 10px; font-weight: bold; animation: blink 1.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 15px; color: white; }
+        .btn-cashier { background: var(--accent); } .btn-dept { background: var(--blue); }
     </style>
 </head>
-<body onclick="enableAudio()"> <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+<body onclick="enableAudio()">
+
+<audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
 <div class="header">
     <h2 id="screenTitle">🖥️ جاري التحميل...</h2>
-    <div id="status">⏳ جاري الاتصال...</div>
+    <div id="status" style="color: var(--accent);">🛑 اضغط هنا لتفعيل الصوت</div>
 </div>
 
 <div class="grid" id="ordersGrid"></div>
@@ -50,10 +47,14 @@
     const screenType = urlParams.get('dept'); 
     const isCashier = (!screenType || screenType === 'cashier');
 
-    let lastOrderCount = -1;
     let audioEnabled = false;
+    let knownOrders = new Set(); // لحفظ الأوردرات القديمة عشان الجرس ميضربش عالفاضي
 
-    function enableAudio() { audioEnabled = true; document.getElementById('status').innerText += " (الصوت مفعل ✅)"; }
+    function enableAudio() {
+        audioEnabled = true;
+        document.getElementById('status').innerText = "✅ الصوت شغال";
+        document.getElementById('notifSound').play().catch(()=>{}); // تجربة تشغيل صامتة لتفعيل التصريح
+    }
 
     const titles = { 'barista': '☕ باريستا', 'kitchen': '🍔 مطبخ', 'dessert': '🍰 حلا', 'cashier': '💰 كاشير' };
     document.getElementById('screenTitle').innerText = titles[screenType] || titles['cashier'];
@@ -61,8 +62,8 @@
     database.ref('live_orders').on('value', (snapshot) => {
         const grid = document.getElementById('ordersGrid');
         grid.innerHTML = ''; 
-        let currentOrdersVisible = 0;
-        let hasNewNote = false;
+        let newOrderDetected = false;
+        let noteDetectedInNewOrder = false;
 
         snapshot.forEach((child) => {
             const order = child.val();
@@ -75,53 +76,59 @@
             order.items.forEach(item => {
                 if (isCashier || item.dept === screenType) {
                     hasMyItems = true;
-                    itemsHtml += `<div class="item"><div class="item-row"><span>${item.ar || item.name} × ${item.qty}</span></div>${item.exAr ? `<span class="extra-info">✨ إضافات: ${item.exAr}</span>` : ''}</div>`;
+                    itemsHtml += `<div class="item"><b>${item.ar || item.name} × ${item.qty}</b>${item.exAr ? `<br><small style="color:var(--gold)">+ ${item.exAr}</small>` : ''}</div>`;
                 }
             });
 
             if (hasMyItems) {
-                currentOrdersVisible++;
-                if (finalNote) hasNewNote = true; // نحدد لو فيه أي ملاحظة في الأوردرات الجديدة
+                // فحص هل الأوردر ده جديد على "هذا القسم"؟
+                if (!knownOrders.has(orderId)) {
+                    newOrderDetected = true;
+                    if (finalNote) noteDetectedInNewOrder = true;
+                    knownOrders.add(orderId);
+                }
 
                 const isReady = order.status === 'جاهز للاستلام ✅';
                 const btnHtml = isCashier 
                     ? `<button class="btn btn-cashier" onclick="deleteOrder('${orderId}')">تم المحاسبة والحذف ✅</button>`
-                    : `<button class="btn btn-dept" ${isReady ? 'disabled' : ''} onclick="markReady('${orderId}')">${isReady ? 'تم إرسال التنبيه 🔔' : 'جاهز للتسليم 📣'}</button>`;
+                    : `<button class="btn btn-dept" ${isReady ? 'disabled' : ''} onclick="markReady('${orderId}')">${isReady ? 'تم التنبيه 🔔' : 'جاهز للتسليم 📣'}</button>`;
 
                 grid.innerHTML += `
                     <div class="order-card ${isReady ? 'ready-border' : ''}">
                         <div style="display:flex; justify-content:space-between;">
                             <span class="table-no">طاولة ${order.table}</span>
-                            <span style="color:var(--gold); font-size:12px;">#${orderId.slice(-4)}</span>
+                            <span style="color:var(--gold)">#${orderId.slice(-4)}</span>
                         </div>
                         <div class="items-list">${itemsHtml}</div>
-                        ${finalNote ? `<div class="customer-note">⚠️ ملاحظة: ${finalNote}</div>` : ''}
-                        <div class="total"><span>${isCashier ? 'الإجمالي:' : 'الحالة:'}</span><span>${isCashier ? order.totalPrice : (order.status || 'قيد التحضير')}</span></div>
+                        ${finalNote ? `<div class="customer-note">📝 ملاحظة: ${finalNote}</div>` : ''}
+                        <div class="total"><span>${isCashier ? 'الإجمالي:' : 'الحالة:'}</span><span>${isCashier ? order.totalPrice : (order.status || 'جاري التحضير')}</span></div>
                         ${btnHtml}
                     </div>`;
             }
         });
 
-        // تشغيل التنبيهات الصوتية عند وصول أوردر جديد
-        if (lastOrderCount !== -1 && currentOrdersVisible > lastOrderCount) {
-            playAlert(hasNewNote);
+        // تشغيل الجرس والنطق لو فيه أوردر جديد نزل القسم ده
+        if (newOrderDetected) {
+            playAlert(noteDetectedInNewOrder);
         }
-        lastOrderCount = currentOrdersVisible;
     });
 
     function playAlert(withNote) {
         if (!audioEnabled) return;
-        
-        // 1. صوت الجرس العادي
-        document.getElementById('notifSound').play();
 
-        // 2. لو فيه ملاحظة، ينطق "يوجد ملاحظة" بعد ثانية
+        // 1. صوت الجرس
+        const bell = document.getElementById('notifSound');
+        bell.currentTime = 0;
+        bell.play();
+
+        // 2. تنبيه الملاحظة الصوتي (يشتغل في كل الأقسام)
         if (withNote) {
             setTimeout(() => {
-                const msg = new SpeechSynthesisUtterance("تنبيه، يوجد ملاحظة في هذا الطلب");
-                msg.lang = 'ar-SA';
-                window.speechSynthesis.speak(msg);
-            }, 1000);
+                const speech = new SpeechSynthesisUtterance("تنبيه، يوجد ملاحظة في هذا الطلب");
+                speech.lang = 'ar-SA';
+                speech.rate = 0.9;
+                window.speechSynthesis.speak(speech);
+            }, 1200);
         }
     }
 
