@@ -23,7 +23,6 @@
         .btn-done { background: var(--accent); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 15px; transition: 0.3s; }
         .btn-done:hover { background: #16a34a; transform: translateY(-2px); }
         audio { display: none; }
-        .hidden-item { display: none; } /* لإخفاء الأصناف اللي مش تبع القسم */
     </style>
 </head>
 <body>
@@ -47,19 +46,22 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // --- اكتشاف نوع الشاشة من الرابط ---
     const urlParams = new URLSearchParams(window.location.search);
-    const screenType = urlParams.get('dept'); // بياخد القيمة من ?dept=...
+    const screenType = urlParams.get('dept'); 
 
-    // تحديث العنوان بناءً على القسم
+    // تحديث العناوين بذكاء
     const titles = {
         'barista': '☕ شاشة الباريستا (المشروبات)',
         'kitchen': '🍔 شاشة المطبخ (الأكل)',
         'dessert': '🍰 شاشة الحلا (الحلويات)',
         'cashier': '💰 شاشة الكاشير (الكل)'
     };
-    if(screenType && titles[screenType]) {
-        document.getElementById('screenTitle').innerText = titles[screenType];
+    
+    // لو مفيش dept في اللينك يبقى كاشير تلقائي
+    if(!screenType || screenType === 'cashier') {
+        document.getElementById('screenTitle').innerText = titles['cashier'];
+    } else {
+        document.getElementById('screenTitle').innerText = titles[screenType] || '💰 شاشة مراقبة عامة';
     }
 
     database.ref('.info/connected').on('value', (snap) => {
@@ -71,6 +73,8 @@
         grid.innerHTML = ''; 
         
         if (snapshot.exists()) {
+            let foundAnyItemForThisScreen = false;
+
             snapshot.forEach((child) => {
                 const order = child.val();
                 const orderId = child.key;
@@ -79,13 +83,13 @@
                 let hasItemsForThisScreen = false;
 
                 order.items.forEach(item => {
-                    // شرط الفلترة: 
-                    // لو إحنا في الكاشير (screenType نال) هنعرض كله.
-                    // لو في قسم محدد، هنعرض بس اللي الـ dept بتاعه زيه.
-                    const isMyDept = !screenType || screenType === 'cashier' || item.dept === screenType;
+                    // القوة هنا: لو screenType فاضي (كاشير) يعرض كل حاجة، لو موجود يفلتر
+                    const isGlobalView = (!screenType || screenType === 'cashier');
+                    const isExactDept = (item.dept === screenType);
 
-                    if (isMyDept) {
+                    if (isGlobalView || isExactDept) {
                         hasItemsForThisScreen = true;
+                        foundAnyItemForThisScreen = true;
                         itemsHtml += `
                             <div class="item">
                                 <div class="item-main">
@@ -97,7 +101,6 @@
                     }
                 });
 
-                // لو الأوردر فيه أصناف تخص الشاشة دي، نعرض الكارت
                 if (hasItemsForThisScreen) {
                     grid.innerHTML += `
                         <div class="order-card">
@@ -108,46 +111,38 @@
                                 </div>
                                 <span style="color:var(--gold); font-family: monospace;">#${orderId.slice(-4)}</span>
                             </div>
-                            
-                            <div class="items-list">
-                                ${itemsHtml}
-                            </div>
-
+                            <div class="items-list">${itemsHtml}</div>
                             <div class="total">
-                                <span>${screenType === 'cashier' || !screenType ? 'الإجمالي:' : 'حالة الطلب:'}</span>
-                                <span>${screenType === 'cashier' || !screenType ? order.totalPrice + ' ريال' : 'قيد التنفيذ'}</span>
+                                <span>${(!screenType || screenType === 'cashier') ? 'الإجمالي:' : 'حالة الطلب:'}</span>
+                                <span>${(!screenType || screenType === 'cashier') ? order.totalPrice + ' ريال' : 'قيد التنفيذ'}</span>
                             </div>
-
                             <button class="btn-done" onclick="completeOrder('${orderId}')">
-                                ${screenType === 'cashier' || !screenType ? 'تم المحاسبة والتسليم ✅' : 'جاهز للتسليم 🔔'}
+                                ${(!screenType || screenType === 'cashier') ? 'تم المحاسبة والتسليم ✅' : 'جاهز للتسليم 🔔'}
                             </button>
-                        </div>
-                    `;
+                        </div>`;
                 }
             });
-            // تشغيل الصوت فقط لو فيه أوردرات ظهرت فعلاً في القسم ده
-            if (grid.innerHTML !== '') {
+            
+            if (foundAnyItemForThisScreen) {
                 document.getElementById('notifSound').play().catch(e => {});
             }
         } else {
-            grid.innerHTML = '<h3 style="grid-column: 1/-1; text-align:center; color:#64748b; margin-top:50px;">لا توجد طلبات حالياً.. الشغل واقف! ☕</h3>';
+            grid.innerHTML = '<h3 style="grid-column: 1/-1; text-align:center; color:#64748b; margin-top:50px;">لا توجد طلبات حالياً.. ☕</h3>';
         }
     });
 
     function completeOrder(id) {
-        let msg = (screenType === 'cashier' || !screenType) ? 'تأكيد المحاسبة وحذف الطلب؟' : 'تأكيد جاهزية الأصناف في قسمك؟';
-        
+        let msg = (!screenType || screenType === 'cashier') ? 'تأكيد المحاسبة وحذف الطلب؟' : 'تأكيد جاهزية الطلب في قسمك؟';
         if(confirm(msg)) {
-            // لو كاشير يحذف الأوردر خالص، لو مطبخ/باريستا ممكن نعدل حالته بس (حسب رغبتك)
-            // حالياً هنخليه يحذف عشان نسهل الشغل
             database.ref('live_orders/' + id).once('value').then(snap => {
-                database.ref('history_orders').push({...snap.val(), completedAt: new Date().toLocaleTimeString('ar-SA')});
-                database.ref('live_orders/' + id).remove();
-                database.ref('orders/' + id).update({ status: 'جاهز للاستلام ✅' });
+                if(snap.val()) {
+                    database.ref('history_orders').push({...snap.val(), completedAt: new Date().toLocaleTimeString('ar-SA')});
+                    database.ref('live_orders/' + id).remove();
+                    database.ref('orders/' + id).update({ status: 'جاهز للاستلام ✅' });
+                }
             });
         }
     }
 </script>
 </body>
 </html>
-
