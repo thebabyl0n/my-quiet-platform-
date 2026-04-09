@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha Shadow Client</title>
+    <title>Alpha Shadow | Client</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -27,7 +27,6 @@
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .item-card { background: #fff; border-radius: 18px; padding: 10px; border: 1px solid #f0f0f0; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .item-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 14px; }
-        .item-card h4 { margin: 10px 0 5px; font-size: 15px; color: var(--dark); }
         
         .extra-sel { width: 100%; padding: 8px; border-radius: 10px; border: 1px solid #ddd; margin: 10px 0; font-size: 12px; background: #fafafa; }
         .add-btn { background: var(--dark); color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; }
@@ -35,9 +34,6 @@
         .cart-box { margin-top: 30px; background: #f9fafb; padding: 20px; border-radius: 24px; border: 1px solid #eee; }
         .cart-item { display: flex; flex-direction: column; border-bottom: 1px solid #eee; padding: 10px 0; gap: 4px; }
         .cart-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .item-name { font-weight: bold; font-size: 16px; color: var(--dark); }
-        .item-qty { background: var(--gold); color: white; padding: 2px 8px; border-radius: 6px; font-size: 14px; margin-left: 5px; }
-        .extra-name { color: var(--gold); font-size: 13px; font-weight: 600; padding-right: 10px; }
         
         .discount-row { display: flex; justify-content: space-between; color: #dc2626; font-weight: bold; margin-top: 10px; font-size: 14px; border-top: 1px solid #ddd; padding-top: 10px; }
         .total-price { font-size: 22px; font-weight: 800; color: var(--dark); margin: 10px 0; text-align: center; }
@@ -101,20 +97,14 @@
 
     let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
     let oType = ""; let tNum = ""; let extras = ""; let currentOrderId = null;
-    let discountPercent = 0; let activePromo = "";
+    let discountAmountValue = 0; let discountType = "percent"; let activePromo = "";
 
+    // جلب الإعدادات
     database.ref('settings').on('value', snap => {
         const s = snap.val();
-        if(s) {
-            if(s.branding) {
-                document.getElementById('nameW').innerText = s.branding.name;
-                document.getElementById('logoW').src = s.branding.logo;
-            }
-            if(s.audio) {
-                welcomeAudio = s.audio.welcome;
-                readyAudio = s.audio.ready;
-                successMsg = s.audio.msgText;
-            }
+        if(s && s.branding) {
+            document.getElementById('nameW').innerText = s.branding.name;
+            document.getElementById('logoW').src = s.branding.logo;
         }
     });
 
@@ -151,12 +141,8 @@
         if(type === 'محلي' && !tNum) return alert("الرجاء إدخال رقم الطاولة");
         document.getElementById('typeLbl').innerText = type;
         document.getElementById('tblLbl').innerText = tNum ? `(طاولة ${tNum})` : "";
-        document.getElementById('welcome-screen').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('welcome-screen').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-            if(welcomeAudio) talk(welcomeAudio);
-        }, 500);
+        document.getElementById('welcome-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
     }
 
     function addToCart(k, ar, en, p) {
@@ -167,43 +153,43 @@
         const existingItem = cart.find(i => i.k === k && i.exEn === exEn);
         if (existingItem) { existingItem.qty += 1; } 
         else { cart.push({k, ar, en, p, exAr, exEn, exP, qty: 1}); }
-        talk(en + (exEn ? " with " + exEn : ""));
         renderCart();
     }
 
-    function applyPromo() {
-        const inputCode = document.getElementById('promoCode').value.trim();
-        if(!inputCode) return;
+    // --- وظيفة الخصم الاحترافية (توصية الجدة) ---
+    async function applyPromo() {
+        const code = document.getElementById('promoCode').value.trim();
+        if(!code) return;
 
-        database.ref('coupons').once('value', snap => {
-            const allCoupons = snap.val();
-            let found = false;
-            let tempDiscount = 0;
+        // سحب الكود مباشرة بـ Key (أسرع وأذكى)
+        const snapshot = await database.ref("coupons/" + code).get();
 
-            if (allCoupons) {
-                Object.keys(allCoupons).forEach(key => {
-                    const couponData = allCoupons[key];
-                    // فحص لو الكود هو العنوان (Key) أو موجود كخاصية داخلية
-                    if (key === inputCode || (couponData && couponData.code === inputCode)) {
-                        found = true;
-                        // محاولة سحب القيمة أياً كان مكانها
-                        let rawDiscount = (typeof couponData === 'object') ? (couponData.discount || couponData.value) : couponData;
-                        tempDiscount = parseFloat(rawDiscount) || 0;
-                    }
-                });
-            }
+        if (!snapshot.exists()) {
+            alert("❌ الكود غير صحيح");
+            resetPromo();
+            return;
+        }
 
-            if(found && tempDiscount > 0) {
-                discountPercent = tempDiscount;
-                activePromo = inputCode;
-                showToast("تم تطبيق الخصم بنجاح! 🎉");
-                renderCart();
-            } else {
-                alert("كود الخصم غير صحيح أو منتهي");
-                discountPercent = 0; activePromo = "";
-                renderCart();
-            }
-        });
+        const data = snapshot.val();
+
+        // التأكد من أن الكود نشط (Active)
+        if (data.active === false) {
+            alert("❌ هذا الكود منتهي أو غير مفعل حالياً");
+            resetPromo();
+            return;
+        }
+
+        // تخزين بيانات الخصم
+        activePromo = code;
+        discountAmountValue = parseFloat(data.discount) || 0;
+        discountType = data.type || "percent"; // الافتراضي نسبة مئوية
+
+        showToast("✅ تم تطبيق الخصم بنجاح!");
+        renderCart();
+    }
+
+    function resetPromo() {
+        activePromo = ""; discountAmountValue = 0; renderCart();
     }
 
     function renderCart() {
@@ -213,22 +199,28 @@
             subTotal += itemTotal;
             h += `<div class="cart-item">
                     <div class="cart-row">
-                        <span class="item-name"><span class="item-qty">${i.qty}x</span> ${i.ar}</span>
-                        <span>${itemTotal.toFixed(2)} ريال 
-                            <button onclick="updateQty(${x}, -1)" style="border:none;background:none;font-weight:bold;cursor:pointer;color:var(--gold);font-size:18px;">➖</button>
-                            <button onclick="updateQty(${x}, 1)" style="border:none;background:none;font-weight:bold;cursor:pointer;color:var(--gold);font-size:18px;">➕</button>
-                        </span>
+                        <span><b>${i.qty}x</b> ${i.ar}</span>
+                        <span>${itemTotal.toFixed(2)} ريال</span>
                     </div>
-                    ${i.exAr ? `<div class="extra-name">+ إضافة: ${i.exAr}</div>` : ''}
                   </div>`;
         });
         
-        let discountVal = (subTotal * discountPercent) / 100;
-        let finalTotal = subTotal - discountVal;
+        // حساب الخصم بناءً على النوع (نسبة أو مبلغ ثابت)
+        let calculatedDiscount = 0;
+        if (discountType === "percent") {
+            calculatedDiscount = (subTotal * discountAmountValue) / 100;
+        } else {
+            calculatedDiscount = discountAmountValue;
+        }
 
-        if(discountVal > 0) {
+        // التأكد إن الخصم مش أكبر من الحساب
+        if (calculatedDiscount > subTotal) calculatedDiscount = subTotal;
+
+        let finalTotal = subTotal - calculatedDiscount;
+
+        if(calculatedDiscount > 0) {
             document.getElementById('discountInfo').style.display = 'flex';
-            document.getElementById('discountVal').innerText = `-${discountVal.toFixed(2)} ريال (${discountPercent}%)`;
+            document.getElementById('discountVal').innerText = `-${calculatedDiscount.toFixed(2)} ريال (${discountType === 'percent' ? discountAmountValue + '%' : 'خصم ثابت'})`;
         } else {
             document.getElementById('discountInfo').style.display = 'none';
         }
@@ -237,58 +229,25 @@
         document.getElementById('total').innerText = finalTotal.toFixed(2);
     }
 
-    function updateQty(index, change) {
-        cart[index].qty += change;
-        if (cart[index].qty <= 0) cart.splice(index, 1);
-        renderCart();
-    }
-
-    function talk(t) {
-        window.speechSynthesis.cancel();
-        const m = new SpeechSynthesisUtterance(t); m.lang = 'en-US';
-        window.speechSynthesis.speak(m);
-    }
-
     function submitOrder() {
         if(!cart.length) return alert("السلة فارغة");
         const finalTotal = document.getElementById('total').innerText;
-        const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
-        const discountAmount = (subTotal * discountPercent) / 100;
-
+        
         const newOrderRef = database.ref('orders').push();
-        currentOrderId = newOrderRef.key;
         newOrderRef.set({
             items: cart, type: oType, table: tNum,
-            notes: document.getElementById('notes').value,
             promoUsed: activePromo,
-            discountAmount: discountAmount.toFixed(2),
             total: finalTotal,
             status: 'قيد المراجعة ⏳', time: Date.now()
         });
 
-        document.getElementById('order-status-bar').style.display = 'block';
-        database.ref('orders/' + currentOrderId + '/status').on('value', s => {
-            const status = s.val();
-            document.getElementById('order-status-bar').innerText = "حالة الطلب: " + status;
-            if(status === 'جاهز للاستلام ✅') {
-                showToast(successMsg || "طلبك جاهز يا فنان!");
-                if(readyAudio) talk(readyAudio);
-            }
-        });
-
-        let msg = `*طلب جديد (${oType} ${tNum?'طاولة '+tNum:''})*:\n`;
-        cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
-        if(activePromo) msg += `\n*كود الخصم المستخدم*: ${activePromo} (${discountPercent}%)`;
-        msg += `\n*الملاحظات*: ${document.getElementById('notes').value}`;
-        msg += `\n*الإجمالي النهائي*: ${finalTotal} ريال`;
-
-        window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-        cart = []; renderCart(); activePromo = ""; discountPercent = 0;
+        alert("تم إرسال طلبك! شكراً لك.");
+        location.reload(); 
     }
 
     function showToast(m) {
         const t = document.getElementById('toast'); t.innerText = m;
-        t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 5000);
+        t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 4000);
     }
 </script>
 </body>
