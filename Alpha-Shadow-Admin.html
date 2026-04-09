@@ -3,62 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Shadow | Master Control</title>
+    <title>Master Control | الظل</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --primary: #0f172a; --gold: #c8a27c; --green: #22c55e; }
         body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; margin: 0; padding: 20px; }
         #lock-screen { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
-        .container { max-width: 650px; margin: auto; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: none; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: none; }
         .section { background: #f8fafc; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        label { display: block; margin: 10px 0 5px; font-weight: bold; font-size: 14px; }
-        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; }
-        .btn-save { background: var(--green); color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        h3 { color: var(--primary); border-bottom: 2px solid var(--gold); padding-bottom: 5px; margin-top: 0; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; font-size: 13px; color: #475569; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 14px; }
+        .btn-save { background: var(--green); color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
+        .btn-save:hover { opacity: 0.8; }
         .btn-gold { background: var(--gold); }
+        .item-row { background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-del { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="lock-screen">
-    <h3>🔒 لوحة التحكم محمية</h3>
-    <input type="password" id="passInput" placeholder="أدخل كلمة السر" style="width: 200px; text-align: center;">
+    <h3>🔒 الظل | لوحة التحكم</h3>
+    <input type="password" id="passInput" placeholder="كلمة السر" style="width: 200px; text-align: center; margin-bottom: 10px;">
     <button class="btn-save" onclick="checkPass()" style="width: 100px;">دخول</button>
 </div>
 
 <div class="container" id="adminContent">
-    <h2 style="text-align: center;">⚙️ إعدادات White Label</h2>
+    <h2 style="text-align: center; color: var(--primary);">⚙️ نظام إدارة الكافيه (White Label)</h2>
 
     <div class="section">
-        <h3>🎨 الهوية والمظهر</h3>
+        <h3>🎨 براند الكافيه والمظهر</h3>
         <label>اسم الكافيه (بدل Alpha-Shadow)</label>
-        <input type="text" id="cafeName" placeholder="مثلاً: قهوة المختص">
-        <label>رابط اللوجو (الذي يظهر في البداية)</label>
+        <input type="text" id="cafeName" placeholder="مثلاً: قهوة الظل">
+        <label>رابط اللوجو</label>
         <input type="text" id="logoUrl">
-        <label>رابط صورة الخلفية الرئيسية</label>
+        <label>رابط صورة الخلفية (الصفحة الزرقاء)</label>
         <input type="text" id="bgUrl">
-        <button class="btn-save btn-gold" onclick="saveSettings('branding')">حفظ تغييرات المظهر ✨</button>
+        <button class="btn-save btn-gold" onclick="saveSettings('branding')">تحديث البراند 💾</button>
     </div>
 
     <div class="section">
-        <h3>🎙️ الرسائل الصوتية (English)</h3>
-        <label>رسالة الترحيب (مثلاً: Welcome to [X] Coffee)</label>
-        <input type="text" id="welcomeVoice" placeholder="e.g. Welcome to The Barn Code">
-        <label>رسالة استلام الطلب (مثلاً: Your order from [X] is ready)</label>
-        <input type="text" id="readyVoice" placeholder="e.g. Your order is ready, Enjoy!">
-        <button class="btn-save btn-gold" onclick="saveSettings('audio')">حفظ الرسائل الصوتية 🎧</button>
+        <h3>🎙️ الإعدادات الصوتية (English)</h3>
+        <label>رسالة الترحيب عند الدخول</label>
+        <input type="text" id="welcomeVoice" placeholder="Welcome to [Name] Coffee">
+        <label>رسالة عند إرسال الطلب</label>
+        <input type="text" id="readyVoice" placeholder="Your order is ready, Enjoy!">
+        <button class="btn-save btn-gold" onclick="saveSettings('audio')">حفظ الأصوات 🎧</button>
     </div>
 
     <div class="section">
-        <h3>☕ إضافة مشروب</h3>
+        <h3>➕ إدارة الإضافات (Dropdown Options)</h3>
+        <label>اسم الإضافة (عربي)</label>
+        <input type="text" id="extAr" placeholder="مثلاً: حليب لوز">
+        <label>اسم الإضافة (EN للنطق)</label>
+        <input type="text" id="extEn" placeholder="e.g. Almond Milk">
+        <label>السعر الإضافي (0 لو مجاني)</label>
+        <input type="number" id="extPrice" value="0">
+        <button class="btn-save" onclick="addExtra()">إضافة للـ Dropdown ✅</button>
+        <div id="extrasList"></div>
+    </div>
+
+    <div class="section">
+        <h3>☕ قائمة المشروبات</h3>
         <label>الاسم (عربي)</label><input type="text" id="itemAr">
-        <label>الاسم (EN)</label><input type="text" id="itemEn">
-        <label>السعر</label><input type="number" id="itemPrice">
+        <label>الاسم (EN للنطق)</label><input type="text" id="itemEn">
+        <label>السعر الأساسي</label><input type="number" id="itemPrice">
         <label>رابط الصورة</label><input type="text" id="itemImg">
-        <button class="btn-save" onclick="addItem()">إضافة المشروب ✅</button>
+        <button class="btn-save" onclick="addItem()">إضافة مشروب جديد ☕</button>
+        <div id="itemsList"></div>
     </div>
-
-    <div id="fullList"></div>
 </div>
 
 <script>
@@ -75,7 +90,8 @@
         if(document.getElementById('passInput').value === 'Lovely333') {
             document.getElementById('lock-screen').style.display = 'none';
             document.getElementById('adminContent').style.display = 'block';
-        } else { alert("خطأ!"); }
+            loadData();
+        } else { alert("كلمة السر خطأ يا فنان!"); }
     }
 
     function saveSettings(type) {
@@ -94,15 +110,62 @@
         alert("تم الحفظ بنجاح!");
     }
 
+    function addExtra() {
+        const ar = document.getElementById('extAr').value;
+        const en = document.getElementById('extEn').value;
+        const price = document.getElementById('extPrice').value;
+        if(ar && en) {
+            database.ref('extras_options').push({ ar, en, price: parseFloat(price) });
+            document.getElementById('extAr').value = '';
+            document.getElementById('extEn').value = '';
+        }
+    }
+
     function addItem() {
         const ar = document.getElementById('itemAr').value;
         const en = document.getElementById('itemEn').value;
         const price = document.getElementById('itemPrice').value;
         const img = document.getElementById('itemImg').value;
         if(ar && price) {
-            database.ref('menu_items').push({ ar, en, price: parseInt(price), img });
-            alert("تمت الإضافة!");
+            database.ref('menu_items').push({ ar, en, price: parseFloat(price), img });
+            alert("تمت إضافة المشروب!");
         }
+    }
+
+    function loadData() {
+        // تحميل الإعدادات الحالية
+        database.ref('settings').on('value', snap => {
+            const s = snap.val();
+            if(s) {
+                if(s.branding) {
+                    document.getElementById('cafeName').value = s.branding.name || "";
+                    document.getElementById('logoUrl').value = s.branding.logo || "";
+                    document.getElementById('bgUrl').value = s.branding.bg || "";
+                }
+                if(s.audio) {
+                    document.getElementById('welcomeVoice').value = s.audio.welcome || "";
+                    document.getElementById('readyVoice').value = s.audio.ready || "";
+                }
+            }
+        });
+
+        // عرض قائمة الإضافات للحذف
+        database.ref('extras_options').on('value', snap => {
+            let h = "<strong>الإضافات الحالية:</strong>";
+            snap.forEach(child => {
+                h += `<div class="item-row">${child.val().ar} (+${child.val().price}) <button class="btn-del" onclick="database.ref('extras_options/${child.key}').remove()">حذف</button></div>`;
+            });
+            document.getElementById('extrasList').innerHTML = h;
+        });
+
+        // عرض قائمة المشروبات للحذف
+        database.ref('menu_items').on('value', snap => {
+            let h = "<strong>المشروبات الحالية:</strong>";
+            snap.forEach(child => {
+                h += `<div class="item-row">${child.val().ar} <button class="btn-del" onclick="database.ref('menu_items/${child.key}').remove()">حذف</button></div>`;
+            });
+            document.getElementById('itemsList').innerHTML = h;
+        });
     }
 </script>
 </body>
