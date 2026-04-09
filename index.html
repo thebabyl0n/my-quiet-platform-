@@ -46,10 +46,10 @@
         </div>
         
         <div id="menu-items">
-            <p style="text-align:center; padding:20px; color:#64748b;">جاري تحميل المنيو السيادي...</p>
+            <p style="text-align:center; padding:50px; color:#64748b;">جاري سحب المنيو من السحاب... ☁️</p>
         </div>
 
-        <textarea id="order-notes" class="notes-area" rows="3" placeholder="اكتب هنا ملاحظاتك (مثلاً: السكر، تقسيم الطلب، إلخ...)"></textarea>
+        <textarea id="order-notes" class="notes-area" rows="3" placeholder="اكتب ملاحظاتك هنا..."></textarea>
 
         <div class="footer-signature">
             <p style="margin: 0;">Developed with 💡 by <b>Shadow & Alpha</b></p>
@@ -81,27 +81,17 @@
             window.speechSynthesis.speak(msg);
         }
 
-        // جلب المنيو من الفايربيز
+        // سحب المنيو من Admin (الفايربيز) فقط
         database.ref('menu_items').on('value', snap => {
             const data = snap.val();
-            dynamicMenu = [];
+            dynamicMenu = []; // بنبدأ بقائمة فاضية تماماً
             for(let id in data) {
                 dynamicMenu.push({
-                    fbId: id,
-                    ar: data[id].ar,
-                    en: data[id].en,
-                    price: data[id].price,
-                    img: data[id].img,
-                    qty: 0,
-                    opts: [
-                        {name: "Standard", price: 0},
-                        {name: "No Sugar", price: 0},
-                        {name: "Almond Milk", price: 2},
-                        {name: "Double Shot", price: 2}
-                    ]
+                    ar: data[id].ar, en: data[id].en, price: data[id].price, img: data[id].img, qty: 0,
+                    opts: [{name: "Standard", price: 0}, {name: "No Sugar", price: 0}, {name: "Almond Milk", price: 2}, {name: "Double Shot", price: 2}]
                 });
             }
-            if(orderMode !== "") render(); // تحديث الشاشة لو الزبون دخل فعلاً
+            if(orderMode !== "") render();
         });
 
         function askTable() { 
@@ -115,16 +105,15 @@
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
             document.getElementById('mode-badge').innerText = mode === 'local' ? `طاولة: ${tableNumber}` : "سفري";
-            speak("Welcome to Alpha Shadow, Your coffee is being coded", 'en-US');
+            speak("Welcome to Alpha Shadow, Choose your drink", 'en-US');
             render();
         }
 
         function render() {
             let html = ""; let total = 0;
             if(dynamicMenu.length === 0) {
-                html = "<p style='text-align:center; padding:20px;'>المنيو فارغ حالياً، أضف أصنافاً من لوحة المدير.</p>";
+                html = "<p style='text-align:center; padding:50px; color:#64748b;'>المنيو فارغ حالياً، يرجى إضافة أصناف من لوحة المدير.</p>";
             }
-
             dynamicMenu.forEach((item, index) => {
                 const optElement = document.getElementById(`opt-${index}`);
                 const selectedOptIndex = optElement ? optElement.value : 0;
@@ -164,7 +153,6 @@
             
             const notes = document.getElementById('order-notes').value;
             const typeStr = orderMode === 'local' ? `محلي (طاولة ${tableNumber})` : "سفري";
-            
             const itemsList = orderedItems.map((item, index) => {
                 const originalIndex = dynamicMenu.indexOf(item);
                 const optIndex = document.getElementById(`opt-${originalIndex}`).value;
@@ -188,13 +176,9 @@
                 }
             });
 
-            speak("Order sent successfully. Enjoy!", 'en-US');
-            
-            const msg = `*طلب جديد من Alpha-Shadow*\n*النوع:* ${typeStr}\n*الطلبات:*\n${itemsList.join("\n")}\n*ملاحظات:* ${notes}\n*الإجمالي:* ${document.getElementById('total-price').innerText} SAR`;
-            window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-            
+            speak("Order sent. Enjoy!", 'en-US');
+            window.open(`https://wa.me/966579747707?text=${encodeURIComponent("*طلب جديد*:\n" + itemsList.join("\n") + "\nإجمالي: " + document.getElementById('total-price').innerText + " SAR")}`);
             dynamicMenu.forEach(i => i.qty = 0); 
-            document.getElementById('order-notes').value = "";
             render();
         }
     </script>
