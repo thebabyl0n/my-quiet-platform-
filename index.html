@@ -3,58 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Shadow VIP | Menu</title>
+    <title>Alpha-Shadow VIP</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --primary: #0f172a; --accent: #22c55e; --gold: #c8a27c; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; padding-bottom: 160px; }
-        .hero { position: fixed; inset: 0; background: linear-gradient(rgba(15,23,42,0.85), rgba(15,23,42,0.85)), url('https://i.postimg.cc/kMQRJDQ3/xresch_blueprint_6944719_1920.jpg'); background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; color: white; text-align: center; }
-        .btn-main { background: var(--gold); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 10px; width: 280px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: 0.3s; }
-        .table-input { padding: 12px; border-radius: 10px; border: 1px solid var(--gold); width: 80%; margin-top: 10px; font-size: 16px; text-align: center; display: none; color: black; outline: none; }
-        .card { background: white; margin: 15px; border-radius: 20px; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; padding: 15px; }
-        .card-top { display: flex; align-items: center; width: 100%; }
-        .card img { width: 75px; height: 75px; object-fit: cover; border-radius: 15px; }
-        .card-info { padding: 0 15px; flex: 1; }
-        .counter-box { display: flex; align-items: center; gap: 10px; background: #f1f5f9; padding: 5px 10px; border-radius: 50px; }
-        .btn-step { background: white; border: 1px solid #cbd5e1; width: 35px; height: 35px; border-radius: 50%; font-weight: bold; cursor: pointer; }
-        .qty { font-weight: bold; min-width: 25px; text-align: center; color: var(--primary); font-size: 18px; }
-        .options-select { width: 100%; margin-top: 10px; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 14px; background: #f8fafc; outline: none; }
-        .notes-area { width: 90%; margin: 15px auto; display: block; padding: 12px; border-radius: 15px; border: 1px solid #cbd5e1; font-family: inherit; resize: none; outline: none; }
-        .cart-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 18px; border-radius: 50px; font-weight: bold; border: none; width: 90%; font-size: 18px; z-index: 1000; box-shadow: 0 10px 25px rgba(34,197,94,0.4); }
-        #status-notif { position: fixed; top: 20px; width: 90%; left: 5%; background: var(--accent); color: white; padding: 15px; border-radius: 15px; text-align: center; display: none; z-index: 3000; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .footer-signature { text-align: center; padding: 30px 10px; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; background: #fff; margin-top: 20px; }
-        .partnership-tag { color: var(--gold); font-weight: bold; letter-spacing: 2px; margin-top: 5px; display: block; }
+        :root { --primary: #0f172a; --gold: #c8a27c; --green: #22c55e; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; padding-bottom: 180px; }
+        .hero { position: fixed; inset: 0; background: linear-gradient(rgba(15,23,42,0.9), rgba(15,23,42,0.9)), url('https://i.postimg.cc/kMQRJDQ3/xresch_blueprint_6944719_1920.jpg'); background-size: cover; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; }
+        .btn-main { background: var(--gold); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; margin: 10px; width: 250px; }
+        .offer-slider { width: 100%; overflow-x: auto; display: flex; gap: 10px; padding: 10px; background: #fff; border-bottom: 2px solid var(--gold); }
+        .offer-slider img { height: 150px; border-radius: 15px; flex-shrink: 0; }
+        .card { background: white; margin: 10px; border-radius: 15px; padding: 10px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .card img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; }
+        .qty-box { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+        .btn-step { background: #f1f5f9; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; }
+        .discount-section { background: white; margin: 10px; padding: 15px; border-radius: 15px; text-align: center; }
+        .cart-btn { position: fixed; bottom: 20px; left: 5%; width: 90%; background: var(--green); color: white; padding: 15px; border-radius: 50px; border: none; font-size: 18px; font-weight: bold; z-index: 1000; }
     </style>
 </head>
 <body>
-    <div id="status-notif">طلبك جاهز! استلمه من الكاونتر ✨</div>
 
     <div id="welcome-screen" class="hero">
-        <h1 style="font-size: 35px;">Alpha-Shadow</h1>
-        <p style="color: var(--gold); font-size: 18px;">The Barn's Code</p>
-        <button class="btn-main" onclick="askTable()">📍 محلي / Dine-in</button>
-        <input type="number" id="tableNum" class="table-input" placeholder="رقم الطاولة">
-        <button id="confirmTable" class="btn-main" style="display:none; background:var(--accent);" onclick="setMode('local')">تأكيد</button>
+        <h1>Alpha-Shadow</h1>
+        <button class="btn-main" onclick="setMode('local')">📍 محلي / Dine-in</button>
         <button class="btn-main" onclick="setMode('away')">🚗 سفري / Takeaway</button>
     </div>
 
     <div id="main-content" style="display:none;">
-        <div style="background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;">
-            <b style="letter-spacing: 1px;">ALPHA SHADOW VIP</b>
-            <span id="mode-badge" style="background:var(--gold); padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: bold;"></span>
-        </div>
+        <div class="offer-slider" id="offerSlider"></div>
         
-        <div id="menu-items">
-            <p style="text-align:center; padding:50px; color:#64748b;">جاري سحب المنيو من السحاب... ☁️</p>
+        <div id="menu-items"></div>
+
+        <div class="discount-section">
+            <input type="text" id="couponInput" placeholder="كود الخصم" style="padding:10px; border-radius:10px; border:1px solid #ddd; width:60%;">
+            <button onclick="applyCoupon()" style="padding:10px; background:var(--gold); border:none; border-radius:10px; color:white;">تطبيق</button>
+            <p id="discountMsg" style="color:var(--green); font-size:12px; margin-top:5px;"></p>
         </div>
 
-        <textarea id="order-notes" class="notes-area" rows="3" placeholder="اكتب ملاحظاتك هنا..."></textarea>
-
-        <div class="footer-signature">
-            <p style="margin: 0;">Developed with 💡 by <b>Shadow & Alpha</b></p>
-            <span class="partnership-tag">HAMADA ENGINEERING PARTNERSHIP</span>
-        </div>
+        <textarea id="order-notes" style="width:90%; margin:10px 5%; padding:10px; border-radius:10px; border:1px solid #ddd;" placeholder="ملاحظات الطلب..."></textarea>
 
         <button class="cart-btn" onclick="sendOrder()">
             إرسال الطلب | <span id="total-price">0</span> SAR
@@ -71,115 +57,68 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        let orderMode = ""; let tableNumber = "";
-        let dynamicMenu = [];
+        let menuData = []; let orderMode = ""; let discount = 0;
 
-        function speak(text, lang = 'en-US') {
-            window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance();
-            msg.text = text; msg.lang = lang;
-            window.speechSynthesis.speak(msg);
-        }
-
-        // سحب المنيو من Admin (الفايربيز) فقط
-        database.ref('menu_items').on('value', snap => {
-            const data = snap.val();
-            dynamicMenu = []; // بنبدأ بقائمة فاضية تماماً
-            for(let id in data) {
-                dynamicMenu.push({
-                    ar: data[id].ar, en: data[id].en, price: data[id].price, img: data[id].img, qty: 0,
-                    opts: [{name: "Standard", price: 0}, {name: "No Sugar", price: 0}, {name: "Almond Milk", price: 2}, {name: "Double Shot", price: 2}]
-                });
-            }
-            if(orderMode !== "") render();
-        });
-
-        function askTable() { 
-            document.getElementById('tableNum').style.display = 'block'; 
-            document.getElementById('confirmTable').style.display = 'inline-block'; 
-        }
-        
         function setMode(mode) {
             orderMode = mode;
-            if(mode === 'local') tableNumber = document.getElementById('tableNum').value || "1";
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
-            document.getElementById('mode-badge').innerText = mode === 'local' ? `طاولة: ${tableNumber}` : "سفري";
-            speak("Welcome to Alpha Shadow, Choose your drink", 'en-US');
-            render();
+            loadData();
+        }
+
+        function loadData() {
+            database.ref('offers').on('value', snap => {
+                let html = "";
+                snap.forEach(child => { html += `<img src="${child.val().img}">`; });
+                document.getElementById('offerSlider').innerHTML = html;
+            });
+
+            database.ref('menu_items').on('value', snap => {
+                menuData = [];
+                snap.forEach(child => { menuData.push({...child.val(), qty: 0}); });
+                render();
+            });
         }
 
         function render() {
             let html = ""; let total = 0;
-            if(dynamicMenu.length === 0) {
-                html = "<p style='text-align:center; padding:50px; color:#64748b;'>المنيو فارغ حالياً، يرجى إضافة أصناف من لوحة المدير.</p>";
-            }
-            dynamicMenu.forEach((item, index) => {
-                const optElement = document.getElementById(`opt-${index}`);
-                const selectedOptIndex = optElement ? optElement.value : 0;
-                const optPrice = item.opts[selectedOptIndex].price;
-                total += (item.qty * (item.price + optPrice));
-                
+            menuData.forEach((item, index) => {
+                total += (item.qty * item.price);
                 html += `
                 <div class="card">
-                    <div class="card-top">
-                        <img src="${item.img}" onerror="this.src='https://via.placeholder.com/75?text=Alpha'">
-                        <div class="card-info"><b>${item.ar}</b><br><small>${item.price} SAR</small></div>
-                        <div class="counter-box">
-                            <button class="btn-step" onclick="updateQty(${index}, -1)">-</button>
-                            <span class="qty">${item.qty}</span>
-                            <button class="btn-step" onclick="updateQty(${index}, 1)">+</button>
-                        </div>
+                    <img src="${item.img}">
+                    <div style="margin-right:10px"><b>${item.ar}</b><br><small>${item.price} SAR</small></div>
+                    <div class="qty-box">
+                        <button class="btn-step" onclick="updateQty(${index}, -1)">-</button>
+                        <span>${item.qty}</span>
+                        <button class="btn-step" onclick="updateQty(${index}, 1)">+</button>
                     </div>
-                    <select class="options-select" id="opt-${index}" onchange="render()">
-                        ${item.opts.map((o, i) => `<option value="${i}">${o.name} ${o.price > 0 ? '(+'+o.price+' SAR)' : ''}</option>`).join('')}
-                    </select>
                 </div>`;
             });
+            let finalTotal = total - (total * (discount / 100));
             document.getElementById('menu-items').innerHTML = html;
-            document.getElementById('total-price').innerText = total;
+            document.getElementById('total-price').innerText = finalTotal.toFixed(2);
         }
 
-        function updateQty(index, step) {
-            if (dynamicMenu[index].qty + step < 0) return;
-            dynamicMenu[index].qty += step;
-            if (step > 0) speak(dynamicMenu[index].qty + " " + dynamicMenu[index].en, 'en-US');
-            render();
+        function updateQty(i, s) { if(menuData[i].qty+s >= 0) { menuData[i].qty+=s; render(); } }
+
+        function applyCoupon() {
+            const code = document.getElementById('couponInput').value.toUpperCase();
+            database.ref('coupons').child(code).once('value', snap => {
+                if(snap.exists()) {
+                    discount = snap.val().pct;
+                    document.getElementById('discountMsg').innerText = `تم تطبيق خصم ${discount}%`;
+                    render();
+                } else { alert("كود غير صحيح"); }
+            });
         }
 
         function sendOrder() {
-            const orderedItems = dynamicMenu.filter(i => i.qty > 0);
-            if(orderedItems.length === 0) { speak("Please select an item first", 'en-US'); return; }
-            
-            const notes = document.getElementById('order-notes').value;
-            const typeStr = orderMode === 'local' ? `محلي (طاولة ${tableNumber})` : "سفري";
-            const itemsList = orderedItems.map((item, index) => {
-                const originalIndex = dynamicMenu.indexOf(item);
-                const optIndex = document.getElementById(`opt-${originalIndex}`).value;
-                const optName = item.opts[optIndex].name;
-                return `${item.qty} x ${item.ar} (${optName})`;
-            });
-
-            const newOrderRef = database.ref('orders').push();
-            newOrderRef.set({
-                type: typeStr, items: itemsList, notes: notes,
-                time: new Date().toLocaleTimeString('ar-SA'),
-                isLocal: orderMode === 'local',
-                totalPrice: document.getElementById('total-price').innerText,
-                status: 'pending'
-            });
-
-            newOrderRef.on('value', snap => {
-                if(snap.val() && snap.val().status === 'ready') {
-                    document.getElementById('status-notif').style.display = 'block';
-                    speak("Your order is ready! Enjoy your Alpha experience.", 'en-US');
-                }
-            });
-
-            speak("Order sent. Enjoy!", 'en-US');
-            window.open(`https://wa.me/966579747707?text=${encodeURIComponent("*طلب جديد*:\n" + itemsList.join("\n") + "\nإجمالي: " + document.getElementById('total-price').innerText + " SAR")}`);
-            dynamicMenu.forEach(i => i.qty = 0); 
-            render();
+            const items = menuData.filter(i => i.qty > 0).map(i => `${i.qty} x ${i.ar}`);
+            if(items.length === 0) return;
+            const total = document.getElementById('total-price').innerText;
+            const msg = `*طلب جديد*\nالنوع: ${orderMode}\nالطلبات:\n${items.join('\n')}\nالإجمالي: ${total} SAR`;
+            window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
         }
     </script>
 </body>
