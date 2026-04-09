@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Shadow | Master Admin</title>
+    <title>Alpha-Shadow | Master Control</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -11,67 +11,51 @@
         body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; margin: 0; padding: 20px; }
         #lock-screen { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
         .container { max-width: 650px; margin: auto; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: none; }
-        h2, h3 { text-align: center; color: var(--primary); border-bottom: 2px solid var(--gold); padding-bottom: 10px; }
         .section { background: #f8fafc; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        .input-group { margin-bottom: 12px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #475569; }
-        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; outline: none; font-size: 15px; }
-        .btn-save { background: var(--green); color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; font-size: 14px; }
+        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; }
+        .btn-save { background: var(--green); color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; }
         .btn-gold { background: var(--gold); }
-        .item-card { background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-delete { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="lock-screen">
     <h3>🔒 لوحة التحكم محمية</h3>
-    <input type="password" id="passInput" placeholder="كلمة السر" style="width: 200px; text-align: center; margin-bottom: 10px;">
-    <button class="btn-save" onclick="checkPass()" style="width: 120px;">دخول</button>
+    <input type="password" id="passInput" placeholder="أدخل كلمة السر" style="width: 200px; text-align: center;">
+    <button class="btn-save" onclick="checkPass()" style="width: 100px;">دخول</button>
 </div>
 
 <div class="container" id="adminContent">
-    <h2>⚙️ لوحة التحكم الشاملة</h2>
+    <h2 style="text-align: center;">⚙️ إعدادات White Label</h2>
 
     <div class="section">
-        <h3>🎨 إعدادات الهوية والمظهر</h3>
-        <div class="input-group"><label>اسم المكان (عربي)</label><input type="text" id="nameAr"></div>
-        <div class="input-group"><label>رابط اللوجو</label><input type="text" id="logo"></div>
-        <div class="input-group"><label>رابط صورة الخلفية</label><input type="text" id="bg"></div>
-        <button class="btn-save btn-gold" onclick="saveIdentity()">حفظ المظهر 💾</button>
+        <h3>🎨 الهوية والمظهر</h3>
+        <label>اسم الكافيه (بدل Alpha-Shadow)</label>
+        <input type="text" id="cafeName" placeholder="مثلاً: قهوة المختص">
+        <label>رابط اللوجو (الذي يظهر في البداية)</label>
+        <input type="text" id="logoUrl">
+        <label>رابط صورة الخلفية الرئيسية</label>
+        <input type="text" id="bgUrl">
+        <button class="btn-save btn-gold" onclick="saveSettings('branding')">حفظ تغييرات المظهر ✨</button>
     </div>
 
-    <div class="section" style="border-right: 5px solid var(--gold);">
-        <h3>🎙️ تخصيص الرسائل الصوتية (English)</h3>
-        <div class="input-group">
-            <label>رسالة الترحيب عند الدخول</label>
-            <input type="text" id="welcomeMsg" placeholder="e.g. Welcome to Our Coffee">
-        </div>
-        <div class="input-group">
-            <label>رسالة عند إرسال الطلب</label>
-            <input type="text" id="doneMsg" placeholder="e.g. Your order is ready, Enjoy!">
-        </div>
-        <p style="font-size: 11px; color: #666;">* النص الذي تكتبه هنا هو ما سيتم نطقه صوتياً للزبون.</p>
-        <button class="btn-save btn-gold" onclick="saveAudioSettings()">حفظ الرسائل الصوتية 🎧</button>
+    <div class="section">
+        <h3>🎙️ الرسائل الصوتية (English)</h3>
+        <label>رسالة الترحيب (مثلاً: Welcome to [X] Coffee)</label>
+        <input type="text" id="welcomeVoice" placeholder="e.g. Welcome to The Barn Code">
+        <label>رسالة استلام الطلب (مثلاً: Your order from [X] is ready)</label>
+        <input type="text" id="readyVoice" placeholder="e.g. Your order is ready, Enjoy!">
+        <button class="btn-save btn-gold" onclick="saveSettings('audio')">حفظ الرسائل الصوتية 🎧</button>
     </div>
 
     <div class="section">
         <h3>☕ إضافة مشروب</h3>
-        <div class="input-group"><label>الاسم عربي</label><input type="text" id="itemNameAr"></div>
-        <div class="input-group"><label>الاسم EN</label><input type="text" id="itemNameEn"></div>
-        <div class="input-group"><label>السعر</label><input type="number" id="itemPrice"></div>
-        <div class="input-group"><label>رابط الصورة</label><input type="text" id="itemImg"></div>
-        <button class="btn-save" onclick="addItem()">حفظ المشروب ✨</button>
-    </div>
-
-    <div class="section">
-        <h3>🎟️ العروض والكوبونات</h3>
-        <input type="text" id="offerImg" placeholder="رابط صورة العرض" style="margin-bottom:10px;">
-        <button class="btn-save" onclick="addOffer()">إضافة عرض 🖼️</button>
-        <hr>
-        <input type="text" id="cpCode" placeholder="كود الكوبون" style="margin-bottom:10px;">
-        <input type="number" id="cpPct" placeholder="نسبة الخصم %" style="margin-bottom:10px;">
-        <button class="btn-save" onclick="addCoupon()">تفعيل كوبون 🎟️</button>
+        <label>الاسم (عربي)</label><input type="text" id="itemAr">
+        <label>الاسم (EN)</label><input type="text" id="itemEn">
+        <label>السعر</label><input type="number" id="itemPrice">
+        <label>رابط الصورة</label><input type="text" id="itemImg">
+        <button class="btn-save" onclick="addItem()">إضافة المشروب ✅</button>
     </div>
 
     <div id="fullList"></div>
@@ -91,72 +75,35 @@
         if(document.getElementById('passInput').value === 'Lovely333') {
             document.getElementById('lock-screen').style.display = 'none';
             document.getElementById('adminContent').style.display = 'block';
-            loadData();
         } else { alert("خطأ!"); }
     }
 
-    function saveIdentity() {
-        database.ref('settings/identity').set({
-            nameAr: document.getElementById('nameAr').value,
-            logo: document.getElementById('logo').value,
-            bg: document.getElementById('bg').value
-        });
-        alert("تم حفظ المظهر!");
-    }
-
-    function saveAudioSettings() {
-        database.ref('settings/audio').set({
-            welcome: document.getElementById('welcomeMsg').value,
-            done: document.getElementById('doneMsg').value
-        });
-        alert("تم حفظ الرسائل الصوتية!");
-    }
-
-    function loadData() {
-        database.ref('settings').on('value', snap => {
-            const s = snap.val();
-            if(s) {
-                if(s.identity) {
-                    document.getElementById('nameAr').value = s.identity.nameAr || "";
-                    document.getElementById('logo').value = s.identity.logo || "";
-                    document.getElementById('bg').value = s.identity.bg || "";
-                }
-                if(s.audio) {
-                    document.getElementById('welcomeMsg').value = s.audio.welcome || "";
-                    document.getElementById('doneMsg').value = s.audio.done || "";
-                }
-            }
-        });
+    function saveSettings(type) {
+        if(type === 'branding') {
+            database.ref('settings/branding').set({
+                name: document.getElementById('cafeName').value,
+                logo: document.getElementById('logoUrl').value,
+                bg: document.getElementById('bgUrl').value
+            });
+        } else {
+            database.ref('settings/audio').set({
+                welcome: document.getElementById('welcomeVoice').value,
+                ready: document.getElementById('readyVoice').value
+            });
+        }
+        alert("تم الحفظ بنجاح!");
     }
 
     function addItem() {
-        const ar = document.getElementById('itemNameAr').value;
-        const en = document.getElementById('itemNameEn').value;
+        const ar = document.getElementById('itemAr').value;
+        const en = document.getElementById('itemEn').value;
         const price = document.getElementById('itemPrice').value;
         const img = document.getElementById('itemImg').value;
         if(ar && price) {
             database.ref('menu_items').push({ ar, en, price: parseInt(price), img });
-            alert("تم!");
+            alert("تمت الإضافة!");
         }
     }
-
-    function addOffer() {
-        const img = document.getElementById('offerImg').value;
-        if(img) database.ref('offers').push({ img });
-    }
-
-    function addCoupon() {
-        const code = document.getElementById('cpCode').value.toUpperCase();
-        const pct = document.getElementById('cpPct').value;
-        if(code && pct) database.ref('coupons').child(code).set({ pct: parseInt(pct) });
-    }
-
-    database.ref().on('value', snap => {
-        const d = snap.val();
-        let h = "<h3>القائمة الحالية:</h3>";
-        for(let id in d.menu_items) h += `<div class="item-card">${d.menu_items[id].ar} <button class="btn-delete" onclick="database.ref('menu_items/${id}').remove()">حذف</button></div>`;
-        document.getElementById('fullList').innerHTML = h;
-    });
 </script>
 </body>
 </html>
