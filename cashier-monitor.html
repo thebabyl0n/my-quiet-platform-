@@ -10,16 +10,18 @@
         :root { --bg: #0f172a; --card: #1e293b; --gold: #c8a27c; --text: #f1f5f9; --accent: #22c55e; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #334155; position: relative; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .table-no { background: var(--gold); color: var(--bg); padding: 5px 15px; border-radius: 5px; font-weight: bold; font-size: 18px; }
-        .order-time { font-size: 12px; color: #94a3b8; margin-top: 5px; }
-        .items-list { margin: 15px 0; border-top: 1px solid #334155; padding-top: 10px; }
-        .item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 15px; }
-        .total { font-size: 20px; font-weight: bold; color: var(--accent); border-top: 2px dashed #334155; padding-top: 10px; display: flex; justify-content: space-between; }
-        .btn-done { background: var(--accent); color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 15px; }
-        .btn-done:hover { opacity: 0.9; transform: scale(0.98); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #334155; position: relative; animation: fadeIn 0.4s ease-out; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .table-no { background: var(--gold); color: var(--bg); padding: 5px 15px; border-radius: 8px; font-weight: bold; font-size: 20px; }
+        .order-time { font-size: 13px; color: #94a3b8; margin-top: 8px; }
+        .items-list { margin: 15px 0; border-top: 1px solid #334155; padding-top: 12px; }
+        .item { display: flex; flex-direction: column; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #334155; }
+        .item-main { display: flex; justify-content: space-between; font-weight: 600; font-size: 16px; }
+        .item-extra { font-size: 13px; color: var(--gold); margin-top: 2px; }
+        .total { font-size: 22px; font-weight: bold; color: var(--accent); border-top: 2px solid #334155; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-done { background: var(--accent); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 15px; transition: 0.3s; }
+        .btn-done:hover { background: #16a34a; transform: translateY(-2px); }
         audio { display: none; }
     </style>
 </head>
@@ -29,14 +31,12 @@
 
 <div class="header">
     <h2>🖥️ شاشة مراقبة الطلبات (الكاشير)</h2>
-    <div id="status">متصل بالسيستم 🟢</div>
+    <div id="status">جاري الاتصال... ⏳</div>
 </div>
 
-<div class="grid" id="ordersGrid">
-    </div>
+<div class="grid" id="ordersGrid"></div>
 
 <script>
-    // نفس إعدادات الـ Firebase بتاعتك يا حودة
     const firebaseConfig = {
         apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
         authDomain: "alphashadow-23689.firebaseapp.com",
@@ -46,21 +46,32 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // استماع لحظي للطلبات الجديدة
+    database.ref('.info/connected').on('value', (snap) => {
+        document.getElementById('status').innerText = snap.val() ? "متصل بالسيستم 🟢" : "انقطع الاتصال 🔴";
+    });
+
     database.ref('live_orders').on('value', (snapshot) => {
         const grid = document.getElementById('ordersGrid');
-        grid.innerHTML = ''; // تنظيف الشاشة قبل التحديث
+        grid.innerHTML = ''; 
         
         if (snapshot.exists()) {
-            document.getElementById('notifSound').play(); // تشغيل صوت التنبيه
+            document.getElementById('notifSound').play().catch(e => console.log("Audio play deferred"));
             
             snapshot.forEach((child) => {
                 const order = child.val();
                 const orderId = child.key;
                 
                 let itemsHtml = '';
+                // التعديل هنا ليتناسب مع هيكل بيانات الزبون (i.ar بدلاً من item.name)
                 order.items.forEach(item => {
-                    itemsHtml += `<div class="item"><span>${item.name} × ${item.qty}</span> <span>${item.price} ريال</span></div>`;
+                    itemsHtml += `
+                        <div class="item">
+                            <div class="item-main">
+                                <span>${item.ar || item.name} × ${item.qty}</span>
+                                <span>${((item.p || item.price) * item.qty).toFixed(2)} ريال</span>
+                            </div>
+                            ${item.exAr ? `<div class="item-extra">+ إضافة: ${item.exAr}</div>` : ''}
+                        </div>`;
                 });
 
                 grid.innerHTML += `
@@ -68,14 +79,16 @@
                         <div style="display:flex; justify-content:space-between; align-items:start;">
                             <div>
                                 <span class="table-no">طاولة ${order.table}</span>
-                                <div class="order-time">${order.time}</div>
+                                <div class="order-time">🕒 ${order.time}</div>
                             </div>
-                            <span style="color:var(--gold)">#${orderId.slice(-4)}</span>
+                            <span style="color:var(--gold); font-family: monospace;">#${orderId.slice(-4)}</span>
                         </div>
                         
                         <div class="items-list">
                             ${itemsHtml}
                         </div>
+
+                        ${order.notes ? `<div style="background:#0f172a; padding:8px; border-radius:5px; margin-bottom:10px; font-size:14px;">📝 ${order.notes}</div>` : ''}
 
                         <div class="total">
                             <span>الإجمالي:</span>
@@ -87,22 +100,23 @@
                 `;
             });
         } else {
-            grid.innerHTML = '<h3 style="grid-column: 1/-1; text-align:center; color:#64748b;">لا توجد طلبات حالياً.. الشغل واقف يا وحش! ☕</h3>';
+            grid.innerHTML = '<h3 style="grid-column: 1/-1; text-align:center; color:#64748b; margin-top:50px;">لا توجد طلبات حالياً.. القهوة جاهزة! ☕</h3>';
         }
     });
 
-    // وظيفة إنهاء الأوردر
     function completeOrder(id) {
-        if(confirm('هل تم استلام المبلغ وتسليم الطلب؟')) {
-            // بننقل الطلب للأرشيف عشان مبيعات آخر اليوم (اختياري)
+        if(confirm('تأكيد المحاسبة وحذف الطلب من الشاشة؟')) {
             database.ref('live_orders/' + id).once('value').then(snap => {
-                database.ref('history_orders').push(snap.val());
-                // بنحذفه من الشاشة الرئيسية
+                database.ref('history_orders').push({
+                    ...snap.val(),
+                    completedAt: new Date().toLocaleTimeString('ar-SA')
+                });
                 database.ref('live_orders/' + id).remove();
+                // تحديث حالة الطلب عند الزبون ليصبح "جاهز"
+                database.ref('orders/' + id).update({ status: 'جاهز للاستلام ✅' });
             });
         }
     }
 </script>
 </body>
 </html>
-
