@@ -8,49 +8,53 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --primary: #0f172a; --gold: #c8a27c; --green: #22c55e; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; margin: 0; padding: 20px; color: var(--primary); }
-        .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: var(--primary); border-bottom: 2px solid var(--gold); padding-bottom: 10px; }
-        .input-group { margin-bottom: 15px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; margin: 0; padding: 20px; }
+        #lock-screen { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: none; }
+        h2, h3 { text-align: center; color: var(--primary); border-bottom: 2px solid var(--gold); padding-bottom: 10px; }
+        .section { background: #f8fafc; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .input-group { margin-bottom: 12px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
-        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; outline: none; font-size: 16px; }
-        input:focus { border-color: var(--gold); }
-        .btn-save { background: var(--green); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
-        .btn-save:active { transform: scale(0.98); }
-        .menu-list { margin-top: 30px; }
-        .item-card { background: #fff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-delete { background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; outline: none; }
+        .btn-save { background: var(--green); color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .item-card { background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-delete { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>⚙️ إدارة منيو Alpha-Shadow</h2>
-    
-    <div class="input-group">
-        <label>اسم المشروب (عربي)</label>
-        <input type="text" id="nameAr" placeholder="مثلاً: سبانش لاتيه بارد">
-    </div>
-    
-    <div class="input-group">
-        <label>اسم المشروب (English)</label>
-        <input type="text" id="nameEn" placeholder="e.g. Iced Spanish Latte">
-    </div>
-    
-    <div class="input-group">
-        <label>السعر (SAR)</label>
-        <input type="number" id="price" placeholder="18">
-    </div>
-    
-    <div class="input-group">
-        <label>رابط الصورة (URL)</label>
-        <input type="text" id="imgUrl" placeholder="ضع رابط الصورة هنا">
+<div id="lock-screen">
+    <h3>🔒 أدخل كلمة السر للدخول</h3>
+    <input type="password" id="passInput" style="width: 200px; text-align: center;">
+    <button class="btn-save" onclick="checkPass()" style="width: 100px; margin-top: 10px;">دخول</button>
+</div>
+
+<div class="container" id="adminContent">
+    <h2>⚙️ لوحة تحكم Alpha-Shadow</h2>
+
+    <div class="section">
+        <h3>☕ إضافة مشروب</h3>
+        <div class="input-group"><label>الاسم (عربي)</label><input type="text" id="nameAr"></div>
+        <div class="input-group"><label>الاسم (EN)</label><input type="text" id="nameEn"></div>
+        <div class="input-group"><label>السعر</label><input type="number" id="price"></div>
+        <div class="input-group"><label>رابط الصورة</label><input type="text" id="imgUrl"></div>
+        <button class="btn-save" onclick="addItem('menu_items', 'nameAr', 'nameEn', 'price', 'imgUrl')">حفظ المشروب</button>
     </div>
 
-    <button class="btn-save" onclick="addToMenu()">إضافة المشروب للمنيو ✨</button>
+    <div class="section">
+        <h3>🖼️ إضافة عرض (Banner)</h3>
+        <div class="input-group"><label>رابط صورة العرض</label><input type="text" id="offerImg"></div>
+        <button class="btn-save" onclick="addOffer()">إضافة العرض</button>
+    </div>
 
-    <div class="menu-list" id="menuList">
-        </div>
+    <div class="section">
+        <h3>🎟️ إضافة كوبون خصم</h3>
+        <div class="input-group"><label>كود الكوبون (مثلاً: ALPHA)</label><input type="text" id="couponCode"></div>
+        <div class="input-group"><label>نسبة الخصم %</label><input type="number" id="discountPct"></div>
+        <button class="btn-save" onclick="addCoupon()">تفعيل الكوبون</button>
+    </div>
+
+    <div class="menu-list" id="fullList"></div>
 </div>
 
 <script>
@@ -63,51 +67,51 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    function addToMenu() {
-        const ar = document.getElementById('nameAr').value;
-        const en = document.getElementById('nameEn').value;
-        const price = document.getElementById('price').value;
-        const img = document.getElementById('imgUrl').value;
+    function checkPass() {
+        if(document.getElementById('passInput').value === 'Lovely333') {
+            document.getElementById('lock-screen').style.display = 'none';
+            document.getElementById('adminContent').style.display = 'block';
+        } else { alert("كلمة السر خطأ!"); }
+    }
 
-        if(ar && en && price) {
-            database.ref('menu_items').push({
-                ar: ar,
-                en: en,
-                price: parseInt(price),
-                img: img || "https://via.placeholder.com/150"
-            });
-            alert("تمت الإضافة بنجاح يا قائد!");
-            document.querySelectorAll('input').forEach(i => i.value = "");
-        } else {
-            alert("املأ الخانات الأساسية أولاً");
+    function addItem(path, arId, enId, priceId, imgId) {
+        const ar = document.getElementById(arId).value;
+        const en = document.getElementById(enId).value;
+        const price = document.getElementById(priceId).value;
+        const img = document.getElementById(imgId).value;
+        if(ar && price) {
+            database.ref(path).push({ ar, en, price: parseInt(price), img });
+            alert("تم الحفظ!");
+            document.querySelectorAll('input:not(#passInput)').forEach(i => i.value = "");
         }
     }
 
-    // عرض المنيو الحالي للحذف أو المتابعة
-    database.ref('menu_items').on('value', snap => {
-        const list = document.getElementById('menuList');
-        list.innerHTML = "<h4>الأصناف الحالية:</h4>";
+    function addOffer() {
+        const img = document.getElementById('offerImg').value;
+        if(img) { database.ref('offers').push({ img }); alert("تمت إضافة العرض!"); document.getElementById('offerImg').value = ""; }
+    }
+
+    function addCoupon() {
+        const code = document.getElementById('couponCode').value.toUpperCase();
+        const pct = document.getElementById('discountPct').value;
+        if(code && pct) { database.ref('coupons').child(code).set({ pct: parseInt(pct) }); alert("تم تفعيل الكوبون!"); }
+    }
+
+    // عرض القائمة للحذف
+    database.ref().on('value', snap => {
         const data = snap.val();
-        for(let id in data) {
-            list.innerHTML += `
-                <div class="item-card">
-                    <div>
-                        <b>${data[id].ar}</b><br>
-                        <small>${data[id].price} SAR</small>
-                    </div>
-                    <button class="btn-delete" onclick="deleteItem('${id}')">حذف</button>
-                </div>
-            `;
+        let html = "<h3>إدارة الأصناف:</h3>";
+        for(let id in data.menu_items) {
+            html += `<div class="item-card"><span>${data.menu_items[id].ar}</span><button class="btn-delete" onclick="deleteData('menu_items/${id}')">حذف</button></div>`;
         }
+        html += "<h3>إدارة العروض:</h3>";
+        for(let id in data.offers) {
+            html += `<div class="item-card"><span>عرض ${id}</span><button class="btn-delete" onclick="deleteData('offers/${id}')">حذف</button></div>`;
+        }
+        document.getElementById('fullList').innerHTML = html;
     });
 
-    function deleteItem(id) {
-        if(confirm("هل تريد حذف هذا الصنف؟")) {
-            database.ref('menu_items').child(id).remove();
-        }
-    }
+    function deleteData(path) { if(confirm("حذف؟")) database.ref(path).remove(); }
 </script>
-
 </body>
 </html>
-
