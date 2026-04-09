@@ -3,48 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Shadow VIP</title>
+    <title>Alpha-Shadow | VIP Menu</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --primary: #0f172a; --gold: #c8a27c; --green: #22c55e; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; padding-bottom: 180px; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; padding-bottom: 180px; overflow-x: hidden; }
         .hero { position: fixed; inset: 0; background: linear-gradient(rgba(15,23,42,0.9), rgba(15,23,42,0.9)), url('https://i.postimg.cc/kMQRJDQ3/xresch_blueprint_6944719_1920.jpg'); background-size: cover; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; }
-        .btn-main { background: var(--gold); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; margin: 10px; width: 250px; }
-        .offer-slider { width: 100%; overflow-x: auto; display: flex; gap: 10px; padding: 10px; background: #fff; border-bottom: 2px solid var(--gold); }
-        .offer-slider img { height: 150px; border-radius: 15px; flex-shrink: 0; }
-        .card { background: white; margin: 10px; border-radius: 15px; padding: 10px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .card img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; }
-        .qty-box { display: flex; align-items: center; gap: 10px; margin-right: auto; }
-        .btn-step { background: #f1f5f9; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; }
-        .discount-section { background: white; margin: 10px; padding: 15px; border-radius: 15px; text-align: center; }
-        .cart-btn { position: fixed; bottom: 20px; left: 5%; width: 90%; background: var(--green); color: white; padding: 15px; border-radius: 50px; border: none; font-size: 18px; font-weight: bold; z-index: 1000; }
+        .btn-main { background: var(--gold); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; margin: 10px; width: 250px; font-size: 18px; }
+        .table-select { background: white; color: var(--primary); padding: 10px; border-radius: 10px; margin-top: 10px; width: 200px; font-weight: bold; }
+        .offer-slider { width: 100%; overflow-x: auto; display: flex; gap: 10px; padding: 10px; background: #fff; border-bottom: 2px solid var(--gold); scroll-behavior: smooth; }
+        .offer-slider img { height: 160px; border-radius: 15px; flex-shrink: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .card { background: white; margin: 12px; border-radius: 20px; padding: 12px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: 0.3s; }
+        .card img { width: 85px; height: 85px; border-radius: 15px; object-fit: cover; margin-left: 12px; }
+        .qty-box { display: flex; align-items: center; gap: 12px; margin-right: auto; background: #f1f5f9; padding: 5px 12px; border-radius: 50px; }
+        .btn-step { background: white; border: none; width: 32px; height: 32px; border-radius: 50%; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .discount-section { background: white; margin: 15px; padding: 15px; border-radius: 15px; text-align: center; border: 1px dashed var(--gold); }
+        .footer-cart { position: fixed; bottom: 0; width: 100%; background: white; padding: 20px; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.1); z-index: 1500; text-align: center; }
+        .cart-btn { width: 90%; background: var(--green); color: white; padding: 18px; border-radius: 50px; border: none; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 10px 20px rgba(34, 197, 94, 0.3); }
     </style>
 </head>
 <body>
 
     <div id="welcome-screen" class="hero">
-        <h1>Alpha-Shadow</h1>
-        <button class="btn-main" onclick="setMode('local')">📍 محلي / Dine-in</button>
+        <img src="https://i.postimg.cc/pVf5WyDG/Alpha-Logo.png" style="width: 120px; margin-bottom: 20px;">
+        <h1>مرحباً بك في Alpha-Shadow</h1>
+        <button class="btn-main" onclick="showTables()">📍 محلي / Dine-in</button>
+        <div id="tables-container" style="display:none;">
+            <select id="tableNum" class="table-select">
+                <option value="0">اختر رقم الطاولة</option>
+                <script>for(let i=1; i<=20; i++) document.write(`<option value="${i}">طاولة ${i}</option>`);</script>
+            </select>
+            <br>
+            <button class="btn-main" style="width:150px; background:var(--green);" onclick="setMode('local')">تأكيد</button>
+        </div>
         <button class="btn-main" onclick="setMode('away')">🚗 سفري / Takeaway</button>
     </div>
 
     <div id="main-content" style="display:none;">
         <div class="offer-slider" id="offerSlider"></div>
         
-        <div id="menu-items"></div>
+        <div id="menu-items" style="margin-top:10px;"></div>
 
         <div class="discount-section">
-            <input type="text" id="couponInput" placeholder="كود الخصم" style="padding:10px; border-radius:10px; border:1px solid #ddd; width:60%;">
-            <button onclick="applyCoupon()" style="padding:10px; background:var(--gold); border:none; border-radius:10px; color:white;">تطبيق</button>
-            <p id="discountMsg" style="color:var(--green); font-size:12px; margin-top:5px;"></p>
+            <input type="text" id="couponInput" placeholder="كود الخصم" style="padding:12px; border-radius:12px; border:1px solid #ddd; width:60%; outline:none;">
+            <button onclick="applyCoupon()" style="padding:12px 20px; background:var(--gold); border:none; border-radius:12px; color:white; font-weight:bold;">تطبيق</button>
+            <p id="discountMsg" style="color:var(--green); font-weight:bold; margin-top:8px;"></p>
         </div>
 
-        <textarea id="order-notes" style="width:90%; margin:10px 5%; padding:10px; border-radius:10px; border:1px solid #ddd;" placeholder="ملاحظات الطلب..."></textarea>
+        <textarea id="order-notes" style="width:90%; margin:15px 5%; padding:15px; border-radius:15px; border:1px solid #ddd; font-family:inherit;" placeholder="ملاحظات إضافية (السكر، نوع الحليب...)"></textarea>
 
-        <button class="cart-btn" onclick="sendOrder()">
-            إرسال الطلب | <span id="total-price">0</span> SAR
-        </button>
+        <div class="footer-cart">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: var(--primary);">طلبك جاهز؟ اضغط للإرسال 👇</p>
+            <button class="cart-btn" onclick="sendOrder()">
+                 إرسال الطلب | <span id="total-price">0</span> SAR
+            </button>
+        </div>
     </div>
 
     <script>
@@ -59,7 +73,12 @@
 
         let menuData = []; let orderMode = ""; let discount = 0;
 
+        function showTables() { document.getElementById('tables-container').style.display = 'block'; }
+
         function setMode(mode) {
+            if(mode === 'local' && document.getElementById('tableNum').value === "0") {
+                alert("برجاء اختيار رقم الطاولة أولاً"); return;
+            }
             orderMode = mode;
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
@@ -72,10 +91,8 @@
                 snap.forEach(child => { html += `<img src="${child.val().img}">`; });
                 document.getElementById('offerSlider').innerHTML = html;
             });
-
             database.ref('menu_items').on('value', snap => {
-                menuData = [];
-                snap.forEach(child => { menuData.push({...child.val(), qty: 0}); });
+                menuData = []; snap.forEach(child => { menuData.push({...child.val(), qty: 0}); });
                 render();
             });
         }
@@ -87,10 +104,10 @@
                 html += `
                 <div class="card">
                     <img src="${item.img}">
-                    <div style="margin-right:10px"><b>${item.ar}</b><br><small>${item.price} SAR</small></div>
+                    <div><b>${item.ar}</b><br><small style="color:var(--gold)">${item.price} SAR</small></div>
                     <div class="qty-box">
                         <button class="btn-step" onclick="updateQty(${index}, -1)">-</button>
-                        <span>${item.qty}</span>
+                        <span style="font-weight:bold;">${item.qty}</span>
                         <button class="btn-step" onclick="updateQty(${index}, 1)">+</button>
                     </div>
                 </div>`;
@@ -100,25 +117,40 @@
             document.getElementById('total-price').innerText = finalTotal.toFixed(2);
         }
 
-        function updateQty(i, s) { if(menuData[i].qty+s >= 0) { menuData[i].qty+=s; render(); } }
+        function updateQty(i, s) {
+            if(menuData[i].qty + s >= 0) {
+                menuData[i].qty += s;
+                if(s > 0) {
+                    let msg = new SpeechSynthesisUtterance("Ready");
+                    msg.lang = 'en-US'; window.speechSynthesis.speak(msg);
+                }
+                render();
+            }
+        }
 
         function applyCoupon() {
             const code = document.getElementById('couponInput').value.toUpperCase();
             database.ref('coupons').child(code).once('value', snap => {
                 if(snap.exists()) {
                     discount = snap.val().pct;
-                    document.getElementById('discountMsg').innerText = `تم تطبيق خصم ${discount}%`;
+                    document.getElementById('discountMsg').innerText = `✅ تم تطبيق خصم ${discount}%`;
                     render();
-                } else { alert("كود غير صحيح"); }
+                } else { alert("كود الخصم غير صحيح"); }
             });
         }
 
         function sendOrder() {
             const items = menuData.filter(i => i.qty > 0).map(i => `${i.qty} x ${i.ar}`);
-            if(items.length === 0) return;
+            if(items.length === 0) { alert("أضف مشروبات أولاً!"); return; }
+            
             const total = document.getElementById('total-price').innerText;
-            const msg = `*طلب جديد*\nالنوع: ${orderMode}\nالطلبات:\n${items.join('\n')}\nالإجمالي: ${total} SAR`;
-            window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
+            const table = document.getElementById('tableNum').value;
+            const notes = document.getElementById('order-notes').value;
+            const type = orderMode === 'local' ? `📍 محلي (طاولة ${table})` : `🚗 سفري`;
+
+            const fullMsg = `*طلب جديد من Alpha-Shadow*\n------------------\nالنوع: ${type}\nالطلبات:\n${items.join('\n')}\n------------------\nالملاحظات: ${notes || 'لا يوجد'}\n------------------\nالإجمالي النهائي: ${total} SAR`;
+            
+            window.open(`https://wa.me/966579747707?text=${encodeURIComponent(fullMsg)}`);
         }
     </script>
 </body>
