@@ -84,7 +84,7 @@
 
         <div class="total-price">الإجمالي النهائي: <span id="total">0</span> ريال</div>
         
-        <textarea id="notes" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px; font-family:inherit;" rows="3" placeholder="ملاحظاتك الإضافية للباريستا..."></textarea>
+        <textarea id="notes" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px; font-family:inherit;" rows="3" placeholder="ملاحظاتك الإضافية..."></textarea>
         <button class="send-btn" onclick="submitOrder()">إرسال الطلب ✅</button>
     </div>
 </div>
@@ -134,12 +134,14 @@
             let h = "";
             snap.forEach(child => {
                 const item = child.val();
+                // التأكد من وجود القسم أو تعيين باريستا كافتراضي
+                const itemDept = item.dept || 'barista'; 
                 h += `<div class="item-card">
                     <img src="${item.img}">
                     <h4>${item.ar}</h4>
                     <span style="color:var(--gold);font-weight:700;">${item.price} ريال</span>
                     <select class="extra-sel" id="ex-${child.key}">${extras}</select>
-                    <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price},'${item.dept||'barista'}')">إضافة +</button>
+                    <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price},'${itemDept}')">إضافة +</button>
                 </div>`;
             });
             document.getElementById('menu').innerHTML = h;
@@ -165,8 +167,12 @@
         const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
         const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
         const existingItem = cart.find(i => i.k === k && i.exEn === exEn);
-        if (existingItem) { existingItem.qty += 1; } 
-        else { cart.push({k, ar, en, p, exAr, exEn, exP, qty: 1, dept}); }
+        if (existingItem) { 
+            existingItem.qty += 1; 
+        } 
+        else { 
+            cart.push({k, ar, en, p, exAr, exEn, exP, qty: 1, dept: dept}); 
+        }
         talk(en + (exEn ? " with " + exEn : ""));
         renderCart();
     }
@@ -225,7 +231,6 @@
         window.speechSynthesis.speak(m);
     }
 
-    // --- الوظيفة المطورة والمدمجة لإرسال الطلب (الكاشير + الواتساب) ---
     function submitOrder() {
         if(!cart.length) return alert("السلة فارغة");
         const finalTotal = document.getElementById('total').innerText;
@@ -234,20 +239,22 @@
         const notes = document.getElementById('notes').value;
 
         const orderData = {
-            items: cart, type: oType, table: tNum || 'سفري',
-            notes: notes, promoUsed: activePromo,
+            items: cart, // السلة دلوقتِ فيها الـ dept لكل صنف
+            type: oType, 
+            table: tNum || 'سفري',
+            notes: notes, 
+            promoUsed: activePromo,
             discountAmount: dAmount.toFixed(2),
-            totalPrice: finalTotal, status: 'قيد التحضير ⏳',
+            totalPrice: finalTotal, 
+            status: 'قيد التحضير ⏳',
             time: new Date().toLocaleTimeString('ar-SA')
         };
 
-        // إرسال لـ live_orders (لشاشة الكاشير) ولـ orders (للزباين)
         const orderRef = database.ref('live_orders').push();
         currentOrderId = orderRef.key;
         orderRef.set(orderData);
         database.ref('orders/' + currentOrderId).set(orderData);
 
-        // متابعة الحالة للزبون
         document.getElementById('order-status-bar').style.display = 'block';
         database.ref('orders/' + currentOrderId + '/status').on('value', s => {
             const status = s.val();
@@ -258,7 +265,6 @@
             }
         });
 
-        // رسالة الواتساب للمراقبة
         let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'[طاولة '+tNum+']':''}\n`;
         cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
         msg += `*الإجمالي*: ${finalTotal} ريال\n*الملاحظات*: ${notes}`;
@@ -276,3 +282,4 @@
 </script>
 </body>
 </html>
+
