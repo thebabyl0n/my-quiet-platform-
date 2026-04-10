@@ -13,7 +13,6 @@
         #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--dark); color: white; padding: 15px 30px; border-radius: 50px; border: 2px solid var(--gold); z-index: 10001; transition: 0.5s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-weight: bold; text-align: center; width: 80%; }
         #toast.show { top: 20px; }
 
-        /* شاشة الفحص الأولية */
         #check-screen { position: fixed; inset: 0; background: var(--dark); z-index: 10002; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; }
 
         #welcome-screen { position: fixed; inset: 0; background: var(--dark); z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; transition: 0.5s; }
@@ -57,7 +56,7 @@
 
 <div id="check-screen">
     <h2>جاري التأكد من تواجدك في الكافيه... 📍</h2>
-    <p>حي النسيم - جدة</p>
+    <p>فرع حي النسيم</p>
 </div>
 
 <div id="welcome-screen" style="display:none;">
@@ -77,18 +76,17 @@
     <div class="slider-container" id="slider"></div>
     <div class="menu-grid" id="menu"></div>
     <div class="cart-box">
-        <h3 style="margin:0 0 15px 0;">🛒 السلة (<span id="typeLbl"></span> <span id="tblLbl"></span>)</h3>
+        <h3>🛒 السلة (<span id="typeLbl"></span> <span id="tblLbl"></span>)</h3>
         <div id="cartList"></div>
         <div class="promo-container" style="margin-top:15px;">
             <input type="text" id="promoCode" class="promo-input" placeholder="لديك كود خصم؟">
             <button class="promo-btn" onclick="applyPromo()">تفعيل</button>
         </div>
         <div id="discountInfo" style="display:none;" class="discount-row">
-            <span>خصم الكوبون:</span>
-            <span id="discountVal">0</span>
+            <span>خصم الكوبون:</span> <span id="discountVal">0</span>
         </div>
         <div class="total-price">الإجمالي النهائي: <span id="total">0</span> ريال</div>
-        <textarea id="notes" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px; font-family:inherit;" rows="3" placeholder="ملاحظاتك الإضافية..."></textarea>
+        <textarea id="notes" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px;" rows="3" placeholder="ملاحظاتك..."></textarea>
         <button class="send-btn" onclick="submitOrder()">إرسال الطلب ✅</button>
     </div>
 </div>
@@ -96,59 +94,46 @@
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
-        authDomain: "alphashadow-23689.firebaseapp.com",
-        projectId: "alphashadow-23689",
         databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
     };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // 📍 إحداثيات حي النسيم
     const CAFE_LAT = 21.522492; 
     const CAFE_LON = 39.229700;
-    const ALLOWED_DISTANCE = 0.15; // 150 متر تقريباً
+    const ALLOWED_DIST = 0.05; // 50 متر لضمان الثبات
 
     let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
-    let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
-    let discountValReal = 0; let discountType = "percent"; let activePromo = "";
+    let oType = ""; let tNum = ""; let extrasStr = ""; let discountValReal = 0; let discountType = "percent"; let activePromo = "";
 
-    // 📍 التحقق الأول عند فتح الصفحة
     window.onload = () => {
-        checkLocation(() => {
+        checkLoc(() => {
             document.getElementById('check-screen').style.display = 'none';
             document.getElementById('welcome-screen').style.display = 'flex';
         }, () => {
-            document.getElementById('check-screen').innerHTML = "<h2>❌ عذراً.. لازم تكون داخل فرع حي النسيم عشان تطلب</h2>";
+            document.getElementById('check-screen').innerHTML = "<h2>❌ عذراً.. لازم تكون داخل الكافيه عشان تطلب</h2>";
         });
     };
 
-    function checkLocation(onSuccess, onError) {
-        if (!navigator.geolocation) return alert("المتصفح لا يدعم تحديد الموقع");
-        navigator.geolocation.getCurrentPosition((pos) => {
-            const dist = getDist(pos.coords.latitude, pos.coords.longitude, CAFE_LAT, CAFE_LON);
-            if (dist <= ALLOWED_DISTANCE) onSuccess(); else onError();
+    function checkLoc(onSuccess, onError) {
+        if (!navigator.geolocation) return alert("المتصفح لا يدعم الموقع");
+        navigator.geolocation.getCurrentPosition((p) => {
+            const d = getD(p.coords.latitude, p.coords.longitude, CAFE_LAT, CAFE_LON);
+            if (d <= ALLOWED_DIST) onSuccess(); else onError();
         }, onError, { enableHighAccuracy: true });
     }
 
-    function getDist(lat1, lon1, lat2, lon2) {
+    function getD(l1, n1, l2, n2) {
         const R = 6371;
-        const dLat = (lat2-lat1) * Math.PI/180;
-        const dLon = (lon2-lon1) * Math.PI/180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        const dLat = (l2-l1) * Math.PI/180; const dLon = (n2-n1) * Math.PI/180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(l1*Math.PI/180)*Math.cos(l2*Math.PI/180)*Math.sin(dLon/2)**2;
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
-    // مراقبة الإعدادات
     database.ref('settings').on('value', snap => {
-        const s = snap.val();
-        if(s) {
-            if(s.branding) {
-                document.getElementById('nameW').innerText = s.branding.name || "Alpha Shadow";
-                document.getElementById('logoW').src = s.branding.logo || "";
-            }
-            if(s.audio) {
-                welcomeAudio = s.audio.welcome; readyAudio = s.audio.ready; successMsg = s.audio.msgText;
-            }
+        const s = snap.val(); if(s) {
+            if(s.branding) { document.getElementById('nameW').innerText = s.branding.name; document.getElementById('logoW').src = s.branding.logo; }
+            if(s.audio) { welcomeAudio = s.audio.welcome; readyAudio = s.audio.ready; successMsg = s.audio.msgText; }
         }
     });
 
@@ -180,13 +165,11 @@
         });
     }
 
-    function startOrder(type) {
-        oType = type; tNum = document.getElementById('tblNo').value;
-        if(type === 'محلي' && !tNum) return alert("الرجاء إدخال رقم الطاولة");
-        document.getElementById('typeLbl').innerText = type;
-        document.getElementById('tblLbl').innerText = tNum ? `(طاولة ${tNum})` : "";
-        document.getElementById('welcome-screen').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
+    function startOrder(t) {
+        oType = t; tNum = document.getElementById('tblNo').value;
+        if(t === 'محلي' && !tNum) return alert("أدخل رقم الطاولة");
+        document.getElementById('typeLbl').innerText = t; document.getElementById('tblLbl').innerText = tNum ? `(طاولة ${tNum})` : "";
+        document.getElementById('welcome-screen').style.display = 'none'; document.getElementById('app').style.display = 'block';
         if(welcomeAudio) talk(welcomeAudio);
     }
 
@@ -194,114 +177,76 @@
         const s = document.getElementById('ex-'+k);
         const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
         const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
-        const existingItem = cart.find(i => i.k === k && i.exAr === exAr);
-        if (existingItem) { existingItem.qty += 1; } 
-        else { cart.push({k, ar, en, p, exAr, exP, qty: 1, dept: dept}); }
+        const exist = cart.find(i => i.k === k && i.exAr === exAr);
+        if (exist) { exist.qty += 1; } else { cart.push({k, ar, en, p, exAr, exP, qty: 1, dept: dept}); }
         talk(en); renderCart();
     }
 
     async function applyPromo() {
-        const inputCode = document.getElementById('promoCode').value.trim().toUpperCase();
-        if(!inputCode) return;
-        const snapshot = await database.ref("coupons/" + inputCode).get();
-        if (snapshot.exists()) {
-            const data = snapshot.val();
-            discountValReal = parseFloat(data.discount) || 0;
-            discountType = data.type || "percent";
-            activePromo = inputCode;
-            showToast("تم تطبيق الخصم! 🎉"); renderCart();
-        } else { alert("كود الخصم غير صحيح"); }
+        const code = document.getElementById('promoCode').value.trim().toUpperCase();
+        if(!code) return;
+        const s = await database.ref("coupons/" + code).get();
+        if (s.exists()) {
+            discountValReal = parseFloat(s.val().discount); discountType = s.val().type; activePromo = code;
+            showToast("تم الخصم! 🎉"); renderCart();
+        } else { alert("كود خطأ"); }
     }
 
     function renderCart() {
-        let h = ""; let subTotal = 0;
+        let h = ""; let sub = 0;
         cart.forEach((i, x) => {
-            let itemTotal = (i.p + i.exP) * i.qty; subTotal += itemTotal;
-            h += `<div class="cart-item">
-                    <div class="cart-row">
-                        <span class="item-name"><span class="item-qty">${i.qty}x</span> ${i.ar}</span>
-                        <span>${itemTotal.toFixed(2)} ريال 
-                            <button onclick="updateQty(${x}, -1)" style="border:none;background:none;color:var(--gold);font-size:18px;">➖</button>
-                            <button onclick="updateQty(${x}, 1)" style="border:none;background:none;color:var(--gold);font-size:18px;">➕</button>
-                        </span>
-                    </div>
-                    ${i.exAr ? `<div class="extra-name">+ إضافة: ${i.exAr}</div>` : ''}
-                  </div>`;
+            let t = (i.p + i.exP) * i.qty; sub += t;
+            h += `<div class="cart-item"><div class="cart-row"><span class="item-name">${i.qty}x ${i.ar}</span><span>${t.toFixed(2)} ريال <button onclick="upd(${x},-1)">➖</button><button onclick="upd(${x},1)">➕</button></span></div>${i.exAr?`<div class="extra-name">+ ${i.exAr}</div>`:''}</div>`;
         });
-        let dAmt = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
-        let finalT = subTotal - dAmt;
-        document.getElementById('total').innerText = (finalT < 0 ? 0 : finalT).toFixed(2);
+        let d = (discountType === "percent") ? (sub * discountValReal / 100) : discountValReal;
+        let final = sub - d;
+        document.getElementById('total').innerText = (final < 0 ? 0 : final).toFixed(2);
         document.getElementById('cartList').innerHTML = h;
-        if(dAmt > 0) {
-            document.getElementById('discountInfo').style.display='flex';
-            document.getElementById('discountVal').innerText = `-${dAmt.toFixed(2)} ريال`;
-        }
+        if(d > 0) { document.getElementById('discountInfo').style.display='flex'; document.getElementById('discountVal').innerText = `-${d.toFixed(2)} ريال`; }
     }
 
-    function updateQty(index, change) {
-        cart[index].qty += change;
-        if (cart[index].qty <= 0) cart.splice(index, 1);
-        renderCart();
-    }
+    function upd(x, c) { cart[x].qty += c; if (cart[x].qty <= 0) cart.splice(x, 1); renderCart(); }
 
     function talk(t) { window.speechSynthesis.cancel(); const m = new SpeechSynthesisUtterance(t); m.lang = 'en-US'; window.speechSynthesis.speak(m); }
 
     function submitOrder() {
         if(!cart.length) return alert("السلة فارغة");
-
-        // 📍 الفحص الثاني (عند إرسال الطلب الفعلي) لضمان عدم التلاعب بالـ GPS
-        checkLocation(() => {
-            const finalTotal = document.getElementById('total').innerText;
-            const deptsNeeded = [...new Set(cart.map(i => i.dept))]; // يجمع الأقسام المطلوبة في الطلب
-            
-            const orderData = {
+        checkLoc(() => {
+            const depts = [...new Set(cart.map(i => i.dept))];
+            const orderRef = database.ref('live_orders').push();
+            orderRef.set({
                 items: cart, type: oType, table: tNum || 'سفري',
                 notes: document.getElementById('notes').value,
-                promoUsed: activePromo, discountAmount: discountValReal,
-                totalPrice: finalTotal, status: 'قيد التحضير ⏳',
-                time: new Date().toLocaleTimeString('ar-SA'),
-                deptsNeeded: deptsNeeded,
-                baristaReady: false, kitchenReady: false, dessertReady: false, cashierReady: false
-            };
-
-            const orderRef = database.ref('live_orders').push();
-            currentOrderId = orderRef.key;
-            orderRef.set(orderData);
+                totalPrice: document.getElementById('total').innerText,
+                status: 'قيد التحضير ⏳', time: new Date().toLocaleTimeString('ar-SA'),
+                deptsNeeded: depts, baristaReady: false, kitchenReady: false, dessertReady: false, cashierReady: false
+            });
 
             document.getElementById('order-status-bar').style.display = 'block';
-            
-            database.ref('live_orders/' + currentOrderId).on('value', s => {
-                const order = s.val();
-                if(order) {
-                    const statusElement = document.getElementById('order-status-bar');
-                    // فحص شامل للأقسام الأربعة
-                    let isReady = true;
-                    if(order.deptsNeeded.includes('barista') && !order.baristaReady) isReady = false;
-                    if(order.deptsNeeded.includes('kitchen') && !o.kitchenReady) isReady = false;
-                    if(order.deptsNeeded.includes('dessert') && !o.dessertReady) isReady = false;
-                    if(order.deptsNeeded.includes('cashier') && !o.cashierReady) isReady = false;
+            orderRef.on('value', s => {
+                const o = s.val(); if(!o) return;
+                let ready = true;
+                if(o.deptsNeeded.includes('barista') && !o.baristaReady) ready = false;
+                if(o.deptsNeeded.includes('kitchen') && !o.kitchenReady) ready = false;
+                if(o.deptsNeeded.includes('dessert') && !o.dessertReady) ready = false;
+                if(o.deptsNeeded.includes('cashier') && !o.cashierReady) ready = false;
 
-                    if (isReady) {
-                        statusElement.innerText = "حالة الطلب: جاهز للاستلام ✅";
-                        statusElement.style.background = "#dcfce7"; statusElement.style.color = "#15803d";
-                        if(readyAudio) talk(readyAudio); showToast(successMsg || "طلبك جاهز!");
-                    } else {
-                        statusElement.innerText = "حالة الطلب: " + (order.status || "قيد التحضير ⏳");
-                    }
+                if(ready) {
+                    const bar = document.getElementById('order-status-bar');
+                    bar.innerText = "جاهز للاستلام ✅"; bar.style.background = "#dcfce7";
+                    if(readyAudio) talk(readyAudio); showToast(successMsg || "طلبك جاهز!");
                 }
             });
 
-            // إرسال للواتساب
-            let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'[طاولة '+tNum+']':''}\n`;
-            cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
-            msg += `*الإجمالي*: ${finalTotal} ريال`;
+            let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'['+tNum+']':''}\n`;
+            cart.forEach(i => msg += `• ${i.qty}x ${i.ar}\n`);
             window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-            
-            cart = []; renderCart(); showToast("تم إرسال الطلب بنجاح! 🎉");
-        }, () => alert("❌ فشل التحقق.. أنت خارج نطاق الكافيه حالياً"));
+            cart = []; renderCart(); showToast("تم الإرسال! 🎉");
+        }, () => alert("❌ خارج النطاق!"));
     }
 
-    function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 5000); }
+    function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 4000); }
 </script>
 </body>
 </html>
+
