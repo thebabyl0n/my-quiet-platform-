@@ -99,7 +99,6 @@
     let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
     let discountValReal = 0; let discountType = "percent"; let activePromo = "";
 
-    // مراقبة الإعدادات (البحث عن الترحيب والصوت)
     database.ref('settings').on('value', snap => {
         const s = snap.val();
         if(s) {
@@ -108,9 +107,9 @@
                 document.getElementById('logoW').src = s.branding.logo || "";
             }
             if(s.audio) {
-                welcomeAudio = s.audio.welcome; // نص الترحيب
-                readyAudio = s.audio.ready;     // نص جاهزية الطلب
-                successMsg = s.audio.msgText;   // نص رسالة الـ Toast
+                welcomeAudio = s.audio.welcome;
+                readyAudio = s.audio.ready;
+                successMsg = s.audio.msgText;
             }
         }
     });
@@ -229,51 +228,69 @@
         let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
         const notes = document.getElementById('notes').value;
 
+        // السطر ده هو اللي بيربط الصفحات ببعضها يا محمود
+        const deptsNeeded = [...new Set(cart.map(i => i.dept))];
+
         const orderData = {
-            items: cart, type: oType, table: tNum || 'سفري',
-            notes: notes, promoUsed: activePromo, discountAmount: dAmount.toFixed(2),
-            totalPrice: finalTotal, status: 'قيد التحضير ⏳',
+            items: cart, 
+            type: oType, 
+            table: tNum || 'سفري',
+            notes: notes, 
+            promoUsed: activePromo, 
+            discountAmount: dAmount.toFixed(2),
+            totalPrice: finalTotal, 
+            status: 'قيد التحضير ⏳',
             time: new Date().toLocaleTimeString('ar-SA'),
-            baristaReady: false, kitchenReady: false, dessertReady: false
+            deptsNeeded: deptsNeeded, // المفتاح السحري
+            baristaReady: false, 
+            kitchenReady: false, 
+            dessertReady: false
         };
 
         const orderRef = database.ref('live_orders').push();
         currentOrderId = orderRef.key;
-        orderRef.set(orderData);
-
-        document.getElementById('order-status-bar').style.display = 'block';
         
-        // مراقبة الحالة لحظة بلحظة
-        database.ref('live_orders/' + currentOrderId).on('value', s => {
-            const order = s.val();
-            if(order) {
-                const statusElement = document.getElementById('order-status-bar');
-                if (order.baristaReady && order.kitchenReady && order.dessertReady) {
-                    if (statusElement.innerText !== "حالة الطلب: جاهز للاستلام ✅") {
+        // التعديل هنا: بنصفر السلة "بعد" ما نتأكد إن الأوردر اتبعث
+        orderRef.set(orderData).then(() => {
+            document.getElementById('order-status-bar').style.display = 'block';
+            
+            database.ref('live_orders/' + currentOrderId).on('value', s => {
+                const order = s.val();
+                if(order) {
+                    const statusElement = document.getElementById('order-status-bar');
+                    // فحص الجاهزية الذكي
+                    let isReady = true;
+                    if(order.deptsNeeded.includes('barista') && !order.baristaReady) isReady = false;
+                    if(order.deptsNeeded.includes('kitchen') && !order.kitchenReady) isReady = false;
+                    if(order.deptsNeeded.includes('dessert') && !order.dessertReady) isReady = false;
+
+                    if (isReady) {
                         statusElement.innerText = "حالة الطلب: جاهز للاستلام ✅";
                         statusElement.style.background = "#dcfce7";
                         statusElement.style.color = "#15803d";
-                        if(readyAudio) talk(readyAudio); // التنبيه الصوتي
-                        showToast(successMsg || "طلبك جاهز! تفضل للاستلام");
+                        if(readyAudio) talk(readyAudio);
+                        showToast(successMsg || "طلبك جاهز!");
+                    } else {
+                        statusElement.innerText = "حالة الطلب: " + (order.status || "قيد التحضير ⏳");
+                        statusElement.style.background = "#e0f2fe";
+                        statusElement.style.color = "#0369a1";
                     }
-                } else {
-                    statusElement.innerText = "حالة الطلب: " + (order.status || "قيد التحضير ⏳");
-                    statusElement.style.background = "#e0f2fe";
-                    statusElement.style.color = "#0369a1";
                 }
-            } else {
-                document.getElementById('order-status-bar').innerText = "تم تسليم الطلب بنجاح ✅";
-                setTimeout(() => { document.getElementById('order-status-bar').style.display = 'none'; }, 5000);
-            }
+            });
+
+            // تصفير البيانات بعد النجاح
+            cart = []; 
+            renderCart(); 
+            activePromo = ""; 
+            discountValReal = 0;
+            document.getElementById('notes').value = "";
+            showToast("تم إرسال الطلب بنجاح! 🎉");
         });
 
         let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'[طاولة '+tNum+']':''}\n`;
         cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
         msg += `*الإجمالي*: ${finalTotal} ريال\n*الملاحظات*: ${notes}`;
         window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-        
-        cart = []; renderCart(); activePromo = ""; discountValReal = 0;
-        showToast("تم إرسال الطلب بنجاح! 🎉");
     }
 
     function showToast(m) {
@@ -283,4 +300,3 @@
 </script>
 </body>
 </html>
-
