@@ -1,144 +1,105 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha Shadow | VIP Menu</title>
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
-    <style>
-        :root { --gold: #c8a27c; --dark: #0f172a; --bg: #ffffff; --green: #22c55e; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; overflow-x: hidden; }
-        #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--dark); color: white; padding: 15px 30px; border-radius: 50px; border: 2px solid var(--gold); z-index: 10001; transition: 0.5s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-weight: bold; text-align: center; width: 80%; }
-        #toast.show { top: 20px; }
-        #welcome-screen { position: fixed; inset: 0; background: var(--dark); z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; transition: 0.5s; }
-        .welcome-logo { max-width: 130px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 15px; }
-        .order-btn { background: var(--gold); color: var(--dark); border: none; padding: 15px 40px; border-radius: 12px; font-size: 18px; font-weight: bold; margin: 10px; cursor: pointer; width: 220px; }
-        .main-app { display: none; padding: 15px; }
-        .slider-container { display: flex; overflow-x: auto; gap: 10px; padding: 5px 0; margin-bottom: 20px; }
-        .slider-img { width: 88%; height: 160px; border-radius: 15px; flex-shrink: 0; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .item-card { background: #fff; border-radius: 18px; padding: 10px; border: 1px solid #f0f0f0; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .item-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 14px; background: #eee; }
-        .send-btn { background: var(--green); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .cart-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
-    </style>
-</head>
-<body>
-<div id="toast"></div>
-<div id="welcome-screen">
-    <img id="logoW" class="welcome-logo" src="" alt="Logo">
-    <h2 id="nameW">Alpha Shadow</h2>
-    <button class="order-btn" onclick="startOrder('سفري')">🚗 سفري</button>
-    <button class="order-btn" onclick="document.getElementById('table-entry').style.display='block'">☕ محلي</button>
-    <div id="table-entry" style="display:none; margin-top:10px;">
-        <input type="number" id="tblNo" style="width:80px; padding:10px; text-align:center; border-radius:8px; border:2px solid var(--gold);" placeholder="طاولة">
-        <button class="order-btn" style="width:140px; margin-top: 10px;" onclick="startOrder('محلي')">دخول</button>
-    </div>
-</div>
-
-<div class="main-app" id="app">
-    <div id="order-status-bar" style="display:none; background:#e0f2fe; color:#0369a1; padding:12px; text-align:center; font-weight:bold; border-radius:10px; margin-bottom:15px;">قيد التحضير ⏳</div>
-    <div class="slider-container" id="slider"></div>
-    <div class="menu-grid" id="menu"></div>
-    <div style="margin-top:30px; background:#f9fafb; padding:20px; border-radius:24px; border:1px solid #eee;">
-        <h3>🛒 السلة (<span id="typeLbl"></span> <span id="tblLbl"></span>)</h3>
-        <div id="cartList"></div>
-        <input type="text" id="promoCode" style="width:100%; padding:10px; margin:10px 0; border-radius:10px; border:1px solid #ddd;" placeholder="كود الخصم">
-        <button onclick="applyPromo()" style="background:var(--gold); border:none; padding:8px; width:100%; border-radius:10px; color:white;">تفعيل الخصم</button>
-        <div style="font-size:22px; font-weight:800; margin:15px 0; text-align:center;">الإجمالي: <span id="total">0</span> ريال</div>
-        <textarea id="notes" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px;" rows="3" placeholder="ملاحظاتك..."></textarea>
-        <button class="send-btn" onclick="submitOrder()">إرسال الطلب ✅</button>
-    </div>
-</div>
-
 <script>
-    const firebaseConfig = { apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac", authDomain: "://firebaseapp.com", projectId: "alphashadow-23689", databaseURL: "https://firebaseio.com" };
+    const firebaseConfig = { 
+        apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac", 
+        authDomain: "://firebaseapp.com", 
+        projectId: "alphashadow-23689", 
+        databaseURL: "https://firebaseio.com" 
+    };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // 📍 إحداثيات حي النسيم بجدة حقتك يا ملك
-    const CAFE_LAT = 21.522492; const CAFE_LON = 39.229700; const MAX_DIST = 0.2;
-
-    async function checkLocation() {
-        return new Promise((res, rej) => {
-            navigator.geolocation.getCurrentPosition(p => {
-                const d = Math.sqrt(Math.pow(p.coords.latitude - CAFE_LAT, 2) + Math.pow(p.coords.longitude - CAFE_LON, 2)) * 111;
-                if(d <= MAX_DIST) res(); else { alert("يجب أن تكون داخل الكافيه لإتمام الطلب ☕📍"); rej(); }
-            }, () => { alert("يرجى تفعيل GPS 📍"); rej(); }, {enableHighAccuracy: true});
-        });
-    }
+    // 📍 إحداثيات حي النسيم بجدة (السيادة الجغرافية)
+    const TARGET_LAT = 21.522492; const TARGET_LON = 39.229700; const ALLOWED_DISTANCE = 0.15;
 
     let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
-    let oType = ""; let tNum = ""; let discountVal = 0;
+    let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
+    let discountValReal = 0; let discountType = "percent"; let activePromo = "";
 
-    // استعادة البراندنج والأصوات
-    database.ref('settings').on('value', snap => {
-        const s = snap.val();
-        if(s && s.branding) { document.getElementById('nameW').innerText = s.branding.name; document.getElementById('logoW').src = s.branding.logo; }
-        if(s && s.audio) { welcomeAudio = s.audio.welcome; readyAudio = s.audio.ready; successMsg = s.audio.msgText; }
-    });
+    // 1. التحقق الجغرافي (Double Shield)
+    window.onload = () => {
+        validateGeo(() => {
+            document.getElementById('geo-shield').style.display = 'none';
+            document.getElementById('welcome-screen').style.display = 'flex';
+        }, () => {
+            document.getElementById('geo-status').innerText = "❌ خارج نطاق الإمبراطورية (حي النسيم)";
+        });
+    };
 
-    database.ref('offers').on('value', snap => {
-        let h = ""; snap.forEach(c => h += `<img src="${c.val().img}" class="slider-img">`);
-        document.getElementById('slider').innerHTML = h;
-    });
+    function validateGeo(onSuccess, onError) {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const R = 6371;
+                const dLat = (TARGET_LAT - pos.coords.latitude) * Math.PI / 180;
+                const dLon = (TARGET_LON - pos.coords.longitude) * Math.PI / 180;
+                const a = Math.sin(dLat / 2) ** 2 + Math.cos(pos.coords.latitude * Math.PI / 180) * Math.cos(TARGET_LAT * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+                const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                if (dist <= ALLOWED_DISTANCE) onSuccess(); else onError();
+            }, onError, { enableHighAccuracy: true });
+        } else { alert("GPS مطلوب السيادة 📍"); }
+    }
 
+    // 2. تحميل المنيو (تعديل الجدة رقم 1: تطهير القسم)
     function loadMenu() {
         database.ref('menu_items').on('value', snap => {
-            let h = ""; snap.forEach(c => {
-                const i = c.val();
-                const itemDept = (i.dept || 'barista').toLowerCase().trim();
-                h += `<div class="item-card"><img src="${i.img}"><h4>${i.ar}</h4>
-                <button class="order-btn" style="width:100%; font-size:14px;" onclick="addToCart('${c.key}','${i.ar}','${i.en}',${i.price},'${itemDept}')">إضافة ${i.price} ر.س</button></div>`;
-            }); document.getElementById('menu').innerHTML = h;
+            let h = "";
+            snap.forEach(child => {
+                const item = child.val();
+                // 🔥 حقنة الجدة: ضمان الـ lowercase والـ trim للقسم
+                const itemDept = item.dept ? item.dept.toLowerCase().trim() : 'barista';
+                h += `<div class="item-card">
+                    <img src="${item.img}">
+                    <h4>${item.ar}</h4>
+                    <span style="color:var(--gold);font-weight:700;">${item.price} ريال</span>
+                    <select class="extra-sel" id="ex-${child.key}">${extrasStr}</select>
+                    <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price},'${itemDept}')">إضافة +</button>
+                </div>`;
+            });
+            document.getElementById('menu').innerHTML = h;
         });
     }
 
-    async function startOrder(type) {
-        try { await checkLocation(); oType = type; tNum = document.getElementById('tblNo').value;
-            document.getElementById('welcome-screen').style.display = 'none';
-            document.getElementById('app').style.display = 'block'; loadMenu();
-            if(welcomeAudio) talk(welcomeAudio);
-        } catch(e) {}
+    function addToCart(k, ar, en, p, dept) {
+        const s = document.getElementById('ex-'+k);
+        const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
+        const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
+        // 🔥 حقنة الجدة: تمرير الـ dept الصافي للسلة
+        cart.push({k, ar, en, p, exAr, exP, qty: 1, dept: dept});
+        talk(en); renderCart();
     }
 
-    function addToCart(k, ar, en, p, dept) { cart.push({k, ar, en, p, qty: 1, dept: dept}); talk(en); renderCart(); }
-    
-    function renderCart() { 
-        let t=0; let h=""; 
-        cart.forEach((i, x) => { t += i.p; h += `<div class="cart-item"><span>${i.ar}</span><span>${i.p} ريال <button onclick="removeItem(${x})">❌</button></span></div>`; });
-        document.getElementById('total').innerText = (t - discountVal < 0 ? 0 : t - discountVal).toFixed(2);
-        document.getElementById('cartList').innerHTML = h;
-    }
+    // 3. إرسال الطلب (تعديل الجدة رقم 2: الختم الموحد)
+    function submitOrder() {
+        if(!cart.length) return alert("السلة فارغة");
+        validateGeo(() => {
+            const finalTotal = document.getElementById('total').innerText;
+            const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
+            let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
+            
+            // 🔥 حقنة الجدة: ختم الأقسام المطلوب بدقة Case-Insensitive
+            const deptsNeeded = [...new Set(cart.map(item => (item.dept || 'barista').toLowerCase().trim()))];
 
-    function removeItem(x) { cart.splice(x, 1); renderCart(); }
-
-    async function applyPromo() {
-        const code = document.getElementById('promoCode').value;
-        const snap = await database.ref('coupons/' + code).get();
-        if(snap.exists()) { discountVal = snap.val().discount; showToast("تم تطبيق الخصم! 🎁"); renderCart(); } else { alert("كود خطأ"); }
-    }
-
-    async function submitOrder() {
-        if(!cart.length) return;
-        try {
-            await checkLocation();
-            const deptsNeeded = [...new Set(cart.map(item => item.dept))];
-            const orderData = { 
-                items: cart, type: oType, table: tNum || 'سفري', 
-                totalPrice: document.getElementById('total').innerText, 
-                deptsNeeded: deptsNeeded, status: 'قيد التحضير ⏳', 
-                time: new Date().toLocaleTimeString('ar-SA'), notes: document.getElementById('notes').value
+            const orderData = {
+                items: cart, type: oType, table: tNum || 'سفري',
+                notes: document.getElementById('notes').value, // مطابق للاستقبال ✅
+                promoUsed: activePromo, discountAmount: dAmount.toFixed(2),
+                totalPrice: finalTotal, status: 'قيد التحضير ⏳',
+                time: new Date().toLocaleTimeString('ar-SA'),
+                deptsNeeded: deptsNeeded, // الختم السيادي الملياري ✅
+                baristaReady: false, kitchenReady: false, dessertReady: false
             };
-            database.ref('live_orders').push().set(orderData);
-            showToast(successMsg || "تم الإرسال بنجاح! 🎉"); cart = []; renderCart();
-        } catch(e) {}
+
+            const orderRef = database.ref('live_orders').push();
+            orderRef.set(orderData);
+            document.getElementById('order-status-bar').style.display = 'block';
+            showToast("تم إرسال الطلب بنجاح! 🎉");
+            
+            // فتح الواتساب (اختياري حسب رغبتك)
+            let msg = `*طلب جديد* ☕\n*الإجمالي*: ${finalTotal} ريال`;
+            window.open(`https://wa.me{encodeURIComponent(msg)}`);
+
+            cart = []; renderCart();
+        }, () => alert("❌ يجب التواجد داخل الكافيه لإتمام الطلب 📍"));
     }
 
-    function talk(t) { window.speechSynthesis.cancel(); const m = new SpeechSynthesisUtterance(t); m.lang = 'en-US'; window.speechSynthesis.speak(m); }
-    function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 4000); }
+    // ... (باقي الدوال: renderCart, talk, showToast, applyPromo كما هي في نسختك الأصلية) ...
 </script>
-</body>
-</html>
-
