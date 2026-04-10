@@ -17,7 +17,6 @@
         .welcome-logo { max-width: 130px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 15px; }
         .order-btn { background: var(--gold); color: var(--dark); border: none; padding: 15px 40px; border-radius: 12px; font-size: 18px; font-weight: bold; margin: 10px; cursor: pointer; width: 200px; }
         
-        /* شاشة خارج النطاق */
         #location-error { position: fixed; inset: 0; background: white; z-index: 20000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; color: var(--dark); }
 
         #table-entry { display: none; margin-top: 10px; }
@@ -111,16 +110,14 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // إحداثيات الكافيه (حي النسيم - جدة)
     const CAFE_LAT = 21.522492; 
     const CAFE_LON = 39.229700; 
-    const MAX_DISTANCE = 0.15; // 150 متر
+    const MAX_DISTANCE = 0.15; 
 
     let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
     let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
     let discountValReal = 0; let discountType = "percent"; let activePromo = "";
 
-    // 1. فحص الموقع عند الدخول
     function verifyLocation() {
         if (!navigator.geolocation) return alert("المتصفح لا يدعم الموقع");
         navigator.geolocation.getCurrentPosition(position => {
@@ -264,10 +261,8 @@
         window.speechSynthesis.speak(m);
     }
 
-    // 2. فحص الموقع قبل الإرسال (Check الموقع مرتين)
     function submitOrder() {
         if(!cart.length) return alert("السلة فارغة");
-        
         navigator.geolocation.getCurrentPosition(position => {
             const d = calculateDistance(position.coords.latitude, position.coords.longitude, CAFE_LAT, CAFE_LON);
             if (d <= MAX_DISTANCE) {
@@ -295,35 +290,44 @@
 
         const orderRef = database.ref('live_orders').push();
         currentOrderId = orderRef.key;
-        orderRef.set(orderData);
-
-        document.getElementById('order-status-bar').style.display = 'block';
         
-        database.ref('live_orders/' + currentOrderId).on('value', s => {
-            const order = s.val();
-            if(order) {
-                const statusElement = document.getElementById('order-status-bar');
-                if (order.baristaReady && order.kitchenReady && order.dessertReady) {
-                    if (statusElement.innerText !== "حالة الطلب: جاهز للاستلام ✅") {
+        orderRef.set(orderData).then(() => {
+            document.getElementById('order-status-bar').style.display = 'block';
+            
+            // مراقبة الطلب الحالي وفصلها عند الانتهاء لضمان قبول طلبات جديدة
+            const orderPath = database.ref('live_orders/' + currentOrderId);
+            orderPath.on('value', s => {
+                const order = s.val();
+                if(order) {
+                    const statusElement = document.getElementById('order-status-bar');
+                    if (order.baristaReady && order.kitchenReady && order.dessertReady) {
                         statusElement.innerText = "حالة الطلب: جاهز للاستلام ✅";
                         statusElement.style.background = "#dcfce7";
                         statusElement.style.color = "#15803d";
                         if(readyAudio) talk(readyAudio);
                         showToast(successMsg || "طلبك جاهز!");
+                        orderPath.off(); // فصل المراقب
+                    } else {
+                        statusElement.innerText = "حالة الطلب: " + (order.status || "قيد التحضير ⏳");
                     }
-                } else {
-                    statusElement.innerText = "حالة الطلب: " + (order.status || "قيد التحضير ⏳");
                 }
-            }
-        });
+            });
 
-        let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'[طاولة '+tNum+']':''}\n`;
-        cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
-        msg += `*الإجمالي*: ${finalTotal} ريال\n*الملاحظات*: ${notes}`;
-        window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-        
-        cart = []; renderCart(); activePromo = ""; discountValReal = 0;
-        showToast("تم إرسال الطلب بنجاح! 🎉");
+            let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'[طاولة '+tNum+']':''}\n`;
+            cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
+            msg += `*الإجمالي*: ${finalTotal} ريال\n*الملاحظات*: ${notes}`;
+            window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
+            
+            // تصفير البيانات للطلب التالي
+            cart = []; 
+            activePromo = ""; 
+            discountValReal = 0;
+            document.getElementById('notes').value = "";
+            document.getElementById('promoCode').value = "";
+            document.getElementById('discountInfo').style.display = 'none';
+            renderCart();
+            showToast("تم إرسال الطلب بنجاح! 🎉");
+        });
     }
 
     function showToast(m) {
@@ -333,3 +337,4 @@
 </script>
 </body>
 </html>
+
