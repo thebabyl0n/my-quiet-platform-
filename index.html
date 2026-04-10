@@ -103,16 +103,14 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // 📍 إحداثيات حي النسيم
     const TARGET_LAT = 21.522492;
     const TARGET_LON = 39.229700;
-    const ALLOWED_DISTANCE = 0.15; // 150 متر
+    const ALLOWED_DISTANCE = 0.05;
 
     let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
     let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
     let discountValReal = 0; let discountType = "percent"; let activePromo = "";
 
-    // 🛡️ تشغيل درع الموقع عند الفتح
     window.onload = () => {
         validateGeo(() => {
             document.getElementById('geo-shield').style.display = 'none';
@@ -261,27 +259,31 @@
         window.speechSynthesis.speak(m);
     }
 
-    // 🏆 دالة الإرسال المعدلة بأوامر القائد محمود صلاح
     function submitOrder() {
         if(!cart.length) return alert("السلة فارغة");
         
-        // 📍 الفحص الثاني للدرع الجغرافي عند الإرسال
         validateGeo(() => {
             const finalTotal = document.getElementById('total').innerText;
             const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
             let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
             
-            // 🚀 حقن مصفوفة الأقسام الذكية (Dept Injector)
-            const deptsNeeded = [...new Set(cart.map(item => item.dept))];
+            // التعديل السيادي المطلوبة:
+            const deptsNeeded = [...new Set(cart.map(item => item.dept || 'barista'))];
 
             const orderData = {
-                items: cart, type: oType, table: tNum || 'سفري',
+                items: cart, 
+                type: oType, 
+                table: tNum || 'سفري',
                 notes: document.getElementById('notes').value, 
-                promoUsed: activePromo, discountAmount: dAmount.toFixed(2),
-                totalPrice: finalTotal, status: 'قيد التحضير ⏳',
+                promoUsed: activePromo, 
+                discountAmount: dAmount.toFixed(2),
+                totalPrice: finalTotal, 
+                status: 'قيد التحضير ⏳',
                 time: new Date().toLocaleTimeString('ar-SA'),
-                deptsNeeded: deptsNeeded, // المصفوفة المحقونة للأقسام
-                baristaReady: false, kitchenReady: false, dessertReady: false
+                deptsNeeded: deptsNeeded,
+                baristaReady: false, 
+                kitchenReady: false, 
+                dessertReady: false
             };
 
             const orderRef = database.ref('live_orders').push();
@@ -290,13 +292,10 @@
 
             document.getElementById('order-status-bar').style.display = 'block';
             
-            // مراقبة حالة الطلب بالأقسام الذكية
             database.ref('live_orders/' + currentOrderId).on('value', s => {
                 const order = s.val();
                 if(order) {
                     const statusElement = document.getElementById('order-status-bar');
-                    
-                    // التحقق من جاهزية الأقسام المطلوبة فقط في هذا الطلب
                     let allDeptsDone = true;
                     if(order.deptsNeeded.includes('barista') && !order.baristaReady) allDeptsDone = false;
                     if(order.deptsNeeded.includes('kitchen') && !order.kitchenReady) allDeptsDone = false;
@@ -314,7 +313,6 @@
                 }
             });
 
-            // إرسال للواتساب
             let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'[طاولة '+tNum+']':''}\n`;
             cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
             msg += `*الإجمالي*: ${finalTotal} ريال`;
