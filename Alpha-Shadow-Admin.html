@@ -18,6 +18,7 @@
         .btn-save { background: var(--green); color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
         .btn-save:hover { opacity: 0.8; }
         .btn-gold { background: var(--gold); }
+        .btn-red { background: var(--red); }
         .item-row { background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-del { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
     </style>
@@ -32,6 +33,20 @@
 
 <div class="container" id="adminContent">
     <h2 style="text-align: center; color: var(--primary);">⚙️ نظام إدارة الكافيه (Alpha Shadow)</h2>
+
+    <div class="section" style="border: 2px solid var(--gold);">
+        <h3>🔊 التنبيهات والتحكم الصوتي</h3>
+        <label>رسالة الترحيب الصوتية (تنطق عند دخول الزبون)</label>
+        <input type="text" id="welcomeMsgInput" placeholder="مثلاً: Welcome to our cafe">
+        
+        <label>رسالة جاهزية الطلب (تنطق للزبون عند التجهيز)</label>
+        <input type="text" id="readyMsgInput" placeholder="مثلاً: Your order is ready">
+        
+        <label>نص التنبيه المكتوب (الذي يظهر في الـ Toast)</label>
+        <input type="text" id="toastMsgInput" placeholder="مثلاً: طلبك جاهز يا برنس، تفضل للاستلام">
+        
+        <button class="btn-save btn-gold" onclick="saveAudioSettings()">تحديث الأصوات والرسائل ⚡</button>
+    </div>
 
     <div class="section">
         <h3>🎨 براند الكافيه والمظهر</h3>
@@ -53,16 +68,13 @@
         <h3>🎟️ كوبونات الخصم المتكاملة</h3>
         <label>كود الخصم (مثلاً: Shadow10)</label>
         <input type="text" id="couponCode" placeholder="اكتب الكود هنا">
-        
         <label>نوع الخصم</label>
         <select id="discountType">
             <option value="fixed">خصم مبلغ ثابت (ريال)</option>
             <option value="percent">خصم نسبة مئوية (%)</option>
         </select>
-
         <label>القيمة (رقم فقط)</label>
         <input type="number" id="couponValue" placeholder="مثلاً: 10">
-        
         <button class="btn-save btn-gold" onclick="addCoupon()">تفعيل الكوبون ✅</button>
         <div id="couponsList"></div>
     </div>
@@ -114,25 +126,31 @@
         } else { alert("كلمة السر خطأ!"); }
     }
 
+    // دالة حفظ الأصوات الجديدة
+    function saveAudioSettings() {
+        const audioData = {
+            welcome: document.getElementById('welcomeMsgInput').value,
+            ready: document.getElementById('readyMsgInput').value,
+            msgText: document.getElementById('toastMsgInput').value
+        };
+        database.ref('settings/audio').set(audioData).then(() => {
+            alert("تم تحديث التنبيهات الصوتية بنجاح! 😎");
+        });
+    }
+
     function addOffer() {
         const img = document.getElementById('offerImg').value;
         if(img) { database.ref('offers').push({ img }); document.getElementById('offerImg').value = ''; }
     }
 
-    // إضافة كوبون (ريال أو %)
     function addCoupon() {
         const code = document.getElementById('couponCode').value.trim();
         const type = document.getElementById('discountType').value;
         const val = document.getElementById('couponValue').value;
-        
         if(code && val) {
-            database.ref('coupons').child(code).set({ 
-                type: type, 
-                discount: parseFloat(val) 
-            });
+            database.ref('coupons').child(code).set({ type: type, discount: parseFloat(val) });
             alert("تم التفعيل بنجاح!");
-            document.getElementById('couponCode').value = ''; 
-            document.getElementById('couponValue').value = '';
+            document.getElementById('couponCode').value = ''; document.getElementById('couponValue').value = '';
         }
     }
 
@@ -163,23 +181,28 @@
     }
 
     function loadData() {
+        // تحميل إعدادات الصوت والرسائل
+        database.ref('settings/audio').once('value', snap => {
+            const d = snap.val();
+            if(d) {
+                document.getElementById('welcomeMsgInput').value = d.welcome || "";
+                document.getElementById('readyMsgInput').value = d.ready || "";
+                document.getElementById('toastMsgInput').value = d.msgText || "";
+            }
+        });
+
         database.ref('offers').on('value', snap => {
             let h = "";
             snap.forEach(child => { h += `<div class="item-row"><img src="${child.val().img}" width="50"> <button class="btn-del" onclick="database.ref('offers/${child.key}').remove()">حذف</button></div>`; });
             document.getElementById('offersList').innerHTML = h;
         });
 
-        // عرض الكوبونات والتمييز بين الريال والـ %
         database.ref('coupons').on('value', snap => {
             let h = "";
             snap.forEach(child => {
                 const data = child.val();
                 const sign = data.type === 'percent' ? '%' : 'ريال';
-                h += `
-                <div class="item-row">
-                    <span><b>${child.key}</b> (خصم ${data.discount} ${sign})</span> 
-                    <button class="btn-del" onclick="database.ref('coupons/${child.key}').remove()">حذف</button>
-                </div>`;
+                h += `<div class="item-row"><span><b>${child.key}</b> (خصم ${data.discount} ${sign})</span> <button class="btn-del" onclick="database.ref('coupons/${child.key}').remove()">حذف</button></div>`;
             });
             document.getElementById('couponsList').innerHTML = h;
         });
@@ -204,3 +227,4 @@
 </script>
 </body>
 </html>
+
