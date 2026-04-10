@@ -74,35 +74,33 @@
             let hasMyItems = false;
             const finalNote = order.note || order.customerNote || order.notes || "";
 
-            // 1. معالجة العناصر والفلترة (تم تبسيطها لضمان الدقة ومنع التداخل)
+            // 🔥 أمر القائد: فلترة الأصناف داخل الأوردر (أظهر ما يخصني فقط)
             order.items.forEach(item => {
-                if (isCashier || item.dept === screenType) {
-                    hasMyItems = true;
+                // 🛡️ الغربال السيادي: تحديد ما إذا كان هذا الصنف يخص الشاشة الحالية
+                const isThisItemForMe = (item.dept === screenType);
+
+                if (isCashier || isThisItemForMe) {
+                    hasMyItems = true; 
                     
                     let extrasHtml = "";
                     let rawExtras = item.extras || item.extra || item.addedItems || "";
-                    
                     if (rawExtras) {
-                        if (Array.isArray(rawExtras) && rawExtras.length > 0) {
-                            extrasHtml = `<div class="extras-list">➕ ${rawExtras.join(' - ')}</div>`;
-                        } else if (typeof rawExtras === 'string' && rawExtras.trim() !== "") {
-                            extrasHtml = `<div class="extras-list">➕ ${rawExtras}</div>`;
-                        }
+                        if (Array.isArray(rawExtras)) extrasHtml = `<div class="extras-list">➕ ${rawExtras.join(' - ')}</div>`;
+                        else if (typeof rawExtras === 'string') extrasHtml = `<div class="extras-list">➕ ${rawExtras}</div>`;
                     }
 
-                    const isItemDeptReady = order[item.dept + 'Ready'] === true;
+                    const isItemReady = order[item.dept + 'Ready'] === true;
                     itemsHtml += `
                         <div class="item">
-                            <span><b>${item.ar}</b> × ${item.qty} ${isItemDeptReady ? '✅' : ''}</span>
+                            <span><b>${item.ar}</b> × ${item.qty} ${isItemReady ? '✅' : '⏳'}</span>
                             ${extrasHtml}
                         </div>`;
                 }
             });
 
-            // 2. معالجة التنبيهات (تم إصلاح خطأ الـ item الخارج عن اللوب)
             if (hasMyItems) {
                 if (!knownOrders.has(orderId)) {
-                    newOrderDetected = true; 
+                    newOrderDetected = true;
                     if (finalNote) noteDetected = true;
                     knownOrders.add(orderId);
                 }
