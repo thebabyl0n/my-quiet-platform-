@@ -15,7 +15,6 @@
         .table-no { background: var(--gold); color: var(--bg); padding: 5px 15px; border-radius: 8px; font-weight: bold; font-size: 20px; }
         .item { margin-bottom: 10px; border-bottom: 1px dashed #475569; padding-bottom: 10px; }
         
-        /* استايل تتبع الأقسام للكاشير */
         .track-box { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
         .badge { font-size: 11px; padding: 3px 8px; border-radius: 5px; background: #334155; border: 1px solid #475569; }
         .ready-badge { background: rgba(34, 197, 94, 0.2); border-color: var(--accent); color: var(--accent); }
@@ -26,8 +25,8 @@
         .btn-dept { background: var(--blue); }
         .btn:disabled { background: #475569; cursor: not-allowed; }
         
-        /* استايل الإضافات الجديد */
-        .extras-list { color: var(--gold); font-size: 13px; margin-top: 4px; padding-right: 10px; font-weight: 500; }
+        /* استايل الإضافات الجوكر */
+        .extras-list { color: var(--gold); font-size: 13px; margin-top: 4px; padding-right: 15px; font-weight: 500; border-right: 2px solid var(--gold); margin-right: 5px; }
     </style>
 </head>
 <body onclick="enableAudio()">
@@ -80,11 +79,17 @@
                 if (isCashier || item.dept === screenType) {
                     hasMyItems = true;
                     
-                    // --- إضافة كود عرض الإضافات تحت كل صنف ---
+                    // --- فحص الإضافات الجوكر ---
                     let extrasHtml = "";
-                    if (item.extras && item.extras.length > 0) {
-                        // لو فيه إضافات بيعرضها بشكل قائمة تحت الصنف
-                        extrasHtml = `<div class="extras-list">➕ ${item.extras.join(' - ')}</div>`;
+                    // بنجرب كل المسميات اللي ممكن تكون صفحة المنيو بعتتها
+                    let rawExtras = item.extras || item.extra || item.addedItems || "";
+                    
+                    if (rawExtras) {
+                        if (Array.isArray(rawExtras) && rawExtras.length > 0) {
+                            extrasHtml = `<div class="extras-list">➕ ${rawExtras.join(' - ')}</div>`;
+                        } else if (typeof rawExtras === 'string' && rawExtras.trim() !== "") {
+                            extrasHtml = `<div class="extras-list">➕ ${rawExtras}</div>`;
+                        }
                     }
 
                     const isItemDeptReady = order[item.dept + 'Ready'] === true;
