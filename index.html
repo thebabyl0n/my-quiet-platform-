@@ -7,120 +7,29 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { 
-            --gold: #c8a27c; 
-            --dark-bg: #0f141e; 
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --text: #ffffff;
-        }
-
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            margin: 0; 
-            background: var(--dark-bg); 
-            color: var(--text); 
-            overflow-x: hidden;
-            background-attachment: fixed;
-        }
-
-        /* توست التنبيهات */
-        #toast { 
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
-            background: var(--gold); color: #000; padding: 12px 25px; 
-            border-radius: 50px; z-index: 10001; transition: 0.5s; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); font-weight: bold; 
-        }
+        :root { --gold: #c8a27c; --dark-bg: #0f141e; --card-bg: rgba(255, 255, 255, 0.05); --text: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--dark-bg); color: var(--text); overflow-x: hidden; }
+        #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #000; padding: 12px 25px; border-radius: 50px; z-index: 10001; transition: 0.5s; font-weight: bold; }
         #toast.show { top: 20px; }
-
-        /* شاشة التحميل */
-        #geo-shield { 
-            position: fixed; inset: 0; background: var(--dark-bg); 
-            z-index: 11000; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; text-align: center; 
-        }
-
-        /* شاشة الترحيب الفخمة */
-        #welcome-screen { 
-            position: fixed; inset: 0; background: radial-gradient(circle, #1a2332 0%, #0f141e 100%); 
-            z-index: 10000; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; transition: 0.8s ease-in-out; 
-        }
-        .welcome-logo { 
-            max-width: 150px; border-radius: 50%; border: 2px solid var(--gold); 
-            margin-bottom: 20px; box-shadow: 0 0 20px rgba(200, 162, 124, 0.3);
-        }
-
-        .order-btn { 
-            background: transparent; color: var(--gold); border: 1px solid var(--gold); 
-            padding: 15px 45px; border-radius: 50px; font-size: 18px; 
-            font-weight: bold; margin: 12px; cursor: pointer; width: 220px;
-            transition: 0.3s;
-        }
-        .order-btn:hover { background: var(--gold); color: #000; }
-
-        /* التطبيق الرئيسي */
+        #geo-shield { position: fixed; inset: 0; background: var(--dark-bg); z-index: 11000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #welcome-screen { position: fixed; inset: 0; background: radial-gradient(circle, #1a2332 0%, #0f141e 100%); z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.8s ease-in-out; }
+        .welcome-logo { max-width: 150px; border-radius: 50%; border: 2px solid var(--gold); margin-bottom: 20px; }
+        .order-btn { background: transparent; color: var(--gold); border: 1px solid var(--gold); padding: 15px 45px; border-radius: 50px; font-size: 18px; font-weight: bold; margin: 12px; cursor: pointer; width: 220px; transition: 0.3s; }
         .main-app { display: none; padding: 15px; padding-bottom: 100px; }
-
-        header { text-align: center; padding: 20px 0; border-bottom: 1px solid rgba(200, 162, 124, 0.1); }
+        header { text-align: center; padding: 20px 0; }
         .app-logo { width: 60px; border-radius: 50%; border: 1px solid var(--gold); }
-
         .slider-container { display: flex; overflow-x: auto; gap: 12px; padding: 10px 0; scrollbar-width: none; }
-        .slider-img { width: 85%; height: 180px; border-radius: 20px; flex-shrink: 0; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); }
-
+        .slider-img { width: 85%; height: 180px; border-radius: 20px; flex-shrink: 0; object-fit: cover; }
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        
-        .item-card { 
-            background: var(--card-bg); backdrop-filter: blur(10px); 
-            border-radius: 20px; padding: 12px; border: 1px solid rgba(255,255,255,0.05); 
-            text-align: center; transition: 0.3s;
-        }
-        .item-card:active { transform: scale(0.95); }
-        .item-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 15px; margin-bottom: 10px; }
-        .item-card h4 { margin: 5px 0; font-size: 15px; color: #eee; }
-        .price-tag { color: var(--gold); font-weight: bold; font-size: 14px; margin-bottom: 10px; display: block; }
-
-        .extra-sel { 
-            width: 100%; padding: 8px; border-radius: 12px; border: none; 
-            background: rgba(255,255,255,0.1); color: #fff; font-size: 11px; margin-bottom: 10px; outline: none;
-        }
-        .extra-sel option { background: #1a2332; }
-
-        .add-btn { 
-            background: var(--gold); color: #000; border: none; 
-            padding: 10px; border-radius: 12px; width: 100%; 
-            font-weight: 800; font-size: 13px; cursor: pointer; 
-        }
-
-        /* السلة */
-        .cart-box { 
-            margin-top: 40px; background: rgba(255,255,255,0.03); 
-            padding: 20px; border-radius: 25px; border: 1px solid rgba(200, 162, 124, 0.2); 
-        }
-        .cart-item { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .item-qty { color: var(--gold); font-weight: bold; margin-left: 5px; }
-
-        .total-price { 
-            font-size: 24px; font-weight: 800; color: var(--gold); 
-            text-align: center; margin: 25px 0; 
-        }
-
-        .note-area { 
-            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
-            border-radius: 15px; padding: 15px; color: #fff; box-sizing: border-box; margin-bottom: 20px;
-        }
-
-        .send-btn { 
-            background: #22c55e; color: #fff; border: none; 
-            width: 100%; padding: 18px; border-radius: 20px; 
-            font-size: 18px; font-weight: bold; box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
-        }
-
-        /* شاشة الاستلام */
-        #status-bar { 
-            background: rgba(200, 162, 124, 0.1); color: var(--gold); 
-            padding: 15px; text-align: center; border-radius: 15px; 
-            margin-bottom: 20px; font-weight: bold; border: 1px solid var(--gold);
-        }
+        .item-card { background: var(--card-bg); backdrop-filter: blur(10px); border-radius: 20px; padding: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
+        .item-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 15px; }
+        .price-tag { color: var(--gold); font-weight: bold; display: block; margin: 10px 0; }
+        .extra-sel { width: 100%; padding: 8px; border-radius: 12px; background: rgba(255,255,255,0.1); color: #fff; border: none; margin-bottom: 10px; font-size: 11px; }
+        .add-btn { background: var(--gold); color: #000; border: none; padding: 10px; border-radius: 12px; width: 100%; font-weight: 800; }
+        .cart-box { margin-top: 40px; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 25px; border: 1px solid rgba(200, 162, 124, 0.2); }
+        .total-price { font-size: 24px; font-weight: 800; color: var(--gold); text-align: center; margin: 20px 0; }
+        .send-btn { background: #22c55e; color: #fff; border: none; width: 100%; padding: 18px; border-radius: 20px; font-size: 18px; font-weight: bold; }
+        #status-bar { background: rgba(200, 162, 124, 0.1); color: var(--gold); padding: 15px; text-align: center; border-radius: 15px; margin-bottom: 20px; font-weight: bold; border: 1px solid var(--gold); }
     </style>
 </head>
 <body>
@@ -128,46 +37,34 @@
 <div id="toast"></div>
 
 <div id="geo-shield">
-    <div style="font-size: 50px;">📍</div>
-    <h2 id="geo-status" style="color: var(--gold);">نظام التشفير الجغرافي..</h2>
-    <p style="opacity: 0.6;">Alpha Shadow Protocol</p>
+    <h2 id="geo-status" style="color: var(--gold);">📍 جاري التحقق...</h2>
 </div>
 
 <div id="welcome-screen" style="display:none;">
     <img id="logoW" class="welcome-logo" src="">
-    <h1 id="nameW" style="margin-bottom: 30px; letter-spacing: 2px;">ALPHA SHADOW</h1>
+    <h1 id="nameW" style="letter-spacing: 2px;">ALPHA SHADOW</h1>
     <button class="order-btn" onclick="startOrder('سفري')">🚗 TAKE AWAY</button>
-    <button class="order-btn" onclick="showTableInput()">☕ IN STORE</button>
-    
-    <div id="table-entry" style="display:none; margin-top: 15px;">
-        <input type="number" id="tblNo" style="width: 80px; padding: 12px; border-radius: 12px; border: 1px solid var(--gold); background: transparent; color: #fff; text-align: center; font-size: 18px;" placeholder="الطاولة">
-        <button class="order-btn" style="width: 100px; padding: 10px;" onclick="startOrder('محلي')">GO</button>
+    <button class="order-btn" onclick="document.getElementById('table-entry').style.display='block'">☕ IN STORE</button>
+    <div id="table-entry" style="display:none; margin-top:15px;">
+        <input type="number" id="tblNo" style="width:70px; padding:10px; border-radius:10px; background:#000; color:#fff; border:1px solid var(--gold);" placeholder="طاولة">
+        <button class="order-btn" style="width:80px;" onclick="startOrder('محلي')">GO</button>
     </div>
 </div>
 
 <div class="main-app" id="app">
-    <header>
-        <img id="app-logo-img" class="app-logo" src="">
-    </header>
-
-    <div id="status-bar" style="display:none;">جاري تحضير طلبك بكل حب.. ⏳</div>
-
+    <header><img id="app-logo-img" class="app-logo" src=""></header>
+    <div id="status-bar" style="display:none;">⏳ جاري تحضير طلبك..</div>
     <div class="slider-container" id="slider"></div>
-    
-    <div id="menu-sections"></div>
     <div class="menu-grid" id="menu-list"></div>
-
     <div class="cart-box">
-        <h3 style="color: var(--gold);">🛒 سلتك الخاصة</h3>
         <div id="cartList"></div>
-        <div class="total-price">إجمالي: <span id="total">0</span> ريال</div>
-        <textarea id="notes" class="note-area" rows="3" placeholder="ملاحظات الباريستا.."></textarea>
-        <button class="send-btn" onclick="submitOrder()">إرسال الطلب عبر الواتساب</button>
+        <div class="total-price">الإجمالي: <span id="total">0</span> ريال</div>
+        <textarea id="notes" style="width:100%; padding:10px; border-radius:10px; background:rgba(255,255,255,0.05); color:#fff; border:none; margin-bottom:10px;" rows="2" placeholder="ملاحظات.."></textarea>
+        <button class="send-btn" onclick="submitOrder()">تأكيد وإرسال ✅</button>
     </div>
 </div>
 
 <script>
-    // تهيئة Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
         authDomain: "alphashadow-23689.firebaseapp.com",
@@ -177,44 +74,30 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // إعدادات الموقع
-    const TARGET_LAT = 21.522492;
-    const TARGET_LON = 39.229700;
-    const ALLOWED_DIST = 0.50;
-
+    const TARGET_LAT = 21.522492; const TARGET_LON = 39.229700; const ALLOWED_DIST = 0.50;
     let cart = [], extrasStr = "", welcomeAudio = "", readyAudio = "", successMsg = "";
     let oType = "", tNum = "";
 
     window.onload = () => {
-        validateLocation(() => {
-            document.getElementById('geo-shield').style.display = 'none';
-            document.getElementById('welcome-screen').style.display = 'flex';
-        }, () => {
-            document.getElementById('geo-status').innerText = "نعتذر.. الخدمة داخل الفرع فقط 📍";
-        });
+        if(navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                const d = calcDist(pos.coords.latitude, pos.coords.longitude, TARGET_LAT, TARGET_LON);
+                if(d <= ALLOWED_DIST) {
+                    document.getElementById('geo-shield').style.display = 'none';
+                    document.getElementById('welcome-screen').style.display = 'flex';
+                } else { document.getElementById('geo-status').innerText = "خارج النطاق 📍"; }
+            }, () => { document.getElementById('geo-status').innerText = "يرجى تفعيل الـ GPS 📍"; });
+        }
     };
 
-    function validateLocation(success, fail) {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                const d = calcDist(pos.coords.latitude, pos.coords.longitude, TARGET_LAT, TARGET_LON);
-                if (d <= ALLOWED_DIST) success(); else fail();
-            }, fail, {enableHighAccuracy: true});
-        } else { alert("GPS Required"); }
-    }
-
     function calcDist(lat1, lon1, lat2, lon2) {
-        const R = 6371;
-        const dLat = (lat2-lat1)*Math.PI/180;
-        const dLon = (lon2-lon1)*Math.PI/180;
+        const R = 6371; const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
         const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
-    // جلب البيانات الأساسية
     database.ref('settings').on('value', snap => {
-        const s = snap.val();
-        if(s) {
+        const s = snap.val(); if(s) {
             document.getElementById('nameW').innerText = s.branding.name;
             document.getElementById('logoW').src = s.branding.logo;
             document.getElementById('app-logo-img').src = s.branding.logo;
@@ -229,7 +112,7 @@
 
     database.ref('extras_options').on('value', snap => {
         extrasStr = `<option value="">بدون إضافات</option>`;
-        snap.forEach(c => extrasStr += `<option value="${c.val().en}" data-ar="${c.val().ar}" data-p="${c.val().price}">${c.val().ar} (+${c.val().price}ر.س)</option>`);
+        snap.forEach(c => extrasStr += `<option value="${c.val().en}" data-ar="${c.val().ar}" data-p="${c.val().price}">${c.val().ar}</option>`);
         loadMenu();
     });
 
@@ -238,24 +121,21 @@
             let h = "";
             snap.forEach(child => {
                 const item = child.val();
-                h += `
-                <div class="item-card">
+                h += `<div class="item-card">
                     <img src="${item.img}">
                     <h4>${item.ar}</h4>
                     <span class="price-tag">${item.price} ريال</span>
                     <select class="extra-sel" id="ex-${child.key}">${extrasStr}</select>
-                    <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price},'${item.dept}')">إضافة +</button>
+                    <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price},'${item.dept || 'barista'}')">إضافة +</button>
                 </div>`;
             });
             document.getElementById('menu-list').innerHTML = h;
         });
     }
 
-    function showTableInput() { document.getElementById('table-entry').style.display='block'; }
-
     function startOrder(type) {
         oType = type; tNum = document.getElementById('tblNo').value;
-        if(type === 'محلي' && !tNum) return alert("رقم الطاولة يا بطل");
+        if(type === 'محلي' && !tNum) return alert("رقم الطاولة!");
         document.getElementById('welcome-screen').style.transform = 'translateY(-100%)';
         setTimeout(() => {
             document.getElementById('welcome-screen').style.display = 'none';
@@ -268,95 +148,67 @@
         const s = document.getElementById('ex-'+k);
         const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
         const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
-        
-        const existing = cart.find(i => i.k === k && i.exAr === exAr);
-        if(existing) { existing.qty++; } 
-        else { cart.push({k, ar, en, p, exAr, exP, qty: 1, dept: dept || 'barista'}); }
-        
-        talk(en); renderCart(); showToast("تمت الإضافة للسلة ✨");
+        cart.push({k, ar, en, p, exAr, exP, qty: 1, dept: dept.toLowerCase().trim()});
+        talk(en); renderCart(); showToast("تمت الإضافة 🛒");
     }
 
     function renderCart() {
         let h = "", total = 0;
         cart.forEach((i, x) => {
-            let itemT = (i.p + i.exP) * i.qty; total += itemT;
-            h += `
-            <div class="cart-item">
-                <div style="display:flex; justify-content:space-between;">
-                    <span><span class="item-qty">${i.qty}x</span> ${i.ar}</span>
-                    <span>${itemT.toFixed(2)} ر.س</span>
-                </div>
-                <div style="font-size:12px; color:var(--gold); margin-top:5px;">
-                    ${i.exAr ? '+ '+i.exAr : ''} 
-                    <button onclick="removeItem(${x})" style="background:none; border:none; color:red; float:left;">حذف</button>
-                </div>
+            total += (i.p + i.exP);
+            h += `<div style="border-bottom:1px solid rgba(255,255,255,0.05); padding:10px 0;">
+                <span>${i.ar} ${i.exAr ? '<small>('+i.exAr+')</small>' : ''}</span>
+                <button onclick="cart.splice(${x},1);renderCart()" style="float:left; background:none; border:none; color:red;">حذف</button>
             </div>`;
         });
         document.getElementById('total').innerText = total.toFixed(2);
         document.getElementById('cartList').innerHTML = h;
     }
 
-    function removeItem(x) { cart.splice(x, 1); renderCart(); }
-
     function submitOrder() {
-        if(!cart.length) return alert("السلة فارغة!");
-        
+        if(!cart.length) return alert("السلة فارغة");
         const finalTotal = document.getElementById('total').innerText;
-        
-        // دمج الإضافات مع الاسم للشاشات
-        const finalItems = cart.map(item => ({
-            ...item,
-            ar: item.exAr ? `${item.ar} [+${item.exAr}]` : item.ar
-        }));
+        const deptsNeeded = [...new Set(cart.map(i => i.dept))];
 
+        // التعديل هنا لضمان ظهور الطلب في الأقسام
         const orderData = {
-            items: finalItems,
-            type: oType,
-            table: tNum || 'سفري',
+            items: cart.map(i => ({ ...i, ar: i.exAr ? `${i.ar} [+${i.exAr}]` : i.ar })), // دمج الاسم للشاشة
+            type: oType, table: tNum || 'سفري',
             notes: document.getElementById('notes').value,
-            totalPrice: finalTotal,
-            status: '⏳ جاري التحضير',
+            totalPrice: finalTotal, status: '⏳ جاري التحضير',
             time: new Date().toLocaleTimeString('ar-SA'),
-            deptsNeeded: [...new Set(cart.map(i => i.dept))],
-            baristaReady: false, kitchenReady: false, dessertReady: false
+            deptsNeeded: deptsNeeded,
+            baristaReady: !deptsNeeded.includes('barista'), // لو مش باريستا اعتبره جاهز
+            kitchenReady: !deptsNeeded.includes('kitchen'),
+            dessertReady: !deptsNeeded.includes('dessert')
         };
 
         const ref = database.ref('live_orders').push();
         ref.set(orderData);
-
         document.getElementById('status-bar').style.display = 'block';
 
-        // مراقبة الحالة
+        // مراقبة ذكية للحالة
         ref.on('value', s => {
             const o = s.val();
-            if(o && o.baristaReady && o.kitchenReady) { // مثال للجاهزية
-                document.getElementById('status-bar').innerText = "طلبك جاهز للاستلام! ✅";
-                document.getElementById('status-bar').style.background = "var(--gold)";
-                document.getElementById('status-bar').style.color = "#000";
-                if(readyAudio) talk(readyAudio);
+            if(o && ((o.deptsNeeded.includes('barista') && o.baristaReady) || !o.deptsNeeded.includes('barista'))) {
+                // لو القسم المطلوب خلص، نحدث الشاشة للزبون
+                if((o.kitchenReady || !o.deptsNeeded.includes('kitchen')) && (o.dessertReady || !o.deptsNeeded.includes('dessert'))) {
+                    document.getElementById('status-bar').innerText = "طلبك جاهز! ✅";
+                    document.getElementById('status-bar').style.background = "var(--gold)";
+                    document.getElementById('status-bar').style.color = "#000";
+                    if(readyAudio) talk(readyAudio);
+                }
             }
         });
 
-        // واتساب
-        let msg = `*طلب جديد Alpha Shadow*\n`;
-        finalItems.forEach(i => msg += `• ${i.qty}x ${i.ar}\n`);
-        msg += `\n*الإجمالي*: ${finalTotal} ريال\n*المكان*: ${oType} ${tNum?'['+tNum+']':''}`;
+        let msg = `*طلب جديد*\n`;
+        cart.forEach(i => msg += `• ${i.ar} ${i.exAr ? '['+i.exAr+']' : ''}\n`);
         window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-        
         cart = []; renderCart();
     }
 
-    function talk(t) {
-        window.speechSynthesis.cancel();
-        const m = new SpeechSynthesisUtterance(t); m.lang = 'en-US';
-        window.speechSynthesis.speak(m);
-    }
-
-    function showToast(m) {
-        const t = document.getElementById('toast'); t.innerText = m;
-        t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000);
-    }
+    function talk(t) { window.speechSynthesis.cancel(); const m = new SpeechSynthesisUtterance(t); m.lang = 'en-US'; window.speechSynthesis.speak(m); }
+    function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
 </script>
 </body>
 </html>
-
