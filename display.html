@@ -17,7 +17,8 @@
         .customer-note { background: rgba(251, 191, 36, 0.1); color: var(--note); padding: 10px; border-radius: 8px; border-right: 4px solid var(--note); margin-top: 10px; font-weight: bold; }
         .price-tag { color: var(--gold); font-weight: bold; font-size: 14px; }
         .total-box { margin-top: 15px; padding-top: 10px; border-top: 2px solid var(--accent); color: var(--accent); font-size: 18px; font-weight: 800; text-align: center; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 10px; color: white; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 10px; color: white; transition: 0.3s; }
+        .btn:active { transform: scale(0.95); }
         .btn-cashier { background: var(--accent); }
         .btn-dept { background: var(--blue); }
     </style>
@@ -28,7 +29,7 @@
 
 <div class="header">
     <h2 id="screenTitle">🖥️ جاري التحميل...</h2>
-    <div id="status" style="font-size: 14px; color: var(--gold);">🔇 اضغط لتفعيل الصوت</div>
+    <div id="status" style="font-size: 14px; color: var(--gold); cursor: pointer; padding: 10px; border: 1px solid var(--gold); border-radius: 8px;">🔇 اضغط هنا لتفعيل الصوت</div>
 </div>
 
 <div class="grid" id="ordersGrid"></div>
@@ -53,16 +54,24 @@
     let audioEnabled = false;
     let knownOrders = new Set();
 
+    // دالة تفعيل الصوت (مهمة جداً لسياسات المتصفح)
     function enableAudio() { 
         audioEnabled = true; 
         document.getElementById('status').innerText = "✅ الصوت يعمل";
+        document.getElementById('status').style.color = "var(--accent)";
+        document.getElementById('status').style.borderColor = "var(--accent)";
+        // تشغيل صامت لتأكيد الإذن
+        document.getElementById('notifSound').play().then(() => {
+            document.getElementById('notifSound').pause();
+            document.getElementById('notifSound').currentTime = 0;
+        }).catch(e => console.log("Audio Init"));
     }
 
     database.ref('live_orders').on('value', (snapshot) => {
         const grid = document.getElementById('ordersGrid');
         grid.innerHTML = ''; 
-        let newOrderForMe = false;
-        let noteInOrder = false;
+        let shouldPlayAlert = false;
+        let shouldSayNote = false;
 
         snapshot.forEach((child) => {
             const order = child.val();
@@ -71,17 +80,15 @@
 
             let itemsHtml = '';
             let orderHasItemsForMe = false;
+            // التحقق من وجود ملاحظة في أي مسمى (notes أو note)
             const finalNote = order.notes || order.note || "";
 
             order.items.forEach(item => {
                 const itemDept = (item.dept || 'barista').toLowerCase().trim();
                 
-                // التعديل: الكاشير يشوف كل الأصناف، الأقسام تشوف أصنافها بس
                 if (isCashier || itemDept === screenType) {
                     orderHasItemsForMe = true;
                     const isReady = order[itemDept + 'Ready'] === true;
-                    
-                    // التكة التانية: عرض سعر الصنف فقط في شاشة الكاشير
                     const priceInfo = isCashier ? `<span class="price-tag">${(item.p * item.qty).toFixed(2)} ريال</span>` : "";
                     
                     itemsHtml += `
@@ -93,19 +100,20 @@
             });
 
             if (orderHasItemsForMe) {
-                // التكة الأولى: التنبيه للكل (كاشير وأقسام)
+                // إذا كان طلب جديد لهذا القسم أو الكاشير
                 if (!knownOrders.has(orderId)) { 
-                    newOrderForMe = true; 
-                    if (finalNote) noteInOrder = true;
+                    shouldPlayAlert = true; 
+                    if (finalNote.trim() !== "") {
+                        shouldSayNote = true;
+                    }
                     knownOrders.add(orderId); 
                 }
 
                 const isDone = order[screenType + 'Ready'] === true;
                 const btn = isCashier 
                     ? `<button class="btn btn-cashier" onclick="deleteOrder('${orderId}')">تم الحساب - حذف ✅</button>`
-                    : `<button class="btn btn-dept" ${isDone?'disabled':''} onclick="markReady('${orderId}','${screenType}')">${isDone?'جاهز ✅':'تجهيز 📣'}</button>`;
+                    : `<button class="btn btn-dept" ${isDone?'disabled':''} onclick="markReady('${orderId}','${screenType}')">${isDone?'جاهز ✅':'تجهيز القسم 📣'}</button>`;
 
-                // التكة التانية: عرض الإجمالي النهائي في شاشة الكاشير فقط
                 const totalBox = isCashier ? `<div class="total-box">الإجمالي: ${order.totalPrice} ريال</div>` : "";
 
                 grid.innerHTML += `
@@ -122,21 +130,34 @@
             }
         });
 
-        if (newOrderForMe && audioEnabled) {
-            document.getElementById('notifSound').play();
-            if (noteInOrder) {
+        // تنفيذ التنبيهات الصوتية
+        if (shouldPlayAlert && audioEnabled) {
+            const bell = document.getElementById('notifSound');
+            bell.currentTime = 0;
+            bell.play().catch(e => console.log("Play error"));
+
+            if (shouldSayNote) {
+                // ننتظر الجرس يخلص وننطق الملاحظة
                 setTimeout(() => {
+                    window.speechSynthesis.cancel(); // إلغاء أي نطق قديم
                     const msg = new SpeechSynthesisUtterance("تنبيه، يوجد ملاحظة في هذا الطلب");
                     msg.lang = 'ar-SA';
+                    msg.rate = 0.9;
                     window.speechSynthesis.speak(msg);
-                }, 1500);
+                }, 1200);
             }
         }
     });
 
-    function markReady(id, dept) { database.ref('live_orders/' + id).update({ [dept + 'Ready']: true }); }
-    function deleteOrder(id) { if(confirm('تأكيد الحذف النهائي؟')) database.ref('live_orders/' + id).remove(); }
+    function markReady(id, dept) { 
+        database.ref('live_orders/' + id).update({ [dept + 'Ready']: true }); 
+    }
+    
+    function deleteOrder(id) { 
+        if(confirm('تأكيد الحساب وحذف الطلب؟')) {
+            database.ref('live_orders/' + id).remove(); 
+        }
+    }
 </script>
 </body>
 </html>
-
