@@ -74,9 +74,9 @@
             let hasMyItems = false;
             const finalNote = order.note || order.customerNote || order.notes || "";
 
+            // 1. معالجة العناصر والفلترة (تم تبسيطها لضمان الدقة ومنع التداخل)
             order.items.forEach(item => {
-                // 💉 تنفيذ "حقنة الجدة" - منطق الفلترة المرن لضمان السيادة
-                if (isCashier || item.dept === screenType || (order.deptsNeeded && order.deptsNeeded.includes(screenType))) {
+                if (isCashier || item.dept === screenType) {
                     hasMyItems = true;
                     
                     let extrasHtml = "";
@@ -99,12 +99,10 @@
                 }
             });
 
+            // 2. معالجة التنبيهات (تم إصلاح خطأ الـ item الخارج عن اللوب)
             if (hasMyItems) {
                 if (!knownOrders.has(orderId)) {
-                    // التنبيه الصوتي يعمل إذا كان القسم مطلوباً
-                    if (isCashier || item.dept === screenType || (order.deptsNeeded && order.deptsNeeded.includes(screenType))) {
-                        newOrderDetected = true;
-                    }
+                    newOrderDetected = true; 
                     if (finalNote) noteDetected = true;
                     knownOrders.add(orderId);
                 }
