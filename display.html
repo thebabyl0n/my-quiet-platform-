@@ -13,7 +13,7 @@
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
         .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 2px solid #334155; position: relative; }
         .table-no { background: var(--gold); color: var(--bg); padding: 5px 15px; border-radius: 8px; font-weight: bold; font-size: 20px; }
-        .item { margin-bottom: 10px; border-bottom: 1px dashed #475569; padding-bottom: 5px; }
+        .item { margin-bottom: 10px; border-bottom: 1px dashed #475569; padding-bottom: 10px; }
         
         /* استايل تتبع الأقسام للكاشير */
         .track-box { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
@@ -25,6 +25,9 @@
         .btn-cashier { background: var(--accent); }
         .btn-dept { background: var(--blue); }
         .btn:disabled { background: #475569; cursor: not-allowed; }
+        
+        /* استايل الإضافات الجديد */
+        .extras-list { color: var(--gold); font-size: 13px; margin-top: 4px; padding-right: 10px; font-weight: 500; }
     </style>
 </head>
 <body onclick="enableAudio()">
@@ -76,9 +79,20 @@
             order.items.forEach(item => {
                 if (isCashier || item.dept === screenType) {
                     hasMyItems = true;
-                    // ظهور علامة ✅ جنب الصنف لو قسمه داس جاهز
+                    
+                    // --- إضافة كود عرض الإضافات تحت كل صنف ---
+                    let extrasHtml = "";
+                    if (item.extras && item.extras.length > 0) {
+                        // لو فيه إضافات بيعرضها بشكل قائمة تحت الصنف
+                        extrasHtml = `<div class="extras-list">➕ ${item.extras.join(' - ')}</div>`;
+                    }
+
                     const isItemDeptReady = order[item.dept + 'Ready'] === true;
-                    itemsHtml += `<div class="item"><span>${item.ar} × ${item.qty} ${isItemDeptReady ? '✅' : ''}</span></div>`;
+                    itemsHtml += `
+                        <div class="item">
+                            <span><b>${item.ar}</b> × ${item.qty} ${isItemDeptReady ? '✅' : ''}</span>
+                            ${extrasHtml}
+                        </div>`;
                 }
             });
 
@@ -89,7 +103,6 @@
                     knownOrders.add(orderId);
                 }
 
-                // لوحة تحكم الكاشير لمعرفة حالة الأقسام
                 let trackingHtml = '';
                 if (isCashier) {
                     trackingHtml = `
@@ -117,7 +130,7 @@
                         ${trackingHtml}
                         ${finalNote ? `<div class="customer-note">⚠️ ملاحظة: ${finalNote}</div>` : ''}
                         <div style="margin-top:10px; font-weight:bold; color:var(--accent)">
-                            ${isCashier ? 'الإجمالي: ' + order.totalPrice : 'الحالة: قيد التحضير'}
+                            ${isCashier ? 'الإجمالي: ' + order.totalPrice + ' ريال' : 'الحالة: قيد التحضير'}
                         </div>
                         ${btnHtml}
                     </div>`;
@@ -138,7 +151,7 @@
 
     function markDeptReady(id, dept) {
         let update = {};
-        update[dept + 'Ready'] = true; // بيعلم ان القسم ده خلص (مثلاً kitchenReady = true)
+        update[dept + 'Ready'] = true;
         database.ref('live_orders/' + id).update(update);
     }
 
