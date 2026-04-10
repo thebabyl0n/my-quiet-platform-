@@ -17,6 +17,9 @@
         .welcome-logo { max-width: 130px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 15px; }
         .order-btn { background: var(--gold); color: var(--dark); border: none; padding: 15px 40px; border-radius: 12px; font-size: 18px; font-weight: bold; margin: 10px; cursor: pointer; width: 200px; }
         
+        /* شاشة الخطأ خارج النطاق */
+        #location-error { position: fixed; inset: 0; background: white; z-index: 20000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; color: var(--dark); }
+
         #table-entry { display: none; margin-top: 10px; }
         .table-input { width: 100px; padding: 12px; border-radius: 8px; border: 2px solid var(--gold); text-align: center; font-size: 20px; outline: none; }
 
@@ -48,15 +51,28 @@
         .send-btn { background: var(--green); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
-<body>
+<body onload="verifyLocation()">
+
+<div id="location-error">
+    <img src="https://cdn-icons-png.flaticon.com/512/2875/2875438.png" width="80" style="margin-bottom: 20px;">
+    <h2 style="color: #ef4444;">عذراً.. أنت خارج النطاق 📍</h2>
+    <p>يجب التواجد داخل الكافيه لتتمكن من الطلب.</p>
+    <button onclick="location.reload()" style="background: var(--dark); color: white; padding: 12px 25px; border: none; border-radius: 10px; font-weight: bold;">تحديث الموقع 🔄</button>
+</div>
 
 <div id="toast"></div>
 
 <div id="welcome-screen">
     <img id="logoW" class="welcome-logo" src="" alt="">
     <h2 id="nameW" style="margin-bottom: 25px;">Alpha Shadow</h2>
-    <button class="order-btn" onclick="startOrder('سفري')">🚗 سفري</button>
-    <button class="order-btn" onclick="document.getElementById('table-entry').style.display='block'">☕ محلي</button>
+    
+    <div id="loading-loc" style="margin-bottom: 20px; font-size: 14px; color: var(--gold);">جاري التحقق من موقعك... ⏳</div>
+    
+    <div id="action-buttons" style="display: none;">
+        <button class="order-btn" onclick="startOrder('سفري')">🚗 سفري</button>
+        <button class="order-btn" onclick="document.getElementById('table-entry').style.display='block'">☕ محلي</button>
+    </div>
+    
     <div id="table-entry">
         <input type="number" id="tblNo" class="table-input" placeholder="طاولة">
         <br>
@@ -95,11 +111,43 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
+    // إحداثيات الكافيه بتاعك (حي النسيم - جدة) 📍
+    const CAFE_LAT = 21.522492; 
+    const CAFE_LON = 39.229700; 
+    const MAX_DISTANCE = 0.10; // 100 متر
+
     let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
     let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
     let discountValReal = 0; let discountType = "percent"; let activePromo = "";
 
-    // مراقبة الإعدادات (البحث عن الترحيب والصوت)
+    // دالة التحقق من الموقع أول ما الصفحة تفتح
+    function verifyLocation() {
+        if (!navigator.geolocation) {
+            alert("المتصفح لا يدعم تحديد الموقع.");
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(position => {
+            const d = calculateDistance(position.coords.latitude, position.coords.longitude, CAFE_LAT, CAFE_LON);
+            if (d <= MAX_DISTANCE) {
+                document.getElementById('loading-loc').style.display = 'none';
+                document.getElementById('action-buttons').style.display = 'block';
+            } else {
+                document.getElementById('location-error').style.display = 'flex';
+            }
+        }, err => {
+            alert("يرجى تفعيل الـ GPS والسماح بالوصول للموقع لتتمكن من الطلب.");
+        }, { enableHighAccuracy: true });
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; 
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    }
+
+    // مراقبة الإعدادات
     database.ref('settings').on('value', snap => {
         const s = snap.val();
         if(s) {
@@ -108,9 +156,9 @@
                 document.getElementById('logoW').src = s.branding.logo || "";
             }
             if(s.audio) {
-                welcomeAudio = s.audio.welcome; // نص الترحيب
-                readyAudio = s.audio.ready;     // نص جاهزية الطلب
-                successMsg = s.audio.msgText;   // نص رسالة الـ Toast
+                welcomeAudio = s.audio.welcome;
+                readyAudio = s.audio.ready;
+                successMsg = s.audio.msgText;
             }
         }
     });
@@ -243,7 +291,6 @@
 
         document.getElementById('order-status-bar').style.display = 'block';
         
-        // مراقبة الحالة لحظة بلحظة
         database.ref('live_orders/' + currentOrderId).on('value', s => {
             const order = s.val();
             if(order) {
@@ -253,7 +300,7 @@
                         statusElement.innerText = "حالة الطلب: جاهز للاستلام ✅";
                         statusElement.style.background = "#dcfce7";
                         statusElement.style.color = "#15803d";
-                        if(readyAudio) talk(readyAudio); // التنبيه الصوتي
+                        if(readyAudio) talk(readyAudio);
                         showToast(successMsg || "طلبك جاهز! تفضل للاستلام");
                     }
                 } else {
