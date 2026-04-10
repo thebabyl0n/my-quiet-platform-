@@ -221,7 +221,7 @@
         }
     }
 
-    // التكة المطلوبة: سحب الكوبون من لوحة التحكم
+    // تعديل ذكي: بيبحث عن قيمة الخصم بأي مسمى موجود في Firebase
     function applyPromo() {
         const code = document.getElementById('promoCode').value.trim().toUpperCase();
         if (!code) return showToast("الرجاء إدخال الكود أولاً");
@@ -229,8 +229,20 @@
         database.ref('coupons/' + code).once('value', snap => {
             const promo = snap.val();
             if (promo) {
-                discountValReal = parseFloat(promo.value || 0);
-                discountType = promo.type || "percent";
+                // تجربة سحب القيمة من أكثر من حقل محتمل لضمان الدقة
+                let val = promo.value || promo.discount || promo.amount || 0;
+                discountValReal = parseFloat(val);
+                
+                // تحديد نوع الخصم
+                let type = (promo.type || "").toString().toLowerCase();
+                if (type.includes("نسبة") || type === "percent") {
+                    discountType = "percent";
+                } else if (type.includes("مبلغ") || type === "fixed") {
+                    discountType = "fixed";
+                } else {
+                    discountType = "percent"; 
+                }
+                
                 activePromo = code;
                 showToast(`✅ تم تفعيل خصم: ${discountValReal}${discountType === 'percent' ? '%' : ' ريال'}`);
                 renderCart();
