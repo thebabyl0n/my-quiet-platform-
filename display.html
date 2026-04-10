@@ -75,8 +75,8 @@
             const finalNote = order.note || order.customerNote || order.notes || "";
 
             order.items.forEach(item => {
-                // 💉 تنفيذ "حقنة الجدة" - الربط الشرطي السيادي بالأقسام المختومة
-                if (isCashier || (order.deptsNeeded && order.deptsNeeded.includes(screenType) && item.dept === screenType)) {
+                // 💉 تنفيذ "حقنة الجدة" - منطق الفلترة المرن لضمان السيادة
+                if (isCashier || item.dept === screenType || (order.deptsNeeded && order.deptsNeeded.includes(screenType))) {
                     hasMyItems = true;
                     
                     let extrasHtml = "";
@@ -100,12 +100,12 @@
             });
 
             if (hasMyItems) {
-                // التحقق من التنبيه الصوتي فقط إذا كان القسم مطلوباً في deptsNeeded
                 if (!knownOrders.has(orderId)) {
-                    if (isCashier || (order.deptsNeeded && order.deptsNeeded.includes(screenType))) {
+                    // التنبيه الصوتي يعمل إذا كان القسم مطلوباً
+                    if (isCashier || item.dept === screenType || (order.deptsNeeded && order.deptsNeeded.includes(screenType))) {
                         newOrderDetected = true;
-                        if (finalNote) noteDetected = true;
                     }
+                    if (finalNote) noteDetected = true;
                     knownOrders.add(orderId);
                 }
 
