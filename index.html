@@ -91,7 +91,7 @@
 
     const TARGET_LAT = 21.522492;
     const TARGET_LON = 39.229700;
-    const ALLOWED_DISTANCE = 0.50; // وسعنا النطاق قليلاً للتجربة
+    const ALLOWED_DISTANCE = 0.50; 
 
     let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
     let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
@@ -154,7 +154,6 @@
             let h = "";
             snap.forEach(child => {
                 const item = child.val();
-                // تصليح 1: ضمان وجود قسم حتى لو لم يحدد في الداتا
                 const itemDept = item.dept ? item.dept.toLowerCase().trim() : 'barista'; 
                 h += `<div class="item-card">
                     <img src="${item.img}">
@@ -217,7 +216,31 @@
         if(dAmt > 0) {
             document.getElementById('discountInfo').style.display='flex';
             document.getElementById('discountVal').innerText = `-${dAmt.toFixed(2)} ريال`;
+        } else {
+            document.getElementById('discountInfo').style.display='none';
         }
+    }
+
+    // التكة المطلوبة: سحب الكوبون من لوحة التحكم
+    function applyPromo() {
+        const code = document.getElementById('promoCode').value.trim().toUpperCase();
+        if (!code) return showToast("الرجاء إدخال الكود أولاً");
+
+        database.ref('coupons/' + code).once('value', snap => {
+            const promo = snap.val();
+            if (promo) {
+                discountValReal = parseFloat(promo.value || 0);
+                discountType = promo.type || "percent";
+                activePromo = code;
+                showToast(`✅ تم تفعيل خصم: ${discountValReal}${discountType === 'percent' ? '%' : ' ريال'}`);
+                renderCart();
+            } else {
+                discountValReal = 0;
+                activePromo = "";
+                showToast("❌ كود الخصم غير صحيح");
+                renderCart();
+            }
+        });
     }
 
     function updateQty(index, change) {
@@ -240,7 +263,6 @@
             const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
             let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
             
-            // تصليح 2: تجميع الأقسام بشكل سليم وحروف صغيرة
             const deptsNeeded = [...new Set(cart.map(item => (item.dept || 'barista').toLowerCase().trim()))];
 
             const orderData = {
@@ -265,7 +287,6 @@
 
             document.getElementById('order-status-bar').style.display = 'block';
             
-            // مراقبة حالة الطلب
             database.ref('live_orders/' + currentOrderId).on('value', s => {
                 const order = s.val();
                 if(order) {
@@ -305,3 +326,4 @@
 </script>
 </body>
 </html>
+
