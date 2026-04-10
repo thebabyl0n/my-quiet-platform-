@@ -8,14 +8,16 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --gold: #c8a27c; --text: #f1f5f9; --accent: #22c55e; --blue: #3b82f6; --note: #fbbf24; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; min-height: 100vh; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
-        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 2px solid #334155; position: relative; }
-        .table-no { background: var(--gold); color: var(--bg); padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 18px; }
-        .item { margin-bottom: 8px; border-bottom: 1px dashed #475569; padding-bottom: 8px; }
-        .customer-note { background: rgba(251, 191, 36, 0.1); color: var(--note); padding: 8px; border-radius: 8px; border-right: 4px solid var(--note); margin-top: 10px; font-size: 14px; font-weight: bold; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 15px; color: white; }
+        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 2px solid #334155; }
+        .table-no { background: var(--gold); color: var(--bg); padding: 5px 12px; border-radius: 8px; font-weight: bold; }
+        .item { margin-bottom: 8px; border-bottom: 1px dashed #475569; padding-bottom: 8px; display: flex; justify-content: space-between; }
+        .customer-note { background: rgba(251, 191, 36, 0.1); color: var(--note); padding: 10px; border-radius: 8px; border-right: 4px solid var(--note); margin-top: 10px; font-weight: bold; }
+        .price-tag { color: var(--gold); font-weight: bold; font-size: 14px; }
+        .total-box { margin-top: 15px; padding-top: 10px; border-top: 2px solid var(--accent); color: var(--accent); font-size: 18px; font-weight: 800; text-align: center; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 10px; color: white; }
         .btn-cashier { background: var(--accent); }
         .btn-dept { background: var(--blue); }
     </style>
@@ -26,7 +28,7 @@
 
 <div class="header">
     <h2 id="screenTitle">🖥️ جاري التحميل...</h2>
-    <div id="status" style="font-size: 14px; color: var(--gold); cursor: pointer;">🔇 اضغط لتفعيل الصوت</div>
+    <div id="status" style="font-size: 14px; color: var(--gold);">🔇 اضغط لتفعيل الصوت</div>
 </div>
 
 <div class="grid" id="ordersGrid"></div>
@@ -35,7 +37,8 @@
     const urlParams = new URLSearchParams(window.location.search);
     const screenType = (urlParams.get('dept') || 'cashier').toLowerCase().trim(); 
     const isCashier = (screenType === 'cashier');
-    const titles = { 'barista': '☕ باريستا', 'kitchen': '🍔 مطبخ', 'dessert': '🍰 حلا', 'cashier': '💰 كاشير' };
+    
+    const titles = { 'barista': '☕ باريستا', 'kitchen': '🍔 مطبخ', 'dessert': '🍰 حلا', 'cashier': '💰 كاشير الحسابات' };
     document.getElementById('screenTitle').innerText = titles[screenType] || titles['cashier'];
 
     const firebaseConfig = {
@@ -58,8 +61,8 @@
     database.ref('live_orders').on('value', (snapshot) => {
         const grid = document.getElementById('ordersGrid');
         grid.innerHTML = ''; 
-        let newOrderDetected = false;
-        let noteDetected = false;
+        let newOrderForMe = false;
+        let noteInOrder = false;
 
         snapshot.forEach((child) => {
             const order = child.val();
@@ -67,42 +70,61 @@
             if (!order || !order.items) return;
 
             let itemsHtml = '';
-            let hasMyItems = false;
+            let orderHasItemsForMe = false;
             const finalNote = order.notes || order.note || "";
 
             order.items.forEach(item => {
                 const itemDept = (item.dept || 'barista').toLowerCase().trim();
+                
+                // التعديل: الكاشير يشوف كل الأصناف، الأقسام تشوف أصنافها بس
                 if (isCashier || itemDept === screenType) {
-                    hasMyItems = true;
+                    orderHasItemsForMe = true;
                     const isReady = order[itemDept + 'Ready'] === true;
-                    itemsHtml += `<div class="item"><b>${item.ar}</b> × ${item.qty} ${isReady ? '✅' : '⏳'}</div>`;
+                    
+                    // التكة التانية: عرض سعر الصنف فقط في شاشة الكاشير
+                    const priceInfo = isCashier ? `<span class="price-tag">${(item.p * item.qty).toFixed(2)} ريال</span>` : "";
+                    
+                    itemsHtml += `
+                        <div class="item">
+                            <span><b>${item.ar}</b> × ${item.qty} ${isReady ? '✅' : '⏳'}</span>
+                            ${priceInfo}
+                        </div>`;
                 }
             });
 
-            if (hasMyItems) {
+            if (orderHasItemsForMe) {
+                // التكة الأولى: التنبيه للكل (كاشير وأقسام)
                 if (!knownOrders.has(orderId)) { 
-                    newOrderDetected = true; 
-                    if (finalNote) noteDetected = true;
+                    newOrderForMe = true; 
+                    if (finalNote) noteInOrder = true;
                     knownOrders.add(orderId); 
                 }
 
                 const isDone = order[screenType + 'Ready'] === true;
                 const btn = isCashier 
-                    ? `<button class="btn btn-cashier" onclick="deleteOrder('${orderId}')">حساب وحذف ✅</button>`
-                    : `<button class="btn btn-dept" ${isDone?'disabled':''} onclick="markReady('${orderId}','${screenType}')">${isDone?'جاهز':'تجهيز 📣'}</button>`;
+                    ? `<button class="btn btn-cashier" onclick="deleteOrder('${orderId}')">تم الحساب - حذف ✅</button>`
+                    : `<button class="btn btn-dept" ${isDone?'disabled':''} onclick="markReady('${orderId}','${screenType}')">${isDone?'جاهز ✅':'تجهيز 📣'}</button>`;
 
-                grid.innerHTML += `<div class="order-card">
-                    <span class="table-no">طاولة ${order.table}</span>
-                    ${itemsHtml}
-                    ${finalNote ? `<div class="customer-note">⚠️ ملاحظة: ${finalNote}</div>` : ''}
-                    ${btn}
-                </div>`;
+                // التكة التانية: عرض الإجمالي النهائي في شاشة الكاشير فقط
+                const totalBox = isCashier ? `<div class="total-box">الإجمالي: ${order.totalPrice} ريال</div>` : "";
+
+                grid.innerHTML += `
+                    <div class="order-card">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                            <span class="table-no">طاولة ${order.table}</span>
+                            <span style="color:var(--gold)">#${orderId.slice(-4)}</span>
+                        </div>
+                        ${itemsHtml}
+                        ${finalNote ? `<div class="customer-note">⚠️ ملاحظة: ${finalNote}</div>` : ''}
+                        ${totalBox}
+                        ${btn}
+                    </div>`;
             }
         });
 
-        if (newOrderDetected && audioEnabled) {
+        if (newOrderForMe && audioEnabled) {
             document.getElementById('notifSound').play();
-            if (noteDetected) {
+            if (noteInOrder) {
                 setTimeout(() => {
                     const msg = new SpeechSynthesisUtterance("تنبيه، يوجد ملاحظة في هذا الطلب");
                     msg.lang = 'ar-SA';
@@ -113,7 +135,8 @@
     });
 
     function markReady(id, dept) { database.ref('live_orders/' + id).update({ [dept + 'Ready']: true }); }
-    function deleteOrder(id) { if(confirm('تأكيد الحذف؟')) database.ref('live_orders/' + id).remove(); }
+    function deleteOrder(id) { if(confirm('تأكيد الحذف النهائي؟')) database.ref('live_orders/' + id).remove(); }
 </script>
 </body>
 </html>
+
