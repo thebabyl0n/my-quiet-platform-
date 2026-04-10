@@ -185,10 +185,13 @@
         const exEn = s.value; 
         const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
         const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
-        let extrasArray = exAr ? [exAr] : [];
         const existingItem = cart.find(i => i.k === k && i.exEn === exEn);
-        if (existingItem) { existingItem.qty += 1; } 
-        else { cart.push({k, ar, en, p, exAr, exEn, exP, extras: extrasArray, qty: 1, dept: dept}); }
+        if (existingItem) { 
+            existingItem.qty += 1; 
+        } 
+        else { 
+            cart.push({k, ar, en, p, exAr, exEn, exP, qty: 1, dept: dept}); 
+        }
         talk(en + (exEn ? " with " + exEn : ""));
         renderCart();
     }
@@ -221,7 +224,6 @@
         }
     }
 
-    // تعديل ذكي: بيبحث عن قيمة الخصم بأي مسمى موجود في Firebase
     function applyPromo() {
         const code = document.getElementById('promoCode').value.trim().toUpperCase();
         if (!code) return showToast("الرجاء إدخال الكود أولاً");
@@ -229,26 +231,19 @@
         database.ref('coupons/' + code).once('value', snap => {
             const promo = snap.val();
             if (promo) {
-                // تجربة سحب القيمة من أكثر من حقل محتمل لضمان الدقة
                 let val = promo.value || promo.discount || promo.amount || 0;
                 discountValReal = parseFloat(val);
-                
-                // تحديد نوع الخصم
                 let type = (promo.type || "").toString().toLowerCase();
                 if (type.includes("نسبة") || type === "percent") {
                     discountType = "percent";
-                } else if (type.includes("مبلغ") || type === "fixed") {
-                    discountType = "fixed";
                 } else {
-                    discountType = "percent"; 
+                    discountType = "fixed";
                 }
-                
                 activePromo = code;
                 showToast(`✅ تم تفعيل خصم: ${discountValReal}${discountType === 'percent' ? '%' : ' ريال'}`);
                 renderCart();
             } else {
-                discountValReal = 0;
-                activePromo = "";
+                discountValReal = 0; activePromo = "";
                 showToast("❌ كود الخصم غير صحيح");
                 renderCart();
             }
@@ -277,8 +272,17 @@
             
             const deptsNeeded = [...new Set(cart.map(item => (item.dept || 'barista').toLowerCase().trim()))];
 
+            // --- حتة السر هنا: تعديل البيانات قبل ما تروح للسيستم عشان الإضافة تظهر غصب عنها ---
+            const finalItemsForSystem = cart.map(item => {
+                return {
+                    ...item,
+                    // بنخلي اسم الصنف هو (الاسم + الإضافة) عشان الشاشة تقرأها فوراً
+                    ar: item.exAr ? `${item.ar} [+${item.exAr}]` : item.ar
+                };
+            });
+
             const orderData = {
-                items: cart, 
+                items: finalItemsForSystem, // بعتنا النسخة اللي فيها الإضافة مدمجة في الاسم
                 type: oType, 
                 table: tNum || 'سفري',
                 notes: document.getElementById('notes').value, 
@@ -320,9 +324,10 @@
                 }
             });
 
+            // رسالة الواتساب برضه متعدلة عشان الدقة
             let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'[طاولة '+tNum+']':''}\n`;
             cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
-            msg += `*الإجمالي*: ${finalTotal} ريال`;
+            msg += `\n*الإجمالي النهائي*: ${finalTotal} ريال`;
             
             window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
             
@@ -338,3 +343,4 @@
 </script>
 </body>
 </html>
+
