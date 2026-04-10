@@ -3,40 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha Shadow Client</title>
+    <title>Alpha Shadow | طلبك بين يديك</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --gold: #c8a27c; --dark: #0f172a; --bg: #ffffff; }
+        :root { --gold: #c8a27c; --dark: #0f172a; --bg: #ffffff; --green: #22c55e; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; overflow-x: hidden; }
+        
         #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--dark); color: white; padding: 15px 30px; border-radius: 50px; border: 2px solid var(--gold); z-index: 10001; transition: 0.5s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-weight: bold; text-align: center; width: 80%; }
         #toast.show { top: 20px; }
+
         #welcome-screen { position: fixed; inset: 0; background: var(--dark); z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; transition: 0.5s; }
         .welcome-logo { max-width: 130px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 15px; }
         .order-btn { background: var(--gold); color: var(--dark); border: none; padding: 15px 40px; border-radius: 12px; font-size: 18px; font-weight: bold; margin: 10px; cursor: pointer; width: 200px; }
+        
         #table-entry { display: none; margin-top: 10px; }
         .table-input { width: 100px; padding: 12px; border-radius: 8px; border: 2px solid var(--gold); text-align: center; font-size: 20px; outline: none; }
+
         .main-app { display: none; padding: 15px; }
         .slider-container { display: flex; overflow-x: auto; gap: 10px; padding: 5px 0; margin-bottom: 20px; }
         .slider-img { width: 88%; height: 160px; border-radius: 15px; flex-shrink: 0; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .item-card { background: #fff; border-radius: 18px; padding: 10px; border: 1px solid #f0f0f0; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .item-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 14px; }
         .item-card h4 { margin: 10px 0 5px; font-size: 15px; color: var(--dark); }
+        
         .extra-sel { width: 100%; padding: 8px; border-radius: 10px; border: 1px solid #ddd; margin: 10px 0; font-size: 12px; background: #fafafa; }
         .add-btn { background: var(--dark); color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; }
+
         .cart-box { margin-top: 30px; background: #f9fafb; padding: 20px; border-radius: 24px; border: 1px solid #eee; }
         .cart-item { display: flex; flex-direction: column; border-bottom: 1px solid #eee; padding: 10px 0; gap: 4px; }
         .cart-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .item-name { font-weight: bold; font-size: 16px; color: var(--dark); }
         .item-qty { background: var(--gold); color: white; padding: 2px 8px; border-radius: 6px; font-size: 14px; margin-left: 5px; }
         .extra-name { color: var(--gold); font-size: 13px; font-weight: 600; padding-right: 10px; }
+        
         .discount-row { display: flex; justify-content: space-between; color: #dc2626; font-weight: bold; margin-top: 10px; font-size: 14px; border-top: 1px solid #ddd; padding-top: 10px; }
         .total-price { font-size: 22px; font-weight: 800; color: var(--dark); margin: 10px 0; text-align: center; }
         .promo-container { display: flex; gap: 5px; margin-bottom: 15px; }
         .promo-input { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #ddd; outline: none; }
         .promo-btn { background: var(--gold); border: none; padding: 0 15px; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
-        .send-btn { background: #22c55e; color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; }
+
+        .send-btn { background: var(--green); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -56,7 +65,7 @@
 </div>
 
 <div class="main-app" id="app">
-    <div id="order-status-bar" style="display:none; background:#e0f2fe; color:#0369a1; padding:12px; text-align:center; font-weight:bold; border-radius:10px; margin-bottom:15px;">حالة الطلب: جاري التجهيز...</div>
+    <div id="order-status-bar" style="display:none; background:#e0f2fe; color:#0369a1; padding:12px; text-align:center; font-weight:bold; border-radius:10px; margin-bottom:15px;">حالة الطلب: قيد التحضير ⏳</div>
     <div class="slider-container" id="slider"></div>
     <div class="menu-grid" id="menu"></div>
     <div class="cart-box">
@@ -90,6 +99,7 @@
     let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
     let discountValReal = 0; let discountType = "percent"; let activePromo = "";
 
+    // مراقبة الإعدادات (البحث عن الترحيب والصوت)
     database.ref('settings').on('value', snap => {
         const s = snap.val();
         if(s) {
@@ -98,9 +108,9 @@
                 document.getElementById('logoW').src = s.branding.logo || "";
             }
             if(s.audio) {
-                welcomeAudio = s.audio.welcome;
-                readyAudio = s.audio.ready;
-                successMsg = s.audio.msgText;
+                welcomeAudio = s.audio.welcome; // نص الترحيب
+                readyAudio = s.audio.ready;     // نص جاهزية الطلب
+                successMsg = s.audio.msgText;   // نص رسالة الـ Toast
             }
         }
     });
@@ -152,17 +162,10 @@
         const exEn = s.value; 
         const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
         const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
-        
-        // تجهيز الإضافات كمصفوفة عشان شاشات الأقسام تشوفها
         let extrasArray = exAr ? [exAr] : [];
-
         const existingItem = cart.find(i => i.k === k && i.exEn === exEn);
-        if (existingItem) { 
-            existingItem.qty += 1; 
-        } 
-        else { 
-            cart.push({k, ar, en, p, exAr, exEn, exP, extras: extrasArray, qty: 1, dept: dept}); 
-        }
+        if (existingItem) { existingItem.qty += 1; } 
+        else { cart.push({k, ar, en, p, exAr, exEn, exP, extras: extrasArray, qty: 1, dept: dept}); }
         talk(en + (exEn ? " with " + exEn : ""));
         renderCart();
     }
@@ -178,9 +181,7 @@
             activePromo = inputCode;
             showToast("تم تطبيق الخصم! 🎉");
             renderCart();
-        } else {
-            alert("كود الخصم غير صحيح");
-        }
+        } else { alert("كود الخصم غير صحيح"); }
     }
 
     function renderCart() {
@@ -229,14 +230,9 @@
         const notes = document.getElementById('notes').value;
 
         const orderData = {
-            items: cart, 
-            type: oType, 
-            table: tNum || 'سفري',
-            notes: notes, 
-            promoUsed: activePromo,
-            discountAmount: dAmount.toFixed(2),
-            totalPrice: finalTotal, 
-            status: 'قيد التحضير ⏳',
+            items: cart, type: oType, table: tNum || 'سفري',
+            notes: notes, promoUsed: activePromo, discountAmount: dAmount.toFixed(2),
+            totalPrice: finalTotal, status: 'قيد التحضير ⏳',
             time: new Date().toLocaleTimeString('ar-SA'),
             baristaReady: false, kitchenReady: false, dessertReady: false
         };
@@ -244,15 +240,30 @@
         const orderRef = database.ref('live_orders').push();
         currentOrderId = orderRef.key;
         orderRef.set(orderData);
-        database.ref('orders/' + currentOrderId).set(orderData);
 
         document.getElementById('order-status-bar').style.display = 'block';
-        database.ref('orders/' + currentOrderId + '/status').on('value', s => {
-            const status = s.val();
-            document.getElementById('order-status-bar').innerText = "حالة الطلب: " + status;
-            if(status === 'جاهز للاستلام ✅') {
-                showToast(successMsg || "طلبك جاهز!");
-                if(readyAudio) talk(readyAudio);
+        
+        // مراقبة الحالة لحظة بلحظة
+        database.ref('live_orders/' + currentOrderId).on('value', s => {
+            const order = s.val();
+            if(order) {
+                const statusElement = document.getElementById('order-status-bar');
+                if (order.baristaReady && order.kitchenReady && order.dessertReady) {
+                    if (statusElement.innerText !== "حالة الطلب: جاهز للاستلام ✅") {
+                        statusElement.innerText = "حالة الطلب: جاهز للاستلام ✅";
+                        statusElement.style.background = "#dcfce7";
+                        statusElement.style.color = "#15803d";
+                        if(readyAudio) talk(readyAudio); // التنبيه الصوتي
+                        showToast(successMsg || "طلبك جاهز! تفضل للاستلام");
+                    }
+                } else {
+                    statusElement.innerText = "حالة الطلب: " + (order.status || "قيد التحضير ⏳");
+                    statusElement.style.background = "#e0f2fe";
+                    statusElement.style.color = "#0369a1";
+                }
+            } else {
+                document.getElementById('order-status-bar').innerText = "تم تسليم الطلب بنجاح ✅";
+                setTimeout(() => { document.getElementById('order-status-bar').style.display = 'none'; }, 5000);
             }
         });
 
@@ -272,3 +283,4 @@
 </script>
 </body>
 </html>
+
