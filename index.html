@@ -17,6 +17,7 @@
         .welcome-logo { max-width: 130px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 15px; }
         .order-btn { background: var(--gold); color: var(--dark); border: none; padding: 15px 40px; border-radius: 12px; font-size: 18px; font-weight: bold; margin: 10px; cursor: pointer; width: 200px; }
         
+        /* شاشة خارج النطاق */
         #location-error { position: fixed; inset: 0; background: white; z-index: 20000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; color: var(--dark); }
 
         #table-entry { display: none; margin-top: 10px; }
@@ -41,7 +42,12 @@
         .item-qty { background: var(--gold); color: white; padding: 2px 8px; border-radius: 6px; font-size: 14px; margin-left: 5px; }
         .extra-name { color: var(--gold); font-size: 13px; font-weight: 600; padding-right: 10px; }
         
+        .discount-row { display: flex; justify-content: space-between; color: #dc2626; font-weight: bold; margin-top: 10px; font-size: 14px; border-top: 1px solid #ddd; padding-top: 10px; }
         .total-price { font-size: 22px; font-weight: 800; color: var(--dark); margin: 10px 0; text-align: center; }
+        .promo-container { display: flex; gap: 5px; margin-bottom: 15px; }
+        .promo-input { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #ddd; outline: none; }
+        .promo-btn { background: var(--gold); border: none; padding: 0 15px; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
+
         .send-btn { background: var(--green); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
@@ -59,11 +65,14 @@
 <div id="welcome-screen">
     <img id="logoW" class="welcome-logo" src="" alt="">
     <h2 id="nameW" style="margin-bottom: 25px;">Alpha Shadow</h2>
+    
     <div id="loading-loc" style="margin-bottom: 20px; font-size: 14px; color: var(--gold);">جاري التحقق من موقعك... ⏳</div>
+
     <div id="action-buttons" style="display: none;">
         <button class="order-btn" onclick="startOrder('سفري')">🚗 سفري</button>
         <button class="order-btn" onclick="document.getElementById('table-entry').style.display='block'">☕ محلي</button>
     </div>
+
     <div id="table-entry">
         <input type="number" id="tblNo" class="table-input" placeholder="طاولة">
         <br>
@@ -76,10 +85,18 @@
     <div class="slider-container" id="slider"></div>
     <div class="menu-grid" id="menu"></div>
     <div class="cart-box">
-        <h3>🛒 السلة (<span id="typeLbl"></span> <span id="tblLbl"></span>)</h3>
+        <h3 style="margin:0 0 15px 0;">🛒 السلة (<span id="typeLbl"></span> <span id="tblLbl"></span>)</h3>
         <div id="cartList"></div>
-        <div class="total-price">الإجمالي: <span id="total">0</span> ريال</div>
-        <textarea id="notes" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px;" rows="3" placeholder="ملاحظاتك..."></textarea>
+        <div class="promo-container" style="margin-top:15px;">
+            <input type="text" id="promoCode" class="promo-input" placeholder="لديك كود خصم؟">
+            <button class="promo-btn" onclick="applyPromo()">تفعيل</button>
+        </div>
+        <div id="discountInfo" style="display:none;" class="discount-row">
+            <span>خصم الكوبون:</span>
+            <span id="discountVal">0</span>
+        </div>
+        <div class="total-price">الإجمالي النهائي: <span id="total">0</span> ريال</div>
+        <textarea id="notes" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px; font-family:inherit;" rows="3" placeholder="ملاحظاتك الإضافية..."></textarea>
         <button class="send-btn" onclick="submitOrder()">إرسال الطلب ✅</button>
     </div>
 </div>
@@ -94,13 +111,16 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
+    // إحداثيات الكافيه (حي النسيم - جدة)
     const CAFE_LAT = 21.522492; 
     const CAFE_LON = 39.229700; 
     const MAX_DISTANCE = 0.15; // 150 متر
 
     let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
     let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
+    let discountValReal = 0; let discountType = "percent"; let activePromo = "";
 
+    // 1. فحص الموقع عند الدخول
     function verifyLocation() {
         if (!navigator.geolocation) return alert("المتصفح لا يدعم الموقع");
         navigator.geolocation.getCurrentPosition(position => {
@@ -111,7 +131,7 @@
             } else {
                 document.getElementById('location-error').style.display = 'flex';
             }
-        }, () => alert("يرجى تفعيل الـ GPS"), { enableHighAccuracy: true });
+        }, () => alert("يرجى تفعيل الموقع"), { enableHighAccuracy: true });
     }
 
     function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -125,11 +145,15 @@
     database.ref('settings').on('value', snap => {
         const s = snap.val();
         if(s) {
-            document.getElementById('nameW').innerText = s.branding.name;
-            document.getElementById('logoW').src = s.branding.logo;
-            welcomeAudio = s.audio.welcome;
-            readyAudio = s.audio.ready;
-            successMsg = s.audio.msgText;
+            if(s.branding) {
+                document.getElementById('nameW').innerText = s.branding.name || "Alpha Shadow";
+                document.getElementById('logoW').src = s.branding.logo || "";
+            }
+            if(s.audio) {
+                welcomeAudio = s.audio.welcome;
+                readyAudio = s.audio.ready;
+                successMsg = s.audio.msgText;
+            }
         }
     });
 
@@ -149,12 +173,13 @@
             let h = "";
             snap.forEach(child => {
                 const item = child.val();
+                const itemDept = item.dept || 'barista'; 
                 h += `<div class="item-card">
                     <img src="${item.img}">
                     <h4>${item.ar}</h4>
                     <span style="color:var(--gold);font-weight:700;">${item.price} ريال</span>
                     <select class="extra-sel" id="ex-${child.key}">${extrasStr}</select>
-                    <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price},'${item.dept}')">إضافة +</button>
+                    <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price},'${itemDept}')">إضافة +</button>
                 </div>`;
             });
             document.getElementById('menu').innerHTML = h;
@@ -163,7 +188,7 @@
 
     function startOrder(type) {
         oType = type; tNum = document.getElementById('tblNo').value;
-        if(type === 'محلي' && !tNum) return alert("أدخل رقم الطاولة");
+        if(type === 'محلي' && !tNum) return alert("الرجاء إدخال رقم الطاولة");
         document.getElementById('typeLbl').innerText = type;
         document.getElementById('tblLbl').innerText = tNum ? `(طاولة ${tNum})` : "";
         document.getElementById('welcome-screen').style.opacity = '0';
@@ -176,27 +201,61 @@
 
     function addToCart(k, ar, en, p, dept) {
         const s = document.getElementById('ex-'+k);
+        const exEn = s.value; 
         const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
         const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
-        cart.push({k, ar, en, p, exAr, exP, qty: 1, dept: dept});
-        talk(en);
+        let extrasArray = exAr ? [exAr] : [];
+        const existingItem = cart.find(i => i.k === k && i.exEn === exEn);
+        if (existingItem) { existingItem.qty += 1; } 
+        else { cart.push({k, ar, en, p, exAr, exEn, exP, extras: extrasArray, qty: 1, dept: dept}); }
+        talk(en + (exEn ? " with " + exEn : ""));
         renderCart();
     }
 
+    async function applyPromo() {
+        const inputCode = document.getElementById('promoCode').value.trim().toUpperCase();
+        if(!inputCode) return;
+        const snapshot = await database.ref("coupons/" + inputCode).get();
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            discountValReal = parseFloat(data.discount) || 0;
+            discountType = data.type || "percent";
+            activePromo = inputCode;
+            showToast("تم تطبيق الخصم! 🎉");
+            renderCart();
+        } else { alert("كود الخصم غير صحيح"); }
+    }
+
     function renderCart() {
-        let h = ""; let total = 0;
+        let h = ""; let subTotal = 0;
         cart.forEach((i, x) => {
-            let itemT = (i.p + i.exP) * i.qty;
-            total += itemT;
+            let itemTotal = (i.p + i.exP) * i.qty; 
+            subTotal += itemTotal;
             h += `<div class="cart-item">
                     <div class="cart-row">
-                        <span><b>${i.ar}</b></span>
-                        <span>${itemT} ريال <button onclick="cart.splice(${x},1);renderCart()" style="border:none;background:none;cursor:pointer;">❌</button></span>
+                        <span class="item-name"><span class="item-qty">${i.qty}x</span> ${i.ar}</span>
+                        <span>${itemTotal.toFixed(2)} ريال 
+                            <button onclick="updateQty(${x}, -1)" style="border:none;background:none;font-weight:bold;cursor:pointer;color:var(--gold);font-size:18px;">➖</button>
+                            <button onclick="updateQty(${x}, 1)" style="border:none;background:none;font-weight:bold;cursor:pointer;color:var(--gold);font-size:18px;">➕</button>
+                        </span>
                     </div>
+                    ${i.exAr ? `<div class="extra-name">+ إضافة: ${i.exAr}</div>` : ''}
                   </div>`;
         });
-        document.getElementById('total').innerText = total;
+        let dAmt = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
+        let finalT = subTotal - dAmt;
+        document.getElementById('total').innerText = (finalT < 0 ? 0 : finalT).toFixed(2);
         document.getElementById('cartList').innerHTML = h;
+        if(dAmt > 0) {
+            document.getElementById('discountInfo').style.display='flex';
+            document.getElementById('discountVal').innerText = `-${dAmt.toFixed(2)} ريال`;
+        }
+    }
+
+    function updateQty(index, change) {
+        cart[index].qty += change;
+        if (cart[index].qty <= 0) cart.splice(index, 1);
+        renderCart();
     }
 
     function talk(t) {
@@ -205,36 +264,66 @@
         window.speechSynthesis.speak(m);
     }
 
+    // 2. فحص الموقع قبل الإرسال (Check الموقع مرتين)
     function submitOrder() {
         if(!cart.length) return alert("السلة فارغة");
-        // فحص الموقع "اللحظي" قبل الإرسال 🛡️
+        
         navigator.geolocation.getCurrentPosition(position => {
             const d = calculateDistance(position.coords.latitude, position.coords.longitude, CAFE_LAT, CAFE_LON);
             if (d <= MAX_DISTANCE) {
                 confirmAndSend();
             } else {
-                alert("⚠️ أنت خارج نطاق الكافيه حالياً!");
+                alert("⚠️ عذراً، يجب أن تكون داخل الكافيه لإتمام الطلب!");
                 location.reload();
             }
-        });
+        }, () => alert("يرجى تفعيل الموقع"), { enableHighAccuracy: true });
     }
 
     function confirmAndSend() {
+        const finalTotal = document.getElementById('total').innerText;
+        const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
+        let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
+        const notes = document.getElementById('notes').value;
+
         const orderData = {
             items: cart, type: oType, table: tNum || 'سفري',
-            totalPrice: document.getElementById('total').innerText, status: 'قيد التحضير ⏳',
+            notes: notes, promoUsed: activePromo, discountAmount: dAmount.toFixed(2),
+            totalPrice: finalTotal, status: 'قيد التحضير ⏳',
             time: new Date().toLocaleTimeString('ar-SA'),
             baristaReady: false, kitchenReady: false, dessertReady: false
         };
+
         const orderRef = database.ref('live_orders').push();
+        currentOrderId = orderRef.key;
         orderRef.set(orderData);
+
+        document.getElementById('order-status-bar').style.display = 'block';
         
-        // واتساب
-        let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum}\n*الإجمالي*: ${orderData.totalPrice} ريال`;
+        database.ref('live_orders/' + currentOrderId).on('value', s => {
+            const order = s.val();
+            if(order) {
+                const statusElement = document.getElementById('order-status-bar');
+                if (order.baristaReady && order.kitchenReady && order.dessertReady) {
+                    if (statusElement.innerText !== "حالة الطلب: جاهز للاستلام ✅") {
+                        statusElement.innerText = "حالة الطلب: جاهز للاستلام ✅";
+                        statusElement.style.background = "#dcfce7";
+                        statusElement.style.color = "#15803d";
+                        if(readyAudio) talk(readyAudio);
+                        showToast(successMsg || "طلبك جاهز!");
+                    }
+                } else {
+                    statusElement.innerText = "حالة الطلب: " + (order.status || "قيد التحضير ⏳");
+                }
+            }
+        });
+
+        let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'[طاولة '+tNum+']':''}\n`;
+        cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
+        msg += `*الإجمالي*: ${finalTotal} ريال\n*الملاحظات*: ${notes}`;
         window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
         
-        cart = []; renderCart();
-        showToast("تم إرسال طلبك بنجاح! 🎉");
+        cart = []; renderCart(); activePromo = ""; discountValReal = 0;
+        showToast("تم إرسال الطلب بنجاح! 🎉");
     }
 
     function showToast(m) {
