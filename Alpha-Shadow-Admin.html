@@ -20,7 +20,6 @@
         .btn-gold { background: var(--gold); }
         .item-row { background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-del { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
-        .discount-badge { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 5px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -43,19 +42,27 @@
     </div>
 
     <div class="section">
-        <h3>🖼️ إدارة عروض الصور (التحريك العلوي)</h3>
+        <h3>🖼️ إدارة عروض الصور</h3>
         <label>رابط صورة العرض</label>
-        <input type="text" id="offerImg" placeholder="رابط الصورة (JPG/PNG)">
+        <input type="text" id="offerImg" placeholder="رابط الصورة">
         <button class="btn-save" onclick="addOffer()">إضافة عرض جديد 📸</button>
         <div id="offersList"></div>
     </div>
 
     <div class="section">
-        <h3>🎟️ كوبونات الخصم (طريقة الجدة)</h3>
+        <h3>🎟️ كوبونات الخصم المتكاملة</h3>
         <label>كود الخصم (مثلاً: Shadow10)</label>
         <input type="text" id="couponCode" placeholder="اكتب الكود هنا">
-        <label>قيمة الخصم (بالريال)</label>
-        <input type="number" id="couponValue" placeholder="مثلاً: 5">
+        
+        <label>نوع الخصم</label>
+        <select id="discountType">
+            <option value="fixed">خصم مبلغ ثابت (ريال)</option>
+            <option value="percent">خصم نسبة مئوية (%)</option>
+        </select>
+
+        <label>القيمة (رقم فقط)</label>
+        <input type="number" id="couponValue" placeholder="مثلاً: 10">
+        
         <button class="btn-save btn-gold" onclick="addCoupon()">تفعيل الكوبون ✅</button>
         <div id="couponsList"></div>
     </div>
@@ -64,9 +71,9 @@
         <h3>☕ إضافة صنف جديد</h3>
         <label>الاسم (عربي)</label><input type="text" id="itemAr">
         <label>الاسم (EN)</label><input type="text" id="itemEn">
-        <label>السعر الأساسي</label><input type="number" id="itemPrice">
+        <label>السعر</label><input type="number" id="itemPrice">
         <label>رابط الصورة</label><input type="text" id="itemImg">
-        <label>توجيه الطلب إلى</label>
+        <label>توجيه الطلب</label>
         <select id="itemDept">
             <option value="barista">☕ شاشة الباريستا</option>
             <option value="kitchen">🍔 شاشة المطبخ</option>
@@ -82,7 +89,7 @@
 
     <div class="section">
         <h3>➕ الإضافات</h3>
-        <label>اسم الإضافة (عربي)</label><input type="text" id="extAr">
+        <label>اسم الإضافة</label><input type="text" id="extAr">
         <label>السعر</label><input type="number" id="extPrice" value="0">
         <button class="btn-save" onclick="addExtra()">إضافة خيار ✅</button>
         <div id="extrasList"></div>
@@ -107,23 +114,25 @@
         } else { alert("كلمة السر خطأ!"); }
     }
 
-    // إضافة عرض (صورة السلايدر)
     function addOffer() {
         const img = document.getElementById('offerImg').value;
-        if(img) {
-            database.ref('offers').push({ img });
-            document.getElementById('offerImg').value = '';
-        }
+        if(img) { database.ref('offers').push({ img }); document.getElementById('offerImg').value = ''; }
     }
 
-    // إضافة كوبون خصم
+    // إضافة كوبون (ريال أو %)
     function addCoupon() {
         const code = document.getElementById('couponCode').value.trim();
+        const type = document.getElementById('discountType').value;
         const val = document.getElementById('couponValue').value;
+        
         if(code && val) {
-            database.ref('coupons').child(code).set({ discount: parseFloat(val) });
-            alert("تم تفعيل الكوبون!");
-            document.getElementById('couponCode').value = ''; document.getElementById('couponValue').value = '';
+            database.ref('coupons').child(code).set({ 
+                type: type, 
+                discount: parseFloat(val) 
+            });
+            alert("تم التفعيل بنجاح!");
+            document.getElementById('couponCode').value = ''; 
+            document.getElementById('couponValue').value = '';
         }
     }
 
@@ -133,18 +142,13 @@
         const price = document.getElementById('itemPrice').value;
         const img = document.getElementById('itemImg').value;
         const dept = document.getElementById('itemDept').value;
-        if(ar && price) {
-            database.ref('menu_items').push({ ar, en, price: parseFloat(price), img, dept });
-            alert("تمت الإضافة!");
-        }
+        if(ar && price) { database.ref('menu_items').push({ ar, en, price: parseFloat(price), img, dept }); alert("تمت الإضافة!"); }
     }
 
     function addExtra() {
         const ar = document.getElementById('extAr').value;
         const price = document.getElementById('extPrice').value;
-        if(ar) {
-            database.ref('extras_options').push({ ar, price: parseFloat(price) });
-        }
+        if(ar) { database.ref('extras_options').push({ ar, price: parseFloat(price) }); }
     }
 
     function saveSettings(type) {
@@ -159,39 +163,36 @@
     }
 
     function loadData() {
-        // تحميل العروض
         database.ref('offers').on('value', snap => {
             let h = "";
-            snap.forEach(child => {
-                h += `<div class="item-row"><img src="${child.val().img}" width="50" style="border-radius:5px"> <button class="btn-del" onclick="database.ref('offers/${child.key}').remove()">حذف</button></div>`;
-            });
+            snap.forEach(child => { h += `<div class="item-row"><img src="${child.val().img}" width="50"> <button class="btn-del" onclick="database.ref('offers/${child.key}').remove()">حذف</button></div>`; });
             document.getElementById('offersList').innerHTML = h;
         });
 
-        // تحميل الكوبونات
+        // عرض الكوبونات والتمييز بين الريال والـ %
         database.ref('coupons').on('value', snap => {
             let h = "";
             snap.forEach(child => {
-                h += `<div class="item-row"><span><b>${child.key}</b> (خصم ${child.val().discount} ريال)</span> <button class="btn-del" onclick="database.ref('coupons/${child.key}').remove()">حذف</button></div>`;
+                const data = child.val();
+                const sign = data.type === 'percent' ? '%' : 'ريال';
+                h += `
+                <div class="item-row">
+                    <span><b>${child.key}</b> (خصم ${data.discount} ${sign})</span> 
+                    <button class="btn-del" onclick="database.ref('coupons/${child.key}').remove()">حذف</button>
+                </div>`;
             });
             document.getElementById('couponsList').innerHTML = h;
         });
 
-        // تحميل المنيو
         database.ref('menu_items').on('value', snap => {
             let h = "";
-            snap.forEach(child => {
-                h += `<div class="item-row"><span>${child.val().ar}</span><button class="btn-del" onclick="database.ref('menu_items/${child.key}').remove()">حذف</button></div>`;
-            });
+            snap.forEach(child => { h += `<div class="item-row"><span>${child.val().ar}</span><button class="btn-del" onclick="database.ref('menu_items/${child.key}').remove()">حذف</button></div>`; });
             document.getElementById('itemsList').innerHTML = h;
         });
 
-        // تحميل الإضافات
         database.ref('extras_options').on('value', snap => {
             let h = "";
-            snap.forEach(child => {
-                h += `<div class="item-row">${child.val().ar} <button class="btn-del" onclick="database.ref('extras_options/${child.key}').remove()">حذف</button></div>`;
-            });
+            snap.forEach(child => { h += `<div class="item-row">${child.val().ar} <button class="btn-del" onclick="database.ref('extras_options/${child.key}').remove()">حذف</button></div>`; });
             document.getElementById('extrasList').innerHTML = h;
         });
 
