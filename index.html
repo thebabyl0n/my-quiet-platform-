@@ -280,12 +280,23 @@
         let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
         const notes = document.getElementById('notes').value;
 
+        // تحديد الأقسام المطلوبة للطلب الحالي
+        const deptsInOrder = [...new Set(cart.map(i => i.dept))];
+
         const orderData = {
-            items: cart, type: oType, table: tNum || 'سفري',
-            notes: notes, promoUsed: activePromo, discountAmount: dAmount.toFixed(2),
-            totalPrice: finalTotal, status: 'قيد التحضير ⏳',
+            items: cart, 
+            type: oType, 
+            table: tNum || 'سفري',
+            notes: notes, 
+            promoUsed: activePromo, 
+            discountAmount: dAmount.toFixed(2),
+            totalPrice: finalTotal, 
+            status: 'قيد التحضير ⏳',
             time: new Date().toLocaleTimeString('ar-SA'),
-            baristaReady: false, kitchenReady: false, dessertReady: false
+            deptsNeeded: deptsInOrder, // هذا السطر هو مفتاح الربط مع صفحات الموظفين
+            baristaReady: false, 
+            kitchenReady: false, 
+            dessertReady: false
         };
 
         const orderRef = database.ref('live_orders').push();
@@ -294,19 +305,25 @@
         orderRef.set(orderData).then(() => {
             document.getElementById('order-status-bar').style.display = 'block';
             
-            // مراقبة الطلب الحالي وفصلها عند الانتهاء لضمان قبول طلبات جديدة
             const orderPath = database.ref('live_orders/' + currentOrderId);
             orderPath.on('value', s => {
                 const order = s.val();
                 if(order) {
                     const statusElement = document.getElementById('order-status-bar');
-                    if (order.baristaReady && order.kitchenReady && order.dessertReady) {
+                    
+                    // فحص الجاهزية بناءً على الأقسام المطلوبة في الطلب فقط
+                    let isAllDone = true;
+                    if(order.deptsNeeded && order.deptsNeeded.includes('barista') && !order.baristaReady) isAllDone = false;
+                    if(order.deptsNeeded && order.deptsNeeded.includes('kitchen') && !order.kitchenReady) isAllDone = false;
+                    if(order.deptsNeeded && order.deptsNeeded.includes('dessert') && !order.dessertReady) isAllDone = false;
+
+                    if (isAllDone) {
                         statusElement.innerText = "حالة الطلب: جاهز للاستلام ✅";
                         statusElement.style.background = "#dcfce7";
                         statusElement.style.color = "#15803d";
                         if(readyAudio) talk(readyAudio);
                         showToast(successMsg || "طلبك جاهز!");
-                        orderPath.off(); // فصل المراقب
+                        orderPath.off(); 
                     } else {
                         statusElement.innerText = "حالة الطلب: " + (order.status || "قيد التحضير ⏳");
                     }
@@ -318,7 +335,6 @@
             msg += `*الإجمالي*: ${finalTotal} ريال\n*الملاحظات*: ${notes}`;
             window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
             
-            // تصفير البيانات للطلب التالي
             cart = []; 
             activePromo = ""; 
             discountValReal = 0;
