@@ -4,39 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alpha Shadow | طلبك بين يديك</title>
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --gold: #c8a27c; --dark: #0f172a; --bg: #ffffff; --green: #22c55e; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; overflow-x: hidden; }
+        
         #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--dark); color: white; padding: 15px 30px; border-radius: 50px; border: 2px solid var(--gold); z-index: 10001; transition: 0.5s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-weight: bold; text-align: center; width: 80%; }
         #toast.show { top: 20px; }
+
         #welcome-screen { position: fixed; inset: 0; background: var(--dark); z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; transition: 0.5s; }
         .welcome-logo { max-width: 130px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 15px; }
         .order-btn { background: var(--gold); color: var(--dark); border: none; padding: 15px 40px; border-radius: 12px; font-size: 18px; font-weight: bold; margin: 10px; cursor: pointer; width: 200px; }
+        
         #table-entry { display: none; margin-top: 10px; }
         .table-input { width: 100px; padding: 12px; border-radius: 8px; border: 2px solid var(--gold); text-align: center; font-size: 20px; outline: none; }
+
         .main-app { display: none; padding: 15px; }
         .slider-container { display: flex; overflow-x: auto; gap: 10px; padding: 5px 0; margin-bottom: 20px; }
         .slider-img { width: 88%; height: 160px; border-radius: 15px; flex-shrink: 0; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .item-card { background: #fff; border-radius: 18px; padding: 10px; border: 1px solid #f0f0f0; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .item-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 14px; }
         .item-card h4 { margin: 10px 0 5px; font-size: 15px; color: var(--dark); }
+        
         .extra-sel { width: 100%; padding: 8px; border-radius: 10px; border: 1px solid #ddd; margin: 10px 0; font-size: 12px; background: #fafafa; }
         .add-btn { background: var(--dark); color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; }
+
         .cart-box { margin-top: 30px; background: #f9fafb; padding: 20px; border-radius: 24px; border: 1px solid #eee; }
         .cart-item { display: flex; flex-direction: column; border-bottom: 1px solid #eee; padding: 10px 0; gap: 4px; }
         .cart-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .item-name { font-weight: bold; font-size: 16px; color: var(--dark); }
         .item-qty { background: var(--gold); color: white; padding: 2px 8px; border-radius: 6px; font-size: 14px; margin-left: 5px; }
         .extra-name { color: var(--gold); font-size: 13px; font-weight: 600; padding-right: 10px; }
+        
+        .discount-row { display: flex; justify-content: space-between; color: #dc2626; font-weight: bold; margin-top: 10px; font-size: 14px; border-top: 1px solid #ddd; padding-top: 10px; }
         .total-price { font-size: 22px; font-weight: 800; color: var(--dark); margin: 10px 0; text-align: center; }
+        .promo-container { display: flex; gap: 5px; margin-bottom: 15px; }
+        .promo-input { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #ddd; outline: none; }
+        .promo-btn { background: var(--gold); border: none; padding: 0 15px; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; }
+
         .send-btn { background: var(--green); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
+
 <div id="toast"></div>
+
 <div id="welcome-screen">
     <img id="logoW" class="welcome-logo" src="" alt="">
     <h2 id="nameW" style="margin-bottom: 25px;">Alpha Shadow</h2>
@@ -50,14 +65,22 @@
 </div>
 
 <div class="main-app" id="app">
-    <div id="order-status-bar" style="display:none; background:#e0f2fe; color:#0369a1; padding:12px; text-align:center; font-weight:bold; border-radius:10px; margin-bottom:15px;">قيد التحضير ⏳</div>
+    <div id="order-status-bar" style="display:none; background:#e0f2fe; color:#0369a1; padding:12px; text-align:center; font-weight:bold; border-radius:10px; margin-bottom:15px;">حالة الطلب: قيد التحضير ⏳</div>
     <div class="slider-container" id="slider"></div>
     <div class="menu-grid" id="menu"></div>
     <div class="cart-box">
-        <h3>🛒 السلة (<span id="typeLbl"></span> <span id="tblLbl"></span>)</h3>
+        <h3 style="margin:0 0 15px 0;">🛒 السلة (<span id="typeLbl"></span> <span id="tblLbl"></span>)</h3>
         <div id="cartList"></div>
-        <div class="total-price">الإجمالي: <span id="total">0</span> ريال</div>
-        <textarea id="notes" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px;" rows="3" placeholder="ملاحظاتك..."></textarea>
+        <div class="promo-container" style="margin-top:15px;">
+            <input type="text" id="promoCode" class="promo-input" placeholder="لديك كود خصم؟">
+            <button class="promo-btn" onclick="applyPromo()">تفعيل</button>
+        </div>
+        <div id="discountInfo" style="display:none;" class="discount-row">
+            <span>خصم الكوبون:</span>
+            <span id="discountVal">0</span>
+        </div>
+        <div class="total-price">الإجمالي النهائي: <span id="total">0</span> ريال</div>
+        <textarea id="notes" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px; font-family:inherit;" rows="3" placeholder="ملاحظاتك الإضافية..."></textarea>
         <button class="send-btn" onclick="submitOrder()">إرسال الطلب ✅</button>
     </div>
 </div>
@@ -65,36 +88,31 @@
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
-        authDomain: "://firebaseapp.com",
+        authDomain: "alphashadow-23689.firebaseapp.com",
         projectId: "alphashadow-23689",
-        databaseURL: "https://firebaseio.com"
+        databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
     };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // --- إحداثيات الكافيه (تعدل حسب الموقع الفعلي ألفا) ---
-    const CAFE_LAT = 21.522492; const CAFE_LON = 39.229700; const MAX_DIST = 0.15; // 150 متر
-
-    function checkLocation() {
-        return new Promise((res, rej) => {
-            if (!navigator.geolocation) return res(); // للأجهزة القديمة
-            navigator.geolocation.getCurrentPosition(p => {
-                const d = Math.sqrt(Math.pow(p.coords.latitude - CAFE_LAT, 2) + Math.pow(p.coords.longitude - CAFE_LON, 2)) * 111;
-                if (d <= MAX_DIST) res(); else { alert("يجب أن تكون داخل الكافيه للطلب 📍"); rej(); }
-            }, () => { alert("يرجى تفعيل الموقع 📍"); rej(); });
-        });
-    }
-
     let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
     let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
+    let discountValReal = 0; let discountType = "percent"; let activePromo = "";
 
+    // مراقبة الإعدادات (البحث عن الترحيب والصوت)
     database.ref('settings').on('value', snap => {
         const s = snap.val();
-        if(s && s.branding) {
-            document.getElementById('nameW').innerText = s.branding.name;
-            document.getElementById('logoW').src = s.branding.logo;
+        if(s) {
+            if(s.branding) {
+                document.getElementById('nameW').innerText = s.branding.name || "Alpha Shadow";
+                document.getElementById('logoW').src = s.branding.logo || "";
+            }
+            if(s.audio) {
+                welcomeAudio = s.audio.welcome; // نص الترحيب
+                readyAudio = s.audio.ready;     // نص جاهزية الطلب
+                successMsg = s.audio.msgText;   // نص رسالة الـ Toast
+            }
         }
-        if(s && s.audio) { welcomeAudio = s.audio.welcome; readyAudio = s.audio.ready; successMsg = s.audio.msgText; }
     });
 
     database.ref('offers').on('value', snap => {
@@ -104,76 +122,164 @@
 
     database.ref('extras_options').on('value', snap => {
         extrasStr = `<option value="">بدون إضافات</option>`;
-        snap.forEach(c => extrasStr += `<option value="${c.val().ar}" data-p="${c.val().price}">${c.val().ar}</option>`);
+        snap.forEach(c => extrasStr += `<option value="${c.val().en}" data-ar="${c.val().ar}" data-p="${c.val().price}">${c.val().ar}</option>`);
         loadMenu();
     });
 
     function loadMenu() {
         database.ref('menu_items').on('value', snap => {
-            let h = ""; snap.forEach(c => {
-                const i = c.val();
-                h += `<div class="item-card"><img src="${i.img}"><h4>${i.ar}</h4>
-                    <span style="color:var(--gold);font-weight:700;">${i.price} ريال</span>
-                    <select class="extra-sel" id="ex-${c.key}">${extrasStr}</select>
-                    <button class="add-btn" onclick="addToCart('${c.key}','${i.ar}','${i.en}',${i.price},'${i.dept}')">إضافة +</button></div>`;
+            let h = "";
+            snap.forEach(child => {
+                const item = child.val();
+                const itemDept = item.dept || 'barista'; 
+                h += `<div class="item-card">
+                    <img src="${item.img}">
+                    <h4>${item.ar}</h4>
+                    <span style="color:var(--gold);font-weight:700;">${item.price} ريال</span>
+                    <select class="extra-sel" id="ex-${child.key}">${extrasStr}</select>
+                    <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price},'${itemDept}')">إضافة +</button>
+                </div>`;
             });
             document.getElementById('menu').innerHTML = h;
         });
     }
 
-    async function startOrder(type) {
-        try {
-            await checkLocation();
-            oType = type; tNum = document.getElementById('tblNo').value;
-            if(type==='محلي' && !tNum) return alert("رقم الطاولة!");
-            document.getElementById('typeLbl').innerText = type;
-            document.getElementById('tblLbl').innerText = tNum ? `(طاولة ${tNum})` : "";
+    function startOrder(type) {
+        oType = type; tNum = document.getElementById('tblNo').value;
+        if(type === 'محلي' && !tNum) return alert("الرجاء إدخال رقم الطاولة");
+        document.getElementById('typeLbl').innerText = type;
+        document.getElementById('tblLbl').innerText = tNum ? `(طاولة ${tNum})` : "";
+        document.getElementById('welcome-screen').style.opacity = '0';
+        setTimeout(() => {
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             if(welcomeAudio) talk(welcomeAudio);
-        } catch(e) {}
+        }, 500);
     }
 
     function addToCart(k, ar, en, p, dept) {
         const s = document.getElementById('ex-'+k);
-        const exAr = s.value; const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
-        cart.push({k, ar, en, p, exAr, exP, qty: 1, dept});
-        talk(en); renderCart();
+        const exEn = s.value; 
+        const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
+        const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
+        let extrasArray = exAr ? [exAr] : [];
+        const existingItem = cart.find(i => i.k === k && i.exEn === exEn);
+        if (existingItem) { existingItem.qty += 1; } 
+        else { cart.push({k, ar, en, p, exAr, exEn, exP, extras: extrasArray, qty: 1, dept: dept}); }
+        talk(en + (exEn ? " with " + exEn : ""));
+        renderCart();
+    }
+
+    async function applyPromo() {
+        const inputCode = document.getElementById('promoCode').value.trim().toUpperCase();
+        if(!inputCode) return;
+        const snapshot = await database.ref("coupons/" + inputCode).get();
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            discountValReal = parseFloat(data.discount) || 0;
+            discountType = data.type || "percent";
+            activePromo = inputCode;
+            showToast("تم تطبيق الخصم! 🎉");
+            renderCart();
+        } else { alert("كود الخصم غير صحيح"); }
     }
 
     function renderCart() {
-        let h = ""; let total = 0;
+        let h = ""; let subTotal = 0;
         cart.forEach((i, x) => {
-            let itemT = (i.p + i.exP) * i.qty; total += itemT;
-            h += `<div class="cart-item"><div class="cart-row"><b>${i.qty}x ${i.ar}</b><span>${itemT} ريال</span></div>
-                  ${i.exAr ? `<div class="extra-name">+ ${i.exAr}</div>` : ''}</div>`;
+            let itemTotal = (i.p + i.exP) * i.qty; 
+            subTotal += itemTotal;
+            h += `<div class="cart-item">
+                    <div class="cart-row">
+                        <span class="item-name"><span class="item-qty">${i.qty}x</span> ${i.ar}</span>
+                        <span>${itemTotal.toFixed(2)} ريال 
+                            <button onclick="updateQty(${x}, -1)" style="border:none;background:none;font-weight:bold;cursor:pointer;color:var(--gold);font-size:18px;">➖</button>
+                            <button onclick="updateQty(${x}, 1)" style="border:none;background:none;font-weight:bold;cursor:pointer;color:var(--gold);font-size:18px;">➕</button>
+                        </span>
+                    </div>
+                    ${i.exAr ? `<div class="extra-name">+ إضافة: ${i.exAr}</div>` : ''}
+                  </div>`;
         });
-        document.getElementById('total').innerText = total.toFixed(2);
+        let dAmt = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
+        let finalT = subTotal - dAmt;
+        document.getElementById('total').innerText = (finalT < 0 ? 0 : finalT).toFixed(2);
         document.getElementById('cartList').innerHTML = h;
+        if(dAmt > 0) {
+            document.getElementById('discountInfo').style.display='flex';
+            document.getElementById('discountVal').innerText = `-${dAmt.toFixed(2)} ريال`;
+        }
     }
 
-    async function submitOrder() {
-        if(!cart.length) return;
-        try {
-            await checkLocation();
-            const orderData = {
-                items: cart, type: oType, table: tNum || 'سفري',
-                notes: document.getElementById('notes').value,
-                totalPrice: document.getElementById('total').innerText,
-                status: 'قيد التحضير ⏳', time: new Date().toLocaleTimeString('ar-SA'),
-                baristaReady: false, kitchenReady: false, dessertReady: false
-            };
-            const orderRef = database.ref('live_orders').push();
-            orderRef.set(orderData);
-            document.getElementById('order-status-bar').style.display = 'block';
-            showToast("تم الطلب بنجاح! 🎉");
-            cart = []; renderCart();
-        } catch(e) {}
+    function updateQty(index, change) {
+        cart[index].qty += change;
+        if (cart[index].qty <= 0) cart.splice(index, 1);
+        renderCart();
     }
 
-    function talk(t) { window.speechSynthesis.cancel(); const m = new SpeechSynthesisUtterance(t); m.lang = 'en-US'; window.speechSynthesis.speak(m); }
-    function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 4000); }
+    function talk(t) {
+        window.speechSynthesis.cancel();
+        const m = new SpeechSynthesisUtterance(t); m.lang = 'en-US';
+        window.speechSynthesis.speak(m);
+    }
+
+    function submitOrder() {
+        if(!cart.length) return alert("السلة فارغة");
+        const finalTotal = document.getElementById('total').innerText;
+        const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
+        let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
+        const notes = document.getElementById('notes').value;
+
+        const orderData = {
+            items: cart, type: oType, table: tNum || 'سفري',
+            notes: notes, promoUsed: activePromo, discountAmount: dAmount.toFixed(2),
+            totalPrice: finalTotal, status: 'قيد التحضير ⏳',
+            time: new Date().toLocaleTimeString('ar-SA'),
+            baristaReady: false, kitchenReady: false, dessertReady: false
+        };
+
+        const orderRef = database.ref('live_orders').push();
+        currentOrderId = orderRef.key;
+        orderRef.set(orderData);
+
+        document.getElementById('order-status-bar').style.display = 'block';
+        
+        // مراقبة الحالة لحظة بلحظة
+        database.ref('live_orders/' + currentOrderId).on('value', s => {
+            const order = s.val();
+            if(order) {
+                const statusElement = document.getElementById('order-status-bar');
+                if (order.baristaReady && order.kitchenReady && order.dessertReady) {
+                    if (statusElement.innerText !== "حالة الطلب: جاهز للاستلام ✅") {
+                        statusElement.innerText = "حالة الطلب: جاهز للاستلام ✅";
+                        statusElement.style.background = "#dcfce7";
+                        statusElement.style.color = "#15803d";
+                        if(readyAudio) talk(readyAudio); // التنبيه الصوتي
+                        showToast(successMsg || "طلبك جاهز! تفضل للاستلام");
+                    }
+                } else {
+                    statusElement.innerText = "حالة الطلب: " + (order.status || "قيد التحضير ⏳");
+                    statusElement.style.background = "#e0f2fe";
+                    statusElement.style.color = "#0369a1";
+                }
+            } else {
+                document.getElementById('order-status-bar').innerText = "تم تسليم الطلب بنجاح ✅";
+                setTimeout(() => { document.getElementById('order-status-bar').style.display = 'none'; }, 5000);
+            }
+        });
+
+        let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'[طاولة '+tNum+']':''}\n`;
+        cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
+        msg += `*الإجمالي*: ${finalTotal} ريال\n*الملاحظات*: ${notes}`;
+        window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
+        
+        cart = []; renderCart(); activePromo = ""; discountValReal = 0;
+        showToast("تم إرسال الطلب بنجاح! 🎉");
+    }
+
+    function showToast(m) {
+        const t = document.getElementById('toast'); t.innerText = m;
+        t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 5000);
+    }
 </script>
 </body>
 </html>
-
