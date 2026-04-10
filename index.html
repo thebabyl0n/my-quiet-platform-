@@ -3,272 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha Shadow | النظام السيادي</title>
+    <title>Alpha Shadow | القمة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { 
-            --gold: #c8a27c; 
-            --dark-bg: #0f172a; 
-            --card-bg: #1e293b; 
-            --green: #22c55e;
-            --text: #f8fafc;
-        }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--dark-bg); color: var(--text); overflow-x: hidden; }
+        :root { --gold: #c8a27c; --dark-bg: #0f172a; --card-bg: #1e293b; --green: #22c55e; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--dark-bg); color: var(--text); }
         
         /* التنبيهات */
-        #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--card-bg); color: white; padding: 15px 30px; border-radius: 50px; border: 2px solid var(--gold); z-index: 10001; transition: 0.5s; box-shadow: 0 5px 15px rgba(0,0,0,0.5); font-weight: bold; text-align: center; width: 80%; }
+        #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--card-bg); color: white; padding: 15px 30px; border-radius: 50px; border: 2px solid var(--gold); z-index: 10001; transition: 0.5s; box-shadow: 0 5px 15px rgba(0,0,0,0.5); font-weight: bold; }
         #toast.show { top: 20px; }
 
-        /* شاشة نجاح الطلب الفخمة */
-        #order-ready-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 12000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; animation: fadeIn 0.5s; }
+        /* شاشة التجهيز */
+        #order-ready-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 12000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         .ready-card { background: var(--card-bg); padding: 40px; border-radius: 30px; border: 3px solid var(--gold); box-shadow: 0 0 30px var(--gold); }
-        .ready-icon { font-size: 80px; margin-bottom: 20px; display: block; animation: bounce 1s infinite; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-
-        #geo-shield { position: fixed; inset: 0; background: var(--dark-bg); z-index: 11000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; }
-        #welcome-screen { position: fixed; inset: 0; background: var(--dark-bg); z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; transition: 0.5s; }
-        .welcome-logo { max-width: 130px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 15px; }
         
-        .order-btn { background: var(--gold); color: var(--dark-bg); border: none; padding: 15px 40px; border-radius: 12px; font-size: 18px; font-weight: bold; margin: 10px; cursor: pointer; width: 200px; }
-        .table-input { width: 100px; padding: 12px; border-radius: 8px; border: 2px solid var(--gold); text-align: center; font-size: 20px; outline: none; background: #0f172a; color: white; }
-
-        /* شريط حالة الطلب العلوي */
-        #status-bar { display: none; background: #1e293b; color: var(--gold); padding: 15px; text-align: center; font-weight: bold; border: 2px solid var(--gold); border-radius: 15px; margin: 10px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        #welcome-screen { position: fixed; inset: 0; background: var(--dark-bg); z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .welcome-logo { max-width: 130px; border-radius: 50%; border: 2px solid var(--gold); margin-bottom: 15px; }
+        .order-btn { background: var(--gold); color: var(--dark-bg); border: none; padding: 12px 30px; border-radius: 12px; font-size: 18px; font-weight: bold; margin: 5px; cursor: pointer; }
 
         .main-app { display: none; padding: 15px; }
-        .slider-img { width: 88%; height: 160px; border-radius: 20px; flex-shrink: 0; object-fit: cover; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid rgba(200, 162, 124, 0.2); }
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .item-card { background: var(--card-bg); border-radius: 20px; padding: 10px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
-        .item-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 16px; }
-        .item-card h4 { margin: 10px 0 5px; font-size: 15px; color: var(--gold); }
-        
-        .extra-sel { width: 100%; padding: 8px; border-radius: 10px; border: 1px solid rgba(200, 162, 124, 0.3); margin: 10px 0; font-size: 12px; background: #0f172a; color: var(--gold); font-weight: bold; }
-        .add-btn { background: var(--gold); color: var(--dark-bg); border: none; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; }
+        #status-bar { display: none; background: #1e293b; color: var(--gold); padding: 12px; text-align: center; font-weight: bold; border: 1px solid var(--gold); border-radius: 10px; margin-bottom: 15px; }
 
-        .cart-box { margin-top: 30px; background: var(--card-bg); padding: 20px; border-radius: 24px; border: 1px solid rgba(200, 162, 124, 0.2); }
-        .cart-item { display: flex; flex-direction: column; border-bottom: 1px solid #334155; padding: 10px 0; }
-        .total-price { font-size: 24px; font-weight: 800; color: var(--gold); margin: 15px 0; text-align: center; }
-        .send-btn { background: var(--green); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .promo-input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 10px; background: #0f172a; color: white; box-sizing: border-box; }
+        /* الأقسام */
+        .dept-title { color: var(--gold); border-right: 4px solid var(--gold); padding-right: 10px; margin: 25px 0 15px; font-size: 20px; font-weight: 800; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .item-card { background: var(--card-bg); border-radius: 20px; padding: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+        .item-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 15px; }
+        .extra-sel { width: 100%; padding: 8px; border-radius: 10px; background: #0f172a; color: var(--gold); border: 1px solid var(--gold); margin: 8px 0; font-size: 11px; }
+
+        .cart-box { background: var(--card-bg); padding: 20px; border-radius: 24px; margin-top: 30px; border: 1px solid rgba(200,162,124,0.2); }
+        .promo-row { display: flex; gap: 5px; margin-bottom: 15px; }
+        .promo-input { flex: 1; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 1px solid #334155; }
+        .send-btn { background: var(--green); color: white; width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="toast"></div>
+<div id="order-ready-overlay"><div class="ready-card"><h1>☕ طلبك جاهز!</h1><p id="ready-msg-text"></p><button class="order-btn" onclick="location.reload()">استلام</button></div></div>
 
-<div id="order-ready-overlay">
-    <div class="ready-card">
-        <span class="ready-icon">☕</span>
-        <h1 style="color: var(--gold); margin-bottom: 10px;">طلبك جاهز يا فنان!</h1>
-        <p id="ready-msg-text" style="font-size: 18px; color: white;"></p>
-        <button class="order-btn" style="width: auto;" onclick="closeReadyScreen()">بالهناء والشفاء ❤️</button>
-    </div>
-</div>
-
-<div id="geo-shield">
-    <h2 id="geo-status">جاري تفعيل Geo-Location Shield... 📍</h2>
-    <p>Alpha Shadow Security Protocol</p>
-</div>
-
-<div id="welcome-screen" style="display:none;">
-    <img id="logoW" class="welcome-logo" src="" alt="">
-    <h2 id="nameW" style="margin-bottom: 25px;">Alpha Shadow</h2>
+<div id="welcome-screen">
+    <img id="logoW" class="welcome-logo" src=""><h2 id="nameW">Alpha Shadow</h2>
     <button class="order-btn" onclick="startOrder('سفري')">🚗 سفري</button>
     <button class="order-btn" onclick="document.getElementById('table-entry').style.display='block'">☕ محلي</button>
-    <div id="table-entry" style="display:none;">
-        <input type="number" id="tblNo" class="table-input" placeholder="طاولة">
-        <br>
-        <button class="order-btn" style="width: 140px; margin-top: 10px;" onclick="startOrder('محلي')">دخول</button>
-    </div>
+    <div id="table-entry" style="display:none;"><input type="number" id="tblNo" class="promo-input" style="width:80px; text-align:center" placeholder="طاولة"><br><button class="order-btn" onclick="startOrder('محلي')">دخول</button></div>
 </div>
 
 <div class="main-app" id="app">
-    <div id="status-bar">الحالة: قيد التحضير في إمبراطورية ألفا.. ⏳</div>
-
-    <div class="slider-container" id="slider" style="display: flex; overflow-x: auto; gap: 10px;"></div>
-    <div class="menu-grid" id="menu" style="margin-top:20px;"></div>
-    
-    <div class="cart-box">
-        <h3 style="color:var(--gold)">🛒 السلة (<span id="typeLbl"></span> <span id="tblLbl"></span>)</h3>
+    <div id="status-bar">جاري التجهيز... ⏳</div>
+    <div id="slider" style="display:flex; overflow-x:auto; gap:10px; margin-bottom:20px;"></div>
+    <div id="menu-container"></div> <div class="cart-box">
+        <h3 style="color:var(--gold)">🛒 السلة <span id="typeLbl"></span></h3>
         <div id="cartList"></div>
-        <div style="display:flex; gap:5px; margin-top:15px;">
-            <input type="text" id="promoCode" class="promo-input" style="flex:1" placeholder="كود الخصم">
-            <button class="order-btn" style="width:80px; height:45px; margin:0; font-size:14px;" onclick="applyPromo()">تفعيل</button>
+        <div class="promo-row">
+            <input type="text" id="promoCode" class="promo-input" placeholder="كود الخصم">
+            <button class="order-btn" style="padding:0 15px; font-size:14px;" onclick="applyPromo()">تفعيل</button>
         </div>
-        <div id="discountInfo" style="display:none; justify-content:space-between; color:#f87171; font-weight:bold; padding:10px 0;">
-            <span>خصم:</span> <span id="discountVal">0</span>
+        <div id="discountRow" style="display:none; justify-content:space-between; color:#f87171; margin-bottom:10px;">
+            <span>خصم الكوبون:</span><span id="discountVal">0</span>
         </div>
-        <div class="total-price">الإجمالي: <span id="total">0</span> ريال</div>
-        <textarea id="notes" class="promo-input" style="height:80px" placeholder="ملاحظاتك الإضافية..."></textarea>
+        <div class="total-price" style="text-align:center; font-size:24px; color:var(--gold); margin:15px 0;">الإجمالي: <span id="total">0</span> ريال</div>
+        <textarea id="notes" class="promo-input" style="width:100%; height:60px; margin-bottom:15px;" placeholder="ملاحظاتك..."></textarea>
         <button class="send-btn" onclick="submitOrder()">إرسال الطلب ✅</button>
     </div>
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
-        authDomain: "alphashadow-23689.firebaseapp.com",
-        projectId: "alphashadow-23689",
-        databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac", authDomain: "alphashadow-23689.firebaseapp.com", projectId: "alphashadow-23689", databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    const TARGET_LAT = 21.522492, TARGET_LON = 39.229700, ALLOWED_DISTANCE = 0.50; 
-    let cart = [], welcomeAudio = "", readyAudio = "", successMsg = "", oType = "", tNum = "", extrasStr = "", currentOrderId = null, discountValReal = 0, discountType = "percent";
+    let cart = [], extrasStr = "", welcomeAudio = "", readyAudio = "", successMsg = "", oType = "", tNum = "", discountValReal = 0, discountType = "percent";
 
-    window.onload = () => {
-        validateGeo(() => {
-            document.getElementById('geo-shield').style.display = 'none';
-            document.getElementById('welcome-screen').style.display = 'flex';
-        }, () => { document.getElementById('geo-status').innerText = "❌ خارج نطاق الإمبراطورية"; });
-    };
-
-    function validateGeo(ok, err) {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                const dist = calculateDist(pos.coords.latitude, pos.coords.longitude, TARGET_LAT, TARGET_LON);
-                if (dist <= ALLOWED_DISTANCE) ok(); else err();
-            }, err, { enableHighAccuracy: true });
-        } else { alert("GPS Error"); }
-    }
-
-    function calculateDist(lat1, lon1, lat2, lon2) {
-        const R = 6371; const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
-        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    }
-
+    // 1. جلب الإعدادات والإضافات أولاً
     database.ref('settings').on('value', snap => {
         const s = snap.val(); if(s) {
-            if(s.branding) { document.getElementById('nameW').innerText = s.branding.name; document.getElementById('logoW').src = s.branding.logo; }
-            if(s.audio) { welcomeAudio = s.audio.welcome; readyAudio = s.audio.ready; successMsg = s.audio.msgText; }
+            document.getElementById('nameW').innerText = s.branding.name;
+            document.getElementById('logoW').src = s.branding.logo;
+            welcomeAudio = s.audio.welcome; readyAudio = s.audio.ready; successMsg = s.audio.msgText;
         }
-    });
-
-    database.ref('offers').on('value', snap => {
-        let h = ""; snap.forEach(c => h += `<img src="${c.val().img}" class="slider-img">`);
-        document.getElementById('slider').innerHTML = h;
     });
 
     database.ref('extras_options').on('value', snap => {
         extrasStr = `<option value="">بدون إضافات</option>`;
-        snap.forEach(c => { let ex = c.val(); extrasStr += `<option value="${ex.en}" data-ar="${ex.ar}" data-p="${ex.price}">${ex.ar} (+${ex.price} ر.س)</option>`; });
-        loadMenu();
+        snap.forEach(c => { let e = c.val(); extrasStr += `<option value="${e.en}" data-ar="${e.ar}" data-p="${e.price}">${e.ar} (+${e.price})</option>`; });
+        loadMenu(); // حمل المنيو بعد ما الإضافات تجهز
     });
 
+    // 2. تحميل المنيو مقسم حسب الأقسام
     function loadMenu() {
         database.ref('menu_items').on('value', snap => {
-            let h = ""; snap.forEach(child => {
-                const item = child.val();
-                h += `<div class="item-card">
-                    <img src="${item.img}">
-                    <h4>${item.ar}</h4>
-                    <span style="color:#cbd5e1">${item.price} ريال</span>
-                    <select class="extra-sel" id="ex-${child.key}">${extrasStr}</select>
-                    <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price})">إضافة +</button>
+            const depts = {}; 
+            snap.forEach(c => {
+                const item = c.val(); const d = item.dept || "أخرى";
+                if(!depts[d]) depts[d] = "";
+                depts[d] += `<div class="item-card">
+                    <img src="${item.img}"><h4>${item.ar}</h4><span style="font-size:13px">${item.price} ريال</span>
+                    <select class="extra-sel" id="ex-${c.key}">${extrasStr}</select>
+                    <button class="order-btn" style="width:100%; font-size:14px" onclick="addToCart('${c.key}','${item.ar}','${item.en}',${item.price})">إضافة</button>
                 </div>`;
             });
-            document.getElementById('menu').innerHTML = h;
+            let finalH = "";
+            for(let d in depts) { finalH += `<div class="dept-title">${d}</div><div class="menu-grid">${depts[d]}</div>`; }
+            document.getElementById('menu-container').innerHTML = finalH;
         });
     }
 
-    function startOrder(type) {
-        oType = type; tNum = document.getElementById('tblNo').value;
-        if(type === 'محلي' && !tNum) return alert("ادخل رقم الطاولة");
-        document.getElementById('typeLbl').innerText = type;
-        document.getElementById('tblLbl').innerText = tNum ? `(طاولة ${tNum})` : "";
+    function startOrder(t) {
+        oType = t; tNum = document.getElementById('tblNo').value;
+        if(t === 'محلي' && !tNum) return alert("رقم الطاولة!");
         document.getElementById('welcome-screen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
+        document.getElementById('typeLbl').innerText = `${t} ${tNum?'('+tNum+')':''}`;
         if(welcomeAudio) talk(welcomeAudio);
     }
 
     function addToCart(k, ar, en, p) {
         const s = document.getElementById('ex-'+k);
-        const exEn = s.value; const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
-        const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
-        const existingItem = cart.find(i => i.k === k && i.exEn === exEn);
-        if (existingItem) { existingItem.qty += 1; } else { cart.push({k, ar, en, p, exAr, exEn, exP, qty: 1}); }
+        const exEn = s.value, exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "", exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
+        cart.push({ar, en, p, exAr, exEn, exP, qty: 1});
         talk(en + (exEn ? " with " + exEn : ""));
         renderCart();
     }
 
     function renderCart() {
-        let h = ""; let subTotal = 0;
+        let h = "", total = 0;
         cart.forEach((i, x) => {
-            let itemTotal = (i.p + i.exP) * i.qty; subTotal += itemTotal;
-            h += `<div class="cart-item">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-weight:bold;">${i.qty}x ${i.ar} <small style="color:var(--gold)">${i.exAr?'('+i.exAr+')':''}</small></span>
-                    <span>${itemTotal.toFixed(2)}
-                        <button onclick="updateQty(${x}, 1)" style="border:none; background:none; color:var(--gold);">➕</button>
-                        <button onclick="updateQty(${x}, -1)" style="border:none; background:none; color:white;">➖</button>
-                    </span>
-                </div>
+            let rowP = (i.p + i.exP); total += rowP;
+            h += `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #334155">
+                <span>${i.ar} ${i.exAr?'<small>('+i.exAr+')</small>':''}</span>
+                <span>${rowP} <button onclick="cart.splice(${x},1);renderCart()" style="background:none; border:none; color:red">❌</button></span>
             </div>`;
         });
-        let dAmt = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
-        document.getElementById('total').innerText = (subTotal - dAmt).toFixed(2);
+        let d = (discountType === "percent") ? (total * discountValReal / 100) : discountValReal;
+        document.getElementById('total').innerText = (total - d).toFixed(2);
         document.getElementById('cartList').innerHTML = h;
     }
 
-    function submitOrder() {
-        if(!cart.length) return alert("السلة فارغة");
-        const finalTotal = document.getElementById('total').innerText;
-        const orderNotes = document.getElementById('notes').value;
-        
-        const orderRef = database.ref('live_orders').push({
-            items: cart, type: oType, table: tNum || 'سفري',
-            notes: orderNotes, totalPrice: finalTotal, status: 'قيد التحضير ⏳',
-            time: new Date().toLocaleTimeString('ar-SA')
+    function applyPromo() {
+        const code = document.getElementById('promoCode').value.toUpperCase();
+        database.ref('coupons/' + code).once('value', snap => {
+            const p = snap.val();
+            if(p) { 
+                discountValReal = p.value || p.discount; 
+                discountType = p.type || "percent";
+                document.getElementById('discountRow').style.display = 'flex';
+                document.getElementById('discountVal').innerText = discountValReal + (discountType=="percent"?"%":" ريال");
+                showToast("✅ تم الخصم"); renderCart();
+            } else { showToast("❌ كود غير صحيح"); }
         });
-
-        currentOrderId = orderRef.key;
-        document.getElementById('status-bar').style.display = 'block';
-        showToast("🚀 تم إرسال طلبك للتحضير");
-        
-        // واتساب
-        let msg = `*طلب جديد Alpha Shadow*\nالمكان: ${oType} ${tNum?'['+tNum+']':''}\n`;
-        cart.forEach(i => msg += `• ${i.qty}x ${i.ar} ${i.exAr?'('+i.exAr+')':''}\n`);
-        msg += `الإجمالي: ${finalTotal} ريال`;
-        window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-
-        // مراقبة حالة الطلب
-        watchOrderStatus(currentOrderId);
-        
-        cart = []; renderCart(); document.getElementById('notes').value = "";
     }
 
-    function watchOrderStatus(orderId) {
-        database.ref('live_orders/' + orderId).on('value', snap => {
-            const order = snap.val();
-            if (order && order.status === 'تم التجهيز ✅') {
-                document.getElementById('status-bar').innerText = "✅ طلبك جاهز للاستلام!";
-                document.getElementById('ready-msg-text').innerText = successMsg || "تفضل بزيارة البار لاستلام طلبك";
+    function submitOrder() {
+        if(!cart.length) return;
+        const note = document.getElementById('notes').value;
+        const total = document.getElementById('total').innerText;
+        const ref = database.ref('live_orders').push({ items: cart, type: oType, table: tNum, notes: note, totalPrice: total, status: '⏳ قيد التحضير' });
+        
+        let msg = `*طلب Alpha Shadow*\n`;
+        cart.forEach(i => msg += `- ${i.ar} ${i.exAr?'('+i.exAr+')':''}\n`);
+        msg += `*الإجمالي*: ${total}\n*الملاحظات*: ${note}`;
+        window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
+        
+        document.getElementById('status-bar').style.display = 'block';
+        watchOrder(ref.key);
+    }
+
+    function watchOrder(id) {
+        database.ref('live_orders/' + id).on('value', snap => {
+            if(snap.val() && snap.val().status === 'تم التجهيز ✅') {
                 document.getElementById('order-ready-overlay').style.display = 'flex';
+                document.getElementById('ready-msg-text').innerText = successMsg;
                 if(readyAudio) talk(readyAudio);
-                // التوقف عن المراقبة بعد النجاح
-                database.ref('live_orders/' + orderId).off();
             }
         });
     }
 
-    function closeReadyScreen() { document.getElementById('order-ready-overlay').style.display = 'none'; }
-
-    function talk(t) {
-        window.speechSynthesis.cancel();
-        const m = new SpeechSynthesisUtterance(t); m.lang = 'en-US';
-        window.speechSynthesis.speak(m);
-    }
-
-    function showToast(m) {
-        const t = document.getElementById('toast'); t.innerText = m;
-        t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 4000);
-    }
+    function talk(t) { window.speechSynthesis.cancel(); const m = new SpeechSynthesisUtterance(t); m.lang = 'en-US'; window.speechSynthesis.speak(m); }
+    function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
 </script>
 </body>
 </html>
