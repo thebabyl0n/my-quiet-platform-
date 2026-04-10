@@ -1,167 +1,151 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha Shadow | Tracking System</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <style>
-        :root { --bg: #0f172a; --card: #1e293b; --gold: #c8a27c; --text: #f1f5f9; --accent: #22c55e; --blue: #3b82f6; --note: #fbbf24; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
-        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 2px solid #334155; position: relative; }
-        .table-no { background: var(--gold); color: var(--bg); padding: 5px 15px; border-radius: 8px; font-weight: bold; font-size: 20px; }
-        .item { margin-bottom: 10px; border-bottom: 1px dashed #475569; padding-bottom: 10px; }
-        
-        .track-box { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-        .badge { font-size: 11px; padding: 3px 8px; border-radius: 5px; background: #334155; border: 1px solid #475569; }
-        .ready-badge { background: rgba(34, 197, 94, 0.2); border-color: var(--accent); color: var(--accent); }
-        
-        .customer-note { background: rgba(251, 191, 36, 0.1); color: var(--note); padding: 10px; border-radius: 8px; border-right: 4px solid var(--note); margin-top: 10px; font-weight: bold; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 15px; color: white; transition: 0.3s; }
-        .btn-cashier { background: var(--accent); }
-        .btn-dept { background: var(--blue); }
-        .btn:disabled { background: #475569; cursor: not-allowed; }
-        
-        .extras-list { color: var(--gold); font-size: 13px; margin-top: 4px; padding-right: 15px; font-weight: 500; border-right: 2px solid var(--gold); margin-right: 5px; }
-    </style>
-</head>
-<body onclick="enableAudio()">
-
-<audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
-
-<div class="header">
-    <h2 id="screenTitle">🖥️ جاري التحميل...</h2>
-    <div id="status">🔇 اضغط لتفعيل الصوت</div>
-</div>
-
-<div class="grid" id="ordersGrid"></div>
-
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
-        authDomain: "alphashadow-23689.firebaseapp.com",
-        projectId: "alphashadow-23689",
-        databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+const firebaseConfig = {
+    apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
+    authDomain: "alphashadow-23689.firebaseapp.com",
+    projectId: "alphashadow-23689",
+    databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
+};
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const screenType = urlParams.get('dept'); 
-    const isCashier = (!screenType || screenType === 'cashier');
+const urlParams = new URLSearchParams(window.location.search);
+const screenType = urlParams.get('dept'); 
+const isCashier = (!screenType || screenType === 'cashier');
 
-    let audioEnabled = false;
-    let knownOrders = new Set();
+let audioEnabled = false;
+let knownOrders = new Set();
 
-    function enableAudio() { audioEnabled = true; document.getElementById('status').innerText = "✅ الصوت شغال"; }
+function enableAudio() { 
+    audioEnabled = true; 
+    document.getElementById('status').innerText = "✅ الصوت شغال"; 
+}
 
-    const titles = { 'barista': '☕ باريستا', 'kitchen': '🍔 مطبخ', 'dessert': '🍰 حلا', 'cashier': '💰 كاشير' };
-    document.getElementById('screenTitle').innerText = titles[screenType] || titles['cashier'];
+const titles = { 
+    'barista': '☕ باريستا', 
+    'kitchen': '🍔 مطبخ', 
+    'dessert': '🍰 حلا', 
+    'cashier': '💰 كاشير' 
+};
+document.getElementById('screenTitle').innerText = titles[screenType] || titles['cashier'];
 
-    database.ref('live_orders').on('value', (snapshot) => {
-        const grid = document.getElementById('ordersGrid');
-        grid.innerHTML = ''; 
-        let newOrderDetected = false;
-        let noteDetected = false;
+database.ref('live_orders').on('value', (snapshot) => {
+    const grid = document.getElementById('ordersGrid');
+    grid.innerHTML = ''; 
+    let newOrderDetected = false;
+    let noteDetected = false;
 
-        snapshot.forEach((child) => {
-            const order = child.val();
-            const orderId = child.key;
-            let itemsHtml = '';
-            let hasMyItems = false;
-            const finalNote = order.note || order.customerNote || order.notes || "";
+    snapshot.forEach((child) => {
+        const order = child.val();
+        const orderId = child.key;
 
-            // 🔥 أمر القائد: فلترة الأصناف داخل الأوردر (أظهر ما يخصني فقط)
-            order.items.forEach(item => {
-                // 🛡️ الغربال السيادي: تحديد ما إذا كان هذا الصنف يخص الشاشة الحالية
-                const isThisItemForMe = (item.dept === screenType);
+        if (!order || !order.items) return;
 
-                if (isCashier || isThisItemForMe) {
-                    hasMyItems = true; 
-                    
-                    let extrasHtml = "";
-                    let rawExtras = item.extras || item.extra || item.addedItems || "";
-                    if (rawExtras) {
-                        if (Array.isArray(rawExtras)) extrasHtml = `<div class="extras-list">➕ ${rawExtras.join(' - ')}</div>`;
-                        else if (typeof rawExtras === 'string') extrasHtml = `<div class="extras-list">➕ ${rawExtras}</div>`;
+        let itemsHtml = '';
+        let hasMyItems = false;
+
+        const finalNote = order.notes || order.note || "";
+
+        order.items.forEach(item => {
+
+            const isThisItemForMe = (
+                item.dept === screenType ||
+                (order.deptsNeeded && order.deptsNeeded.includes(screenType))
+            );
+
+            if (isCashier || isThisItemForMe) {
+
+                hasMyItems = true;
+
+                let extrasHtml = "";
+                let rawExtras = item.extras || item.extra || item.addedItems || "";
+
+                if (rawExtras) {
+                    if (Array.isArray(rawExtras) && rawExtras.length > 0) {
+                        extrasHtml = `<div class="extras-list">➕ ${rawExtras.join(' - ')}</div>`;
+                    } else if (typeof rawExtras === 'string' && rawExtras.trim() !== "") {
+                        extrasHtml = `<div class="extras-list">➕ ${rawExtras}</div>`;
                     }
-
-                    const isItemReady = order[item.dept + 'Ready'] === true;
-                    itemsHtml += `
-                        <div class="item">
-                            <span><b>${item.ar}</b> × ${item.qty} ${isItemReady ? '✅' : '⏳'}</span>
-                            ${extrasHtml}
-                        </div>`;
-                }
-            });
-
-            if (hasMyItems) {
-                if (!knownOrders.has(orderId)) {
-                    newOrderDetected = true;
-                    if (finalNote) noteDetected = true;
-                    knownOrders.add(orderId);
                 }
 
-                let trackingHtml = '';
-                if (isCashier) {
-                    trackingHtml = `
-                    <div class="track-box">
-                        <span class="badge ${order.baristaReady ? 'ready-badge' : ''}">☕ باريستا ${order.baristaReady ? '✅' : '⏳'}</span>
-                        <span class="badge ${order.kitchenReady ? 'ready-badge' : ''}">🍔 مطبخ ${order.kitchenReady ? '✅' : '⏳'}</span>
-                        <span class="badge ${order.dessertReady ? 'ready-badge' : ''}">🍰 حلا ${order.dessertReady ? '✅' : '⏳'}</span>
-                    </div>`;
-                }
+                const isReady = order[item.dept + 'Ready'] === true;
 
-                const myDeptReady = order[screenType + 'Ready'] === true;
-                const btnHtml = isCashier 
-                    ? `<button class="btn btn-cashier" onclick="deleteOrder('${orderId}')">تم المحاسبة والحذف النهائي ✅</button>`
-                    : `<button class="btn btn-dept" ${myDeptReady ? 'disabled' : ''} onclick="markDeptReady('${orderId}', '${screenType}')">
-                        ${myDeptReady ? 'في انتظار الكاشير...' : 'تم تجهيز قسمي 📣'}
-                      </button>`;
-
-                grid.innerHTML += `
-                    <div class="order-card">
-                        <div style="display:flex; justify-content:space-between;">
-                            <span class="table-no">طاولة ${order.table}</span>
-                            <span style="color:var(--gold)">#${orderId.slice(-4)}</span>
-                        </div>
-                        <div class="items-list">${itemsHtml}</div>
-                        ${trackingHtml}
-                        ${finalNote ? `<div class="customer-note">⚠️ ملاحظة: ${finalNote}</div>` : ''}
-                        <div style="margin-top:10px; font-weight:bold; color:var(--accent)">
-                            ${isCashier ? 'الإجمالي: ' + order.totalPrice + ' ريال' : 'الحالة: قيد التحضير'}
-                        </div>
-                        ${btnHtml}
-                    </div>`;
+                itemsHtml += `
+                <div class="item">
+                    <span><b>${item.ar}</b> × ${item.qty} ${isReady ? '✅' : '⏳'}</span>
+                    ${extrasHtml}
+                </div>`;
             }
         });
 
-        if (newOrderDetected && audioEnabled) {
-            document.getElementById('notifSound').play();
-            if (noteDetected) {
-                setTimeout(() => {
-                    const msg = new SpeechSynthesisUtterance("تنبيه، يوجد ملاحظة في هذا الطلب");
-                    msg.lang = 'ar-SA';
-                    window.speechSynthesis.speak(msg);
-                }, 1200);
-            }
+        if (!hasMyItems) return;
+
+        if (!knownOrders.has(orderId)) {
+            newOrderDetected = true;
+            if (finalNote) noteDetected = true;
+            knownOrders.add(orderId);
         }
+
+        let trackingHtml = '';
+        if (isCashier) {
+            trackingHtml = `
+            <div class="track-box">
+                <span class="badge ${order.baristaReady ? 'ready-badge' : ''}">☕ باريستا</span>
+                <span class="badge ${order.kitchenReady ? 'ready-badge' : ''}">🍔 مطبخ</span>
+                <span class="badge ${order.dessertReady ? 'ready-badge' : ''}">🍰 حلا</span>
+            </div>`;
+        }
+
+        const myReady = order[screenType + 'Ready'] === true;
+
+        const btnHtml = isCashier 
+        ? `<button class="btn btn-cashier" onclick="deleteOrder('${orderId}')">تم الحذف ✅</button>`
+        : `<button class="btn btn-dept" ${myReady ? 'disabled' : ''}
+            onclick="markDeptReady('${orderId}', '${screenType}')">
+            ${myReady ? 'تم التنفيذ ✅' : 'تم تجهيز الطلب 📣'}
+        </button>`;
+
+        grid.innerHTML += `
+        <div class="order-card">
+            <div style="display:flex; justify-content:space-between;">
+                <span class="table-no">طاولة ${order.table}</span>
+                <span style="color:var(--gold)">#${orderId.slice(-4)}</span>
+            </div>
+
+            ${itemsHtml}
+            ${trackingHtml}
+
+            ${finalNote ? `<div class="customer-note">⚠️ ${finalNote}</div>` : ''}
+
+            <div style="margin-top:10px; font-weight:bold; color:var(--accent)">
+                ${isCashier ? 'الإجمالي: ' + order.totalPrice + ' ريال' : 'قيد التحضير'}
+            </div>
+
+            ${btnHtml}
+        </div>`;
     });
 
-    function markDeptReady(id, dept) {
-        let update = {};
-        update[dept + 'Ready'] = true;
-        database.ref('live_orders/' + id).update(update);
-    }
+    if (newOrderDetected && audioEnabled) {
+        document.getElementById('notifSound').play();
 
-    function deleteOrder(id) {
-        if(confirm('تأكيد الحذف النهائي من جميع الشاشات؟')) {
-            database.ref('live_orders/' + id).remove();
+        if (noteDetected) {
+            setTimeout(() => {
+                const msg = new SpeechSynthesisUtterance("يوجد ملاحظة في الطلب");
+                msg.lang = 'ar-SA';
+                speechSynthesis.speak(msg);
+            }, 1000);
         }
     }
+});
+
+function markDeptReady(id, dept) {
+    let update = {};
+    update[dept + 'Ready'] = true;
+    database.ref('live_orders/' + id).update(update);
+}
+
+function deleteOrder(id) {
+    if(confirm('تأكيد الحذف؟')) {
+        database.ref('live_orders/' + id).remove();
+    }
+}
 </script>
-</body>
-</html>
