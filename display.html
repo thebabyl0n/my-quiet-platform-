@@ -25,7 +25,6 @@
         .btn-dept { background: var(--blue); }
         .btn:disabled { background: #475569; cursor: not-allowed; }
         
-        /* استايل الإضافات الجوكر */
         .extras-list { color: var(--gold); font-size: 13px; margin-top: 4px; padding-right: 15px; font-weight: 500; border-right: 2px solid var(--gold); margin-right: 5px; }
     </style>
 </head>
@@ -76,12 +75,11 @@
             const finalNote = order.note || order.customerNote || order.notes || "";
 
             order.items.forEach(item => {
-                if (isCashier || item.dept === screenType) {
+                // 💉 تنفيذ "حقنة الجدة" - الربط الشرطي السيادي بالأقسام المختومة
+                if (isCashier || (order.deptsNeeded && order.deptsNeeded.includes(screenType) && item.dept === screenType)) {
                     hasMyItems = true;
                     
-                    // --- فحص الإضافات الجوكر ---
                     let extrasHtml = "";
-                    // بنجرب كل المسميات اللي ممكن تكون صفحة المنيو بعتتها
                     let rawExtras = item.extras || item.extra || item.addedItems || "";
                     
                     if (rawExtras) {
@@ -102,9 +100,12 @@
             });
 
             if (hasMyItems) {
+                // التحقق من التنبيه الصوتي فقط إذا كان القسم مطلوباً في deptsNeeded
                 if (!knownOrders.has(orderId)) {
-                    newOrderDetected = true;
-                    if (finalNote) noteDetected = true;
+                    if (isCashier || (order.deptsNeeded && order.deptsNeeded.includes(screenType))) {
+                        newOrderDetected = true;
+                        if (finalNote) noteDetected = true;
+                    }
                     knownOrders.add(orderId);
                 }
 
