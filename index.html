@@ -17,8 +17,6 @@
         .welcome-logo { max-width: 130px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 15px; }
         .order-btn { background: var(--gold); color: var(--dark); border: none; padding: 15px 40px; border-radius: 12px; font-size: 18px; font-weight: bold; margin: 10px; cursor: pointer; width: 200px; }
         
-        #location-error { position: fixed; inset: 0; background: white; z-index: 20000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; color: var(--dark); }
-
         #table-entry { display: none; margin-top: 10px; }
         .table-input { width: 100px; padding: 12px; border-radius: 8px; border: 2px solid var(--gold); text-align: center; font-size: 20px; outline: none; }
 
@@ -50,28 +48,15 @@
         .send-btn { background: var(--green); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
-<body onload="verifyLocation()">
-
-<div id="location-error">
-    <img src="https://cdn-icons-png.flaticon.com/512/2875/2875438.png" width="80" style="margin-bottom: 20px;">
-    <h2 style="color: #ef4444;">عذراً.. أنت خارج النطاق 📍</h2>
-    <p>يجب التواجد داخل الكافيه لتتمكن من الطلب.</p>
-    <button onclick="location.reload()" style="background: var(--dark); color: white; padding: 12px 25px; border: none; border-radius: 10px;">تحديث الموقع 🔄</button>
-</div>
+<body>
 
 <div id="toast"></div>
 
 <div id="welcome-screen">
     <img id="logoW" class="welcome-logo" src="" alt="">
     <h2 id="nameW" style="margin-bottom: 25px;">Alpha Shadow</h2>
-    
-    <div id="loading-loc" style="margin-bottom: 20px; font-size: 14px; color: var(--gold);">جاري التحقق من موقعك... ⏳</div>
-
-    <div id="action-buttons" style="display: none;">
-        <button class="order-btn" onclick="startOrder('سفري')">🚗 سفري</button>
-        <button class="order-btn" onclick="document.getElementById('table-entry').style.display='block'">☕ محلي</button>
-    </div>
-
+    <button class="order-btn" onclick="startOrder('سفري')">🚗 سفري</button>
+    <button class="order-btn" onclick="document.getElementById('table-entry').style.display='block'">☕ محلي</button>
     <div id="table-entry">
         <input type="number" id="tblNo" class="table-input" placeholder="طاولة">
         <br>
@@ -110,35 +95,11 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    const CAFE_LAT = 21.522492; 
-    const CAFE_LON = 39.229700; 
-    const MAX_DISTANCE = 0.15; 
-
     let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
     let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
     let discountValReal = 0; let discountType = "percent"; let activePromo = "";
 
-    function verifyLocation() {
-        if (!navigator.geolocation) return alert("المتصفح لا يدعم الموقع");
-        navigator.geolocation.getCurrentPosition(position => {
-            const d = calculateDistance(position.coords.latitude, position.coords.longitude, CAFE_LAT, CAFE_LON);
-            if (d <= MAX_DISTANCE) {
-                document.getElementById('loading-loc').style.display = 'none';
-                document.getElementById('action-buttons').style.display = 'block';
-            } else {
-                document.getElementById('location-error').style.display = 'flex';
-            }
-        }, () => alert("يرجى تفعيل الموقع"), { enableHighAccuracy: true });
-    }
-
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-        return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-    }
-
+    // مراقبة الإعدادات (البحث عن الترحيب والصوت)
     database.ref('settings').on('value', snap => {
         const s = snap.val();
         if(s) {
@@ -147,9 +108,9 @@
                 document.getElementById('logoW').src = s.branding.logo || "";
             }
             if(s.audio) {
-                welcomeAudio = s.audio.welcome;
-                readyAudio = s.audio.ready;
-                successMsg = s.audio.msgText;
+                welcomeAudio = s.audio.welcome; // نص الترحيب
+                readyAudio = s.audio.ready;     // نص جاهزية الطلب
+                successMsg = s.audio.msgText;   // نص رسالة الـ Toast
             }
         }
     });
@@ -263,87 +224,56 @@
 
     function submitOrder() {
         if(!cart.length) return alert("السلة فارغة");
-        navigator.geolocation.getCurrentPosition(position => {
-            const d = calculateDistance(position.coords.latitude, position.coords.longitude, CAFE_LAT, CAFE_LON);
-            if (d <= MAX_DISTANCE) {
-                confirmAndSend();
-            } else {
-                alert("⚠️ عذراً، يجب أن تكون داخل الكافيه لإتمام الطلب!");
-                location.reload();
-            }
-        }, () => alert("يرجى تفعيل الموقع"), { enableHighAccuracy: true });
-    }
-
-    function confirmAndSend() {
         const finalTotal = document.getElementById('total').innerText;
         const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
         let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
         const notes = document.getElementById('notes').value;
 
-        // تحديد الأقسام المطلوبة للطلب الحالي
-        const deptsInOrder = [...new Set(cart.map(i => i.dept))];
-
         const orderData = {
-            items: cart, 
-            type: oType, 
-            table: tNum || 'سفري',
-            notes: notes, 
-            promoUsed: activePromo, 
-            discountAmount: dAmount.toFixed(2),
-            totalPrice: finalTotal, 
-            status: 'قيد التحضير ⏳',
+            items: cart, type: oType, table: tNum || 'سفري',
+            notes: notes, promoUsed: activePromo, discountAmount: dAmount.toFixed(2),
+            totalPrice: finalTotal, status: 'قيد التحضير ⏳',
             time: new Date().toLocaleTimeString('ar-SA'),
-            deptsNeeded: deptsInOrder, // هذا السطر هو مفتاح الربط مع صفحات الموظفين
-            baristaReady: false, 
-            kitchenReady: false, 
-            dessertReady: false
+            baristaReady: false, kitchenReady: false, dessertReady: false
         };
 
         const orderRef = database.ref('live_orders').push();
         currentOrderId = orderRef.key;
-        
-        orderRef.set(orderData).then(() => {
-            document.getElementById('order-status-bar').style.display = 'block';
-            
-            const orderPath = database.ref('live_orders/' + currentOrderId);
-            orderPath.on('value', s => {
-                const order = s.val();
-                if(order) {
-                    const statusElement = document.getElementById('order-status-bar');
-                    
-                    // فحص الجاهزية بناءً على الأقسام المطلوبة في الطلب فقط
-                    let isAllDone = true;
-                    if(order.deptsNeeded && order.deptsNeeded.includes('barista') && !order.baristaReady) isAllDone = false;
-                    if(order.deptsNeeded && order.deptsNeeded.includes('kitchen') && !order.kitchenReady) isAllDone = false;
-                    if(order.deptsNeeded && order.deptsNeeded.includes('dessert') && !order.dessertReady) isAllDone = false;
+        orderRef.set(orderData);
 
-                    if (isAllDone) {
+        document.getElementById('order-status-bar').style.display = 'block';
+        
+        // مراقبة الحالة لحظة بلحظة
+        database.ref('live_orders/' + currentOrderId).on('value', s => {
+            const order = s.val();
+            if(order) {
+                const statusElement = document.getElementById('order-status-bar');
+                if (order.baristaReady && order.kitchenReady && order.dessertReady) {
+                    if (statusElement.innerText !== "حالة الطلب: جاهز للاستلام ✅") {
                         statusElement.innerText = "حالة الطلب: جاهز للاستلام ✅";
                         statusElement.style.background = "#dcfce7";
                         statusElement.style.color = "#15803d";
-                        if(readyAudio) talk(readyAudio);
-                        showToast(successMsg || "طلبك جاهز!");
-                        orderPath.off(); 
-                    } else {
-                        statusElement.innerText = "حالة الطلب: " + (order.status || "قيد التحضير ⏳");
+                        if(readyAudio) talk(readyAudio); // التنبيه الصوتي
+                        showToast(successMsg || "طلبك جاهز! تفضل للاستلام");
                     }
+                } else {
+                    statusElement.innerText = "حالة الطلب: " + (order.status || "قيد التحضير ⏳");
+                    statusElement.style.background = "#e0f2fe";
+                    statusElement.style.color = "#0369a1";
                 }
-            });
-
-            let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'[طاولة '+tNum+']':''}\n`;
-            cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
-            msg += `*الإجمالي*: ${finalTotal} ريال\n*الملاحظات*: ${notes}`;
-            window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-            
-            cart = []; 
-            activePromo = ""; 
-            discountValReal = 0;
-            document.getElementById('notes').value = "";
-            document.getElementById('promoCode').value = "";
-            document.getElementById('discountInfo').style.display = 'none';
-            renderCart();
-            showToast("تم إرسال الطلب بنجاح! 🎉");
+            } else {
+                document.getElementById('order-status-bar').innerText = "تم تسليم الطلب بنجاح ✅";
+                setTimeout(() => { document.getElementById('order-status-bar').style.display = 'none'; }, 5000);
+            }
         });
+
+        let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'[طاولة '+tNum+']':''}\n`;
+        cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
+        msg += `*الإجمالي*: ${finalTotal} ريال\n*الملاحظات*: ${notes}`;
+        window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
+        
+        cart = []; renderCart(); activePromo = ""; discountValReal = 0;
+        showToast("تم إرسال الطلب بنجاح! 🎉");
     }
 
     function showToast(m) {
