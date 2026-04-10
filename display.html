@@ -11,14 +11,19 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
-        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 2px solid #334155; }
+        .order-card { background: var(--card); border-radius: 15px; padding: 20px; border: 2px solid #334155; position: relative; }
         .table-no { background: var(--gold); color: var(--bg); padding: 5px 12px; border-radius: 8px; font-weight: bold; }
         .item { margin-bottom: 8px; border-bottom: 1px dashed #475569; padding-bottom: 8px; display: flex; justify-content: space-between; }
         .customer-note { background: rgba(251, 191, 36, 0.1); color: var(--note); padding: 10px; border-radius: 8px; border-right: 4px solid var(--note); margin-top: 10px; font-weight: bold; }
-        .price-tag { color: var(--gold); font-weight: bold; font-size: 14px; }
-        .total-box { margin-top: 15px; padding-top: 10px; border-top: 2px solid var(--accent); color: var(--accent); font-size: 18px; font-weight: 800; text-align: center; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 10px; color: white; transition: 0.3s; }
-        .btn:active { transform: scale(0.95); }
+        .price-tag { color: var(--gold); font-weight: bold; }
+        .total-box { margin-top: 15px; padding: 10px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; color: var(--accent); font-size: 18px; font-weight: 800; text-align: center; border: 1px solid var(--accent); }
+        
+        /* استايل لمبات متابعة الأقسام للكاشير */
+        .status-bar { display: flex; gap: 5px; margin: 10px 0; flex-wrap: wrap; }
+        .dept-badge { font-size: 11px; padding: 4px 8px; border-radius: 6px; background: #334155; color: #94a3b8; border: 1px solid #475569; }
+        .dept-ready { background: rgba(34, 197, 94, 0.2); color: var(--accent); border-color: var(--accent); font-weight: bold; }
+
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 10px; color: white; }
         .btn-cashier { background: var(--accent); }
         .btn-dept { background: var(--blue); }
     </style>
@@ -29,7 +34,7 @@
 
 <div class="header">
     <h2 id="screenTitle">🖥️ جاري التحميل...</h2>
-    <div id="status" style="font-size: 14px; color: var(--gold); cursor: pointer; padding: 10px; border: 1px solid var(--gold); border-radius: 8px;">🔇 اضغط هنا لتفعيل الصوت</div>
+    <div id="status" onclick="enableAudio()" style="font-size: 14px; color: var(--gold); cursor: pointer; border: 1px solid var(--gold); padding: 5px 10px; border-radius: 5px;">🔇 اضغط لتفعيل التنبيهات</div>
 </div>
 
 <div class="grid" id="ordersGrid"></div>
@@ -38,7 +43,6 @@
     const urlParams = new URLSearchParams(window.location.search);
     const screenType = (urlParams.get('dept') || 'cashier').toLowerCase().trim(); 
     const isCashier = (screenType === 'cashier');
-    
     const titles = { 'barista': '☕ باريستا', 'kitchen': '🍔 مطبخ', 'dessert': '🍰 حلا', 'cashier': '💰 كاشير الحسابات' };
     document.getElementById('screenTitle').innerText = titles[screenType] || titles['cashier'];
 
@@ -54,24 +58,18 @@
     let audioEnabled = false;
     let knownOrders = new Set();
 
-    // دالة تفعيل الصوت (مهمة جداً لسياسات المتصفح)
     function enableAudio() { 
         audioEnabled = true; 
-        document.getElementById('status').innerText = "✅ الصوت يعمل";
+        document.getElementById('status').innerText = "✅ التنبيهات تعمل";
         document.getElementById('status').style.color = "var(--accent)";
-        document.getElementById('status').style.borderColor = "var(--accent)";
-        // تشغيل صامت لتأكيد الإذن
-        document.getElementById('notifSound').play().then(() => {
-            document.getElementById('notifSound').pause();
-            document.getElementById('notifSound').currentTime = 0;
-        }).catch(e => console.log("Audio Init"));
+        document.getElementById('notifSound').play().catch(e => {});
     }
 
     database.ref('live_orders').on('value', (snapshot) => {
         const grid = document.getElementById('ordersGrid');
         grid.innerHTML = ''; 
-        let shouldPlayAlert = false;
-        let shouldSayNote = false;
+        let alertNow = false;
+        let noteNow = false;
 
         snapshot.forEach((child) => {
             const order = child.val();
@@ -79,85 +77,72 @@
             if (!order || !order.items) return;
 
             let itemsHtml = '';
-            let orderHasItemsForMe = false;
-            // التحقق من وجود ملاحظة في أي مسمى (notes أو note)
+            let forMe = false;
             const finalNote = order.notes || order.note || "";
 
             order.items.forEach(item => {
                 const itemDept = (item.dept || 'barista').toLowerCase().trim();
-                
                 if (isCashier || itemDept === screenType) {
-                    orderHasItemsForMe = true;
-                    const isReady = order[itemDept + 'Ready'] === true;
-                    const priceInfo = isCashier ? `<span class="price-tag">${(item.p * item.qty).toFixed(2)} ريال</span>` : "";
-                    
-                    itemsHtml += `
-                        <div class="item">
-                            <span><b>${item.ar}</b> × ${item.qty} ${isReady ? '✅' : '⏳'}</span>
-                            ${priceInfo}
-                        </div>`;
+                    forMe = true;
+                    const isItemReady = order[itemDept + 'Ready'] === true;
+                    const price = isCashier ? `<span class="price-tag">${(item.p * item.qty).toFixed(2)} ريال</span>` : "";
+                    itemsHtml += `<div class="item"><span><b>${item.ar}</b> × ${item.qty} ${isItemReady?'✅':''}</span>${price}</div>`;
                 }
             });
 
-            if (orderHasItemsForMe) {
-                // إذا كان طلب جديد لهذا القسم أو الكاشير
+            if (forMe) {
                 if (!knownOrders.has(orderId)) { 
-                    shouldPlayAlert = true; 
-                    if (finalNote.trim() !== "") {
-                        shouldSayNote = true;
-                    }
+                    alertNow = true; 
+                    if (finalNote.trim() !== "") noteNow = true;
                     knownOrders.add(orderId); 
+                }
+
+                // الجزء اللي طلبته: شريط متابعة الأقسام للكاشير
+                let statusBar = "";
+                if (isCashier) {
+                    statusBar = `
+                    <div class="status-bar">
+                        <span class="dept-badge ${order.baristaReady?'dept-ready':''}">☕ باريستا ${order.baristaReady?'✅':'⏳'}</span>
+                        <span class="dept-badge ${order.kitchenReady?'dept-ready':''}">🍔 مطبخ ${order.kitchenReady?'✅':'⏳'}</span>
+                        <span class="dept-badge ${order.dessertReady?'dept-ready':''}">🍰 حلا ${order.dessertReady?'✅':'⏳'}</span>
+                    </div>`;
                 }
 
                 const isDone = order[screenType + 'Ready'] === true;
                 const btn = isCashier 
-                    ? `<button class="btn btn-cashier" onclick="deleteOrder('${orderId}')">تم الحساب - حذف ✅</button>`
-                    : `<button class="btn btn-dept" ${isDone?'disabled':''} onclick="markReady('${orderId}','${screenType}')">${isDone?'جاهز ✅':'تجهيز القسم 📣'}</button>`;
-
-                const totalBox = isCashier ? `<div class="total-box">الإجمالي: ${order.totalPrice} ريال</div>` : "";
+                    ? `<button class="btn btn-cashier" onclick="deleteOrder('${orderId}')">تحصيل المبلغ وحذف ✅</button>`
+                    : `<button class="btn btn-dept" ${isDone?'disabled':''} onclick="markReady('${orderId}','${screenType}')">${isDone?'تم إرسال الإشعار ✅':'تم التجهيز 📣'}</button>`;
 
                 grid.innerHTML += `
                     <div class="order-card">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span class="table-no">طاولة ${order.table}</span>
-                            <span style="color:var(--gold)">#${orderId.slice(-4)}</span>
+                            <span style="color:var(--gold); font-size:12px;">#${orderId.slice(-4)}</span>
                         </div>
-                        ${itemsHtml}
-                        ${finalNote ? `<div class="customer-note">⚠️ ملاحظة: ${finalNote}</div>` : ''}
-                        ${totalBox}
+                        ${statusBar}
+                        <div style="margin-top:10px;">${itemsHtml}</div>
+                        ${finalNote ? `<div class="customer-note">📝 ملاحظة: ${finalNote}</div>` : ''}
+                        ${isCashier ? `<div class="total-box">المطلوب: ${order.totalPrice} ريال</div>` : ''}
                         ${btn}
                     </div>`;
             }
         });
 
-        // تنفيذ التنبيهات الصوتية
-        if (shouldPlayAlert && audioEnabled) {
-            const bell = document.getElementById('notifSound');
-            bell.currentTime = 0;
-            bell.play().catch(e => console.log("Play error"));
-
-            if (shouldSayNote) {
-                // ننتظر الجرس يخلص وننطق الملاحظة
+        if (alertNow && audioEnabled) {
+            document.getElementById('notifSound').play();
+            if (noteNow) {
                 setTimeout(() => {
-                    window.speechSynthesis.cancel(); // إلغاء أي نطق قديم
+                    window.speechSynthesis.cancel();
                     const msg = new SpeechSynthesisUtterance("تنبيه، يوجد ملاحظة في هذا الطلب");
                     msg.lang = 'ar-SA';
-                    msg.rate = 0.9;
                     window.speechSynthesis.speak(msg);
-                }, 1200);
+                }, 1300);
             }
         }
     });
 
-    function markReady(id, dept) { 
-        database.ref('live_orders/' + id).update({ [dept + 'Ready']: true }); 
-    }
-    
-    function deleteOrder(id) { 
-        if(confirm('تأكيد الحساب وحذف الطلب؟')) {
-            database.ref('live_orders/' + id).remove(); 
-        }
-    }
+    function markReady(id, dept) { database.ref('live_orders/' + id).update({ [dept + 'Ready']: true }); }
+    function deleteOrder(id) { if(confirm('هل تم استلام المبلغ وحذف الطلب؟')) database.ref('live_orders/' + id).remove(); }
 </script>
 </body>
 </html>
