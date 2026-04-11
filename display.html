@@ -17,12 +17,9 @@
         .customer-note { background: rgba(251, 191, 36, 0.1); color: var(--note); padding: 10px; border-radius: 8px; border-right: 4px solid var(--note); margin-top: 10px; font-weight: bold; }
         .price-tag { color: var(--gold); font-weight: bold; }
         .total-box { margin-top: 15px; padding: 10px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; color: var(--accent); font-size: 18px; font-weight: 800; text-align: center; border: 1px solid var(--accent); }
-        
-        /* استايل لمبات متابعة الأقسام للكاشير */
         .status-bar { display: flex; gap: 5px; margin: 10px 0; flex-wrap: wrap; }
         .dept-badge { font-size: 11px; padding: 4px 8px; border-radius: 6px; background: #334155; color: #94a3b8; border: 1px solid #475569; }
         .dept-ready { background: rgba(34, 197, 94, 0.2); color: var(--accent); border-color: var(--accent); font-weight: bold; }
-
         .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 10px; color: white; }
         .btn-cashier { background: var(--accent); }
         .btn-dept { background: var(--blue); }
@@ -63,6 +60,7 @@
         document.getElementById('status').innerText = "✅ التنبيهات تعمل";
         document.getElementById('status').style.color = "var(--accent)";
         document.getElementById('notifSound').play().catch(e => {});
+        requestWakeLock();
     }
 
     database.ref('live_orders').on('value', (snapshot) => {
@@ -97,11 +95,9 @@
                     knownOrders.add(orderId); 
                 }
 
-                // الجزء اللي طلبته: شريط متابعة الأقسام للكاشير
                 let statusBar = "";
                 if (isCashier) {
-                    statusBar = `
-                    <div class="status-bar">
+                    statusBar = `<div class="status-bar">
                         <span class="dept-badge ${order.baristaReady?'dept-ready':''}">☕ باريستا ${order.baristaReady?'✅':'⏳'}</span>
                         <span class="dept-badge ${order.kitchenReady?'dept-ready':''}">🍔 مطبخ ${order.kitchenReady?'✅':'⏳'}</span>
                         <span class="dept-badge ${order.dessertReady?'dept-ready':''}">🍰 حلا ${order.dessertReady?'✅':'⏳'}</span>
@@ -133,8 +129,9 @@
             if (noteNow) {
                 setTimeout(() => {
                     window.speechSynthesis.cancel();
-                    const msg = new SpeechSynthesisUtterance("تنبيه، يوجد ملاحظة في هذا الطلب");
+                    const msg = new SpeechSynthesisUtterance("تنبيه لقسم " + (titles[screenType] || "الطلبات") + "، توجد ملاحظة في الطلب");
                     msg.lang = 'ar-SA';
+                    msg.rate = 0.9;
                     window.speechSynthesis.speak(msg);
                 }, 1300);
             }
@@ -143,62 +140,38 @@
 
     function markReady(id, dept) { database.ref('live_orders/' + id).update({ [dept + 'Ready']: true }); }
     function deleteOrder(id) { if(confirm('هل تم استلام المبلغ وحذف الطلب؟')) database.ref('live_orders/' + id).remove(); }
-    // --- تكة المكياج السيادية: تشغيل الصوت في الخلفية ---
 
-// 1. وظيفة لمنع "نوم" المتصفح (Wake Lock)
-let wakeLock = null;
-async function requestWakeLock() {
-    try {
-        if ('wakeLock' in navigator) {
-            wakeLock = await navigator.wakeLock.request('screen');
-            console.log("🔒 السيستم صاحي ومأمن");
-        }
-    } catch (err) {
-        console.log("WakeLock Error: ", err.message);
+    let wakeLock = null;
+    async function requestWakeLock() {
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+            }
+        } catch (err) {}
     }
-}
 
-// 2. تفعيل الصوت والـ Wake Lock عند أول ضغطة
-const originalEnableAudio = enableAudio; 
-enableAudio = function() {
-    originalEnableAudio(); // تشغيل الوظيفة القديمة
-    requestWakeLock();     // تفعيل ميزة عدم النوم
-    
-    // إنشاء صوت "صامت" يشتغل كل 20 ثانية عشان المتصفح يفتكر إن الصفحة نشطة
     setInterval(() => {
-        const silentDistract = document.getElementById('notifSound');
-        silentDistract.volume = 0.01; // صوت غير مسموع
-        silentDistract.play().catch(e => {});
-        silentDistract.volume = 1.0;  // نرجعه للطبيعي فوراً
+        if (audioEnabled) {
+            const silentDistract = document.getElementById('notifSound');
+            const oldVol = silentDistract.volume;
+            silentDistract.volume = 0.01;
+            silentDistract.play().catch(e => {});
+            setTimeout(() => { silentDistract.volume = oldVol; }, 500);
+        }
     }, 20000);
-};
 
-// 3. إعادة التشغيل إذا المتصفح عمل Resume أو رجعت للشاشة
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        requestWakeLock();
-    }
-});
-
-// 4. تحديث وظيفة التنبيه لضمان "الاختراق" الصوتي
-function forcePlay(audioId) {
-    const audio = document.getElementById(audioId);
-    audio.pause();
-    audio.currentTime = 0;
-    // أهم سطر: Resume للـ Audio Context عشان المتصفحات الرخمة
-    if (window.AudioContext || window.webkitAudioContext) {
-        const context = new (window.AudioContext || window.webkitAudioContext)();
-        context.resume().then(() => {
+    function forcePlay(audioId) {
+        const audio = document.getElementById(audioId);
+        audio.pause();
+        audio.currentTime = 0;
+        if (window.AudioContext || window.webkitAudioContext) {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            context.resume().then(() => { audio.play(); });
+        } else {
             audio.play();
-        });
-    } else {
-        audio.play();
+        }
     }
-}
-
-// تعديل بسيط في جزء الـ Firebase عندك:
-// بدل ما تكتب document.getElementById('notifSound').play();
-// استخدم forcePlay('notifSound');
 </script>
 </body>
 </html>
+
