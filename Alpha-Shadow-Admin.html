@@ -106,12 +106,14 @@
 
     <div class="section">
         <h3>➕ الإضافات</h3>
-        <label>اسم الإضافة</label><input type="text" id="extAr">
-        <label>السعر</label><input type="number" id="extPrice" value="0">
+        <label>اسم الإضافة</label>
+        <input type="text" id="extAr" placeholder="مثلاً: حليب لوز">
+        <label>السعر</label>
+        <input type="number" id="extPrice" value="0">
         <button class="btn-save" onclick="addExtra()">إضافة خيار ✅</button>
         <div id="extrasList"></div>
     </div>
-</div>
+    </div> 
 
 <script>
     const firebaseConfig = {
@@ -230,6 +232,25 @@
         }
     });
   }
+    // دالة إضافة الخيارات (الإضافات) - دي اللي كانت ناقصة يا حودة
+    function addExtra() {
+        const ar = document.getElementById('extAr').value;
+        const price = document.getElementById('extPrice').value;
+        if(ar) {
+            database.ref('extras_options').push({
+                ar: ar,
+                price: parseFloat(price) || 0
+            }).then(() => {
+                alert("تم إضافة الخيار بنجاح! ✅");
+                document.getElementById('extAr').value = ''; 
+                document.getElementById('extPrice').value = '0';
+            });
+        } else {
+            alert("اكتب اسم الإضافة الأول يا بطل! ⚠️");
+        }
+    }
+
 </script>
 </body>
 </html>
+
