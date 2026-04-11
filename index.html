@@ -215,21 +215,26 @@
     database.ref('settings').on('value', snap => {
         const s = snap.val();
         if(s) {
+            // 🎨 جزء البراند والمظهر (الخانات اللي تحت في لوحة التحكم)
             if(s.branding) {
                 document.getElementById('nameW').innerText = s.branding.name || "Alpha Shadow";
                 document.getElementById('logoW').src = s.branding.logo || "";
+                
+                // ربط خانة "رابط صورة الخلفية" من لوحة التحكم بالسورس كود
+                if(s.branding.bg) {
+                    document.body.style.backgroundImage = `url('${s.branding.bg}')`;
+                    document.body.style.backgroundSize = "cover";
+                    document.body.style.backgroundPosition = "center";
+                    document.body.style.backgroundAttachment = "fixed";
+                }
             }
+            // 🔊 جزء التنبيهات والتحكم الصوتي (الخانات اللي فوق - ملمستهاش)
             if(s.audio) {
                 welcomeAudio = s.audio.welcome;
                 readyAudio = s.audio.ready;
                 successMsg = s.audio.msgText;
             }
         }
-    });
-
-    database.ref('offers').on('value', snap => {
-        let h = ""; snap.forEach(c => h += `<img src="${c.val().img}" class="slider-img">`);
-        document.getElementById('slider').innerHTML = h;
     });
 
     database.ref('extras_options').on('value', snap => {
@@ -431,4 +436,3 @@
 </script>
 </body>
 </html>
-
