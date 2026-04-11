@@ -177,20 +177,20 @@
     };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    const database = firebase.database(); // ده سطر 179 اللي عندك
 
-    // ضيف الكود هنا بالظبط:
+    // كود العروض (Slider) - يتحط هنا مرة واحدة بس
     database.ref('slider_images').on('value', snap => {
         let sliderHtml = "";
         snap.forEach(child => { 
             sliderHtml += `<img src="${child.val()}" class="slider-img">`; 
         });
-        document.getElementById('slider').innerHTML = sliderHtml;
+        const sliderDiv = document.getElementById('slider');
+        if(sliderDiv) sliderDiv.innerHTML = sliderHtml;
     });
 
     const TARGET_LAT = 21.522492;
     const TARGET_LON = 39.229700;
-    const ALLOWED_DISTANCE = 0.50; 
+    const ALLOWED_DISTANCE = 0.50;
 
     let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
     let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
