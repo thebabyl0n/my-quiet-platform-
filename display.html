@@ -129,7 +129,7 @@
         });
 
         if (alertNow && audioEnabled) {
-            document.getElementById('notifSound').play();
+            forcePlay('notifSound');
             if (noteNow) {
                 setTimeout(() => {
                     window.speechSynthesis.cancel();
@@ -143,6 +143,62 @@
 
     function markReady(id, dept) { database.ref('live_orders/' + id).update({ [dept + 'Ready']: true }); }
     function deleteOrder(id) { if(confirm('هل تم استلام المبلغ وحذف الطلب؟')) database.ref('live_orders/' + id).remove(); }
+    // --- تكة المكياج السيادية: تشغيل الصوت في الخلفية ---
+
+// 1. وظيفة لمنع "نوم" المتصفح (Wake Lock)
+let wakeLock = null;
+async function requestWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log("🔒 السيستم صاحي ومأمن");
+        }
+    } catch (err) {
+        console.log("WakeLock Error: ", err.message);
+    }
+}
+
+// 2. تفعيل الصوت والـ Wake Lock عند أول ضغطة
+const originalEnableAudio = enableAudio; 
+enableAudio = function() {
+    originalEnableAudio(); // تشغيل الوظيفة القديمة
+    requestWakeLock();     // تفعيل ميزة عدم النوم
+    
+    // إنشاء صوت "صامت" يشتغل كل 20 ثانية عشان المتصفح يفتكر إن الصفحة نشطة
+    setInterval(() => {
+        const silentDistract = document.getElementById('notifSound');
+        silentDistract.volume = 0.01; // صوت غير مسموع
+        silentDistract.play().catch(e => {});
+        silentDistract.volume = 1.0;  // نرجعه للطبيعي فوراً
+    }, 20000);
+};
+
+// 3. إعادة التشغيل إذا المتصفح عمل Resume أو رجعت للشاشة
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        requestWakeLock();
+    }
+});
+
+// 4. تحديث وظيفة التنبيه لضمان "الاختراق" الصوتي
+function forcePlay(audioId) {
+    const audio = document.getElementById(audioId);
+    audio.pause();
+    audio.currentTime = 0;
+    // أهم سطر: Resume للـ Audio Context عشان المتصفحات الرخمة
+    if (window.AudioContext || window.webkitAudioContext) {
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+        context.resume().then(() => {
+            audio.play();
+        });
+    } else {
+        audio.play();
+    }
+}
+
+// تعديل بسيط في جزء الـ Firebase عندك:
+// بدل ما تكتب document.getElementById('notifSound').play();
+// استخدم forcePlay('notifSound');
 </script>
 </body>
 </html>
