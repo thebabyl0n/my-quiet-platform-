@@ -52,8 +52,12 @@
         <h3>🎨 براند الكافيه والمظهر</h3>
         <label>اسم الكافيه</label><input type="text" id="cafeName">
         <label>رابط اللوجو (الدائرة)</label><input type="text" id="logoUrl">
-        <label>رابط الخلفية الجدارية (Wallpaper)</label>
-        <input type="text" id="bgUrl" placeholder="حط رابط الصورة هنا">
+        <label>رابط الخلفية الجدارية (المنيو من الداخل)</label>
+        <input type="text" id="bgUrl" placeholder="رابط صورة المنيو">
+        
+        <label>رابط الصورة الخارجية (شاشة الترحيب)</label>
+        <input type="text" id="bg2Url" placeholder="رابط صورة شاشة الترحيب">
+        
         <button class="btn-save btn-gold" onclick="saveSettings('branding')">تحديث البراند 💾</button>
     </div>
 
@@ -164,20 +168,15 @@
         if(ar && price) { database.ref('menu_items').push({ ar, en, price: parseFloat(price), img, dept }); alert("تمت الإضافة!"); }
     }
 
-    function addExtra() {
-        const ar = document.getElementById('extAr').value;
-        const price = document.getElementById('extPrice').value;
-        if(ar) { database.ref('extras_options').push({ ar, price: parseFloat(price) }); }
-    }
-
     function saveSettings(type) {
         if(type === 'branding') {
             database.ref('settings/branding').update({
                 name: document.getElementById('cafeName').value,
                 logo: document.getElementById('logoUrl').value,
-                bg: document.getElementById('bgUrl').value
+                bg: document.getElementById('bgUrl').value,
+                bg2: document.getElementById('bg2Url').value // إرسال الصورة الخارجية
             }).then(() => {
-                alert("تم تحديث الخلفية والبراند بنجاح! 🚀");
+                alert("تم تحديث البراند والصور بنجاح! 🚀");
             });
         }
     }
@@ -227,11 +226,10 @@
             document.getElementById('cafeName').value = s.name || ""; 
             document.getElementById('logoUrl').value = s.logo || ""; 
             document.getElementById('bgUrl').value = s.bg || ""; 
+            document.getElementById('bg2Url').value = s.bg2 || ""; // تحميل الصورة الخارجية
         }
     });
   }
 </script>
 </body>
 </html>
-
-كود تحكم زايد في خانه الصوره الجداريه
