@@ -38,10 +38,13 @@
         <h3>🔊 التنبيهات والتحكم الصوتي</h3>
         <label>رسالة الترحيب الصوتية (تنطق عند دخول الزبون)</label>
         <input type="text" id="welcomeMsgInput" placeholder="مثلاً: Welcome to our cafe">
+        
         <label>رسالة جاهزية الطلب (تنطق للزبون عند التجهيز)</label>
         <input type="text" id="readyMsgInput" placeholder="مثلاً: Your order is ready">
+        
         <label>نص التنبيه المكتوب (الذي يظهر في الـ Toast)</label>
         <input type="text" id="toastMsgInput" placeholder="مثلاً: طلبك جاهز يا برنس، تفضل للاستلام">
+        
         <button class="btn-save btn-gold" onclick="saveAudioSettings()">تحديث الأصوات والرسائل ⚡</button>
     </div>
 
@@ -124,25 +127,21 @@
         } else { alert("كلمة السر خطأ!"); }
     }
 
+    // دالة حفظ الأصوات الجديدة
     function saveAudioSettings() {
         const audioData = {
             welcome: document.getElementById('welcomeMsgInput').value,
             ready: document.getElementById('readyMsgInput').value,
             msgText: document.getElementById('toastMsgInput').value
         };
-        database.ref('settings/audio').set(audioData);
-        database.ref('settings').update({ pass: 'Lovely333' }).then(() => {
+        database.ref('settings/audio').set(audioData).then(() => {
             alert("تم تحديث التنبيهات الصوتية بنجاح! 😎");
         });
     }
 
     function addOffer() {
         const img = document.getElementById('offerImg').value;
-        if(img) { 
-            database.ref('offers').push({ img }); 
-            database.ref('settings').update({ pass: 'Lovely333' });
-            document.getElementById('offerImg').value = ''; 
-        }
+        if(img) { database.ref('offers').push({ img }); document.getElementById('offerImg').value = ''; }
     }
 
     function addCoupon() {
@@ -151,7 +150,6 @@
         const val = document.getElementById('couponValue').value;
         if(code && val) {
             database.ref('coupons').child(code).set({ type: type, discount: parseFloat(val) });
-            database.ref('settings').update({ pass: 'Lovely333' });
             alert("تم التفعيل بنجاح!");
             document.getElementById('couponCode').value = ''; document.getElementById('couponValue').value = '';
         }
@@ -163,20 +161,13 @@
         const price = document.getElementById('itemPrice').value;
         const img = document.getElementById('itemImg').value;
         const dept = document.getElementById('itemDept').value;
-        if(ar && price) { 
-            database.ref('menu_items').push({ ar, en, price: parseFloat(price), img, dept }); 
-            database.ref('settings').update({ pass: 'Lovely333' });
-            alert("تمت الإضافة!"); 
-        }
+        if(ar && price) { database.ref('menu_items').push({ ar, en, price: parseFloat(price), img, dept }); alert("تمت الإضافة!"); }
     }
 
     function addExtra() {
         const ar = document.getElementById('extAr').value;
         const price = document.getElementById('extPrice').value;
-        if(ar) { 
-            database.ref('extras_options').push({ ar, price: parseFloat(price) }); 
-            database.ref('settings').update({ pass: 'Lovely333' });
-        }
+        if(ar) { database.ref('extras_options').push({ ar, price: parseFloat(price) }); }
     }
 
     function saveSettings(type) {
@@ -185,14 +176,14 @@
                 name: document.getElementById('cafeName').value,
                 logo: document.getElementById('logoUrl').value,
                 bg: document.getElementById('bgUrl').value
-            });
-            database.ref('settings').update({ pass: 'Lovely333' }).then(() => {
+            }).then(() => {
                 alert("تم تحديث الخلفية والبراند بنجاح! 🚀");
             });
         }
     }
 
     function loadData() {
+        // تحميل إعدادات الصوت والرسائل
         database.ref('settings/audio').once('value', snap => {
             const d = snap.val();
             if(d) {
@@ -204,7 +195,7 @@
 
         database.ref('offers').on('value', snap => {
             let h = "";
-            snap.forEach(child => { h += `<div class="item-row"><img src="${child.val().img}" width="50"> <button class="btn-del" onclick="database.ref('offers/${child.key}').remove(); database.ref('settings').update({ pass: 'Lovely333' });">حذف</button></div>`; });
+            snap.forEach(child => { h += `<div class="item-row"><img src="${child.val().img}" width="50"> <button class="btn-del" onclick="database.ref('offers/${child.key}').remove()">حذف</button></div>`; });
             document.getElementById('offersList').innerHTML = h;
         });
 
@@ -213,33 +204,31 @@
             snap.forEach(child => {
                 const data = child.val();
                 const sign = data.type === 'percent' ? '%' : 'ريال';
-                h += `<div class="item-row"><span><b>${child.key}</b> (خصم ${data.discount} ${sign})</span> <button class="btn-del" onclick="database.ref('coupons/${child.key}').remove(); database.ref('settings').update({ pass: 'Lovely333' });">حذف</button></div>`;
+                h += `<div class="item-row"><span><b>${child.key}</b> (خصم ${data.discount} ${sign})</span> <button class="btn-del" onclick="database.ref('coupons/${child.key}').remove()">حذف</button></div>`;
             });
             document.getElementById('couponsList').innerHTML = h;
         });
 
         database.ref('menu_items').on('value', snap => {
             let h = "";
-            snap.forEach(child => { h += `<div class="item-row"><span>${child.val().ar}</span><button class="btn-del" onclick="database.ref('menu_items/${child.key}').remove(); database.ref('settings').update({ pass: 'Lovely333' });">حذف</button></div>`; });
+            snap.forEach(child => { h += `<div class="item-row"><span>${child.val().ar}</span><button class="btn-del" onclick="database.ref('menu_items/${child.key}').remove()">حذف</button></div>`; });
             document.getElementById('itemsList').innerHTML = h;
         });
 
         database.ref('extras_options').on('value', snap => {
             let h = "";
-            snap.forEach(child => { h += `<div class="item-row">${child.val().ar} <button class="btn-del" onclick="database.ref('extras_options/${child.key}').remove(); database.ref('settings').update({ pass: 'Lovely333' });">حذف</button></div>`; });
+            snap.forEach(child => { h += `<div class="item-row">${child.val().ar} <button class="btn-del" onclick="database.ref('extras_options/${child.key}').remove()">حذف</button></div>`; });
             document.getElementById('extrasList').innerHTML = h;
         });
 
-        database.ref('settings/branding').once('value', snap => {
-            const s = snap.val();
-            if(s) { 
-                document.getElementById('cafeName').value = s.name || ""; 
-                document.getElementById('logoUrl').value = s.logo || ""; 
-                document.getElementById('bgUrl').value = s.bg || ""; 
-            }
-        });
-    } // <--- القفلة الصح هنا
+    database.ref('settings/branding').once('value', snap => {
+        const s = snap.val();
+        if(s) { 
+            document.getElementById('cafeName').value = s.name || ""; 
+            document.getElementById('logoUrl').value = s.logo || ""; 
+            document.getElementById('bgUrl').value = s.bg || ""; 
+    });
+  }  
 </script>
 </body>
 </html>
-
