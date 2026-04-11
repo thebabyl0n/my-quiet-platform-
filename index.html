@@ -2,177 +2,110 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alpha Shadow | النظام الملكي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Control | الظل</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        /* الديزاين الفخم اللي طلبته مع الحفاظ على هوية الماستر */
-        :root { 
-            --gold: #c8a27c; 
-            --dark-bg: #0f141e; 
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --text: #ffffff;
-            --green: #22c55e;
-        }
-
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            margin: 0; 
-            background: var(--dark-bg); 
-            color: var(--text); 
-            overflow-x: hidden;
-            background-attachment: fixed;
-        }
-
-        /* توست التنبيهات الفخم */
-        #toast { 
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
-            background: var(--gold); color: #000; padding: 15px 30px; 
-            border-radius: 50px; z-index: 10001; transition: 0.5s; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); font-weight: bold; 
-            text-align: center; width: 80%;
-        }
-        #toast.show { top: 20px; }
-
-        /* شاشة الحماية */
-        #geo-shield { 
-            position: fixed; inset: 0; background: var(--dark-bg); 
-            z-index: 11000; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; text-align: center; 
-        }
-
-        /* شاشة الترحيب الماستر بالديزاين الجديد */
-        #welcome-screen { 
-            position: fixed; inset: 0; background: radial-gradient(circle, #1a2332 0%, #0f141e 100%); 
-            z-index: 10000; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; transition: 0.8s ease-in-out; 
-        }
-        .welcome-logo { 
-            max-width: 140px; 
-            border-radius: 50%; 
-            border: 2px solid var(--gold); 
-            margin-bottom: 20px; 
-            box-shadow: 0 0 20px rgba(200, 162, 124, 0.3);
-            /* ضيف السطر ده عشان نأكد المسح */
-            background-color: #000; 
-            background: transparent; 
-            mix-blend-mode: lighten; 
-        }
-
-
-        .order-btn { 
-            background: transparent; color: var(--gold); border: 1px solid var(--gold); 
-            padding: 15px 45px; border-radius: 50px; font-size: 18px; 
-            font-weight: bold; margin: 12px; cursor: pointer; width: 220px;
-            transition: 0.3s;
-        }
-        .order-btn:hover { background: var(--gold); color: #000; }
-
-        /* التطبيق الرئيسي */
-        .main-app { display: none; padding: 15px; padding-bottom: 100px; }
-
-        #order-status-bar { 
-            background: rgba(200, 162, 124, 0.1); color: var(--gold); 
-            padding: 15px; text-align: center; border-radius: 15px; 
-            margin-bottom: 20px; font-weight: bold; border: 1px solid var(--gold);
-        }
-
-        .slider-container { display: flex; overflow-x: auto; gap: 12px; padding: 10px 0; scrollbar-width: none; }
-        .slider-img { width: 85%; height: 180px; border-radius: 20px; flex-shrink: 0; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); }
-
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        
-        .item-card { 
-            background: var(--card-bg); backdrop-filter: blur(10px); 
-            border-radius: 20px; padding: 12px; border: 1px solid rgba(255,255,255,0.05); 
-            text-align: center; transition: 0.3s;
-        }
-        .item-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 15px; margin-bottom: 10px; }
-        .item-card h4 { margin: 5px 0; font-size: 15px; color: #eee; }
-
-        .extra-sel { 
-            width: 100%; padding: 8px; border-radius: 12px; border: none; 
-            background: rgba(255,255,255,0.1); color: #fff; font-size: 11px; margin-bottom: 10px; outline: none;
-        }
-        .extra-sel option { background: #1a2332; }
-
-        .add-btn { 
-            background: var(--gold); color: #000; border: none; 
-            padding: 10px; border-radius: 12px; width: 100%; 
-            font-weight: 800; font-size: 13px; cursor: pointer; 
-        }
-
-        /* السلة الماستر بشكل فخم */
-        .cart-box { 
-            margin-top: 40px; background: rgba(255,255,255,0.03); 
-            padding: 20px; border-radius: 25px; border: 1px solid rgba(200, 162, 124, 0.2); 
-        }
-        .cart-item { border-bottom: 1px solid rgba(255,255,255,0.05); padding: 15px 0; }
-        .item-name { font-weight: bold; font-size: 16px; color: #fff; }
-        .item-qty { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 6px; font-size: 14px; margin-left: 5px; font-weight: 900; }
-        
-        .total-price { 
-            font-size: 24px; font-weight: 800; color: var(--gold); 
-            text-align: center; margin: 25px 0; 
-        }
-
-        .promo-container { display: flex; gap: 8px; margin-bottom: 15px; }
-        .promo-input { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; outline: none; }
-        .promo-btn { background: var(--gold); border: none; padding: 0 20px; border-radius: 12px; color: #000; font-weight: bold; cursor: pointer; }
-
-        .discount-row { display: flex; justify-content: space-between; color: #ff4d4d; font-weight: bold; margin-bottom: 10px; font-size: 14px; }
-
-        .send-btn { 
-            background: var(--green); color: white; border: none; 
-            width: 100%; padding: 18px; border-radius: 20px; 
-            font-size: 18px; font-weight: bold; box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
-        }
+        :root { --primary: #0f172a; --gold: #c8a27c; --green: #22c55e; --red: #ff4d4d; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; margin: 0; padding: 20px; }
+        #lock-screen { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: none; }
+        .section { background: #f8fafc; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        h3 { color: var(--primary); border-bottom: 2px solid var(--gold); padding-bottom: 5px; margin-top: 0; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; font-size: 13px; color: #475569; }
+        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 14px; }
+        .btn-save { background: var(--green); color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
+        .btn-save:hover { opacity: 0.8; }
+        .btn-gold { background: var(--gold); }
+        .btn-red { background: var(--red); }
+        .item-row { background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-del { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div id="toast"></div>
-
-<div id="geo-shield">
-    <h2 id="geo-status" style="color: var(--gold);">جاري تفعيل Geo-Location Shield... 📍</h2>
-    <p style="opacity: 0.5;">Alpha Shadow Security Protocol</p>
+<div id="lock-screen">
+    <h3>🔒 الظل | لوحة التحكم</h3>
+    <input type="password" id="passInput" placeholder="كلمة السر" style="width: 200px; text-align: center; margin-bottom: 10px;">
+    <button class="btn-save" onclick="checkPass()" style="width: 100px;">دخول</button>
 </div>
 
-<div id="welcome-screen" style="display:none;">
-    <img id="logoW" class="welcome-logo" src="">
-    <h2 id="nameW" style="letter-spacing: 2px;">Alpha Shadow</h2>
-    <button class="order-btn" onclick="startOrder('سفري')">🚗 سفري</button>
-    <button class="order-btn" onclick="document.getElementById('table-entry').style.display='block'">☕ محلي</button>
-    <div id="table-entry">
-        <input type="number" id="tblNo" style="width: 80px; padding: 12px; border-radius: 12px; border: 1px solid var(--gold); background: transparent; color: #fff; text-align: center; font-size: 18px;" placeholder="طاولة">
-        <br>
-        <button class="order-btn" style="width: 140px; margin-top: 15px;" onclick="startOrder('محلي')">دخول</button>
+<div class="container" id="adminContent">
+    <h2 style="text-align: center; color: var(--primary);">⚙️ نظام إدارة الكافيه (Alpha Shadow)</h2>
+
+    <div class="section" style="border: 2px solid var(--gold);">
+        <h3>🔊 التنبيهات والتحكم الصوتي</h3>
+        <label>رسالة الترحيب الصوتية (تنطق عند دخول الزبون)</label>
+        <input type="text" id="welcomeMsgInput" placeholder="مثلاً: Welcome to our cafe">
+        
+        <label>رسالة جاهزية الطلب (تنطق للزبون عند التجهيز)</label>
+        <input type="text" id="readyMsgInput" placeholder="مثلاً: Your order is ready">
+        
+        <label>نص التنبيه المكتوب (الذي يظهر في الـ Toast)</label>
+        <input type="text" id="toastMsgInput" placeholder="مثلاً: طلبك جاهز يا برنس، تفضل للاستلام">
+        
+        <button class="btn-save btn-gold" onclick="saveAudioSettings()">تحديث الأصوات والرسائل ⚡</button>
     </div>
-</div>
 
-<div class="main-app" id="app">
-    <div id="order-status-bar" style="display:none;">حالة الطلب: قيد التحضير ⏳</div>
-    <div class="slider-container" id="slider"></div>
-    <div class="menu-grid" id="menu"></div>
-    
-    <div class="cart-box">
-        <h3 style="margin:0 0 15px 0; color: var(--gold);">🛒 السلة (<span id="typeLbl"></span> <span id="tblLbl"></span>)</h3>
-        <div id="cartList"></div>
-        
-        <div class="promo-container" style="margin-top:20px;">
-            <input type="text" id="promoCode" class="promo-input" placeholder="لديك كود خصم؟">
-            <button class="promo-btn" onclick="applyPromo()">تفعيل</button>
-        </div>
-        
-        <div id="discountInfo" style="display:none;" class="discount-row">
-            <span>خصم الكوبون:</span>
-            <span id="discountVal">0</span>
-        </div>
-        
-        <div class="total-price">الإجمالي النهائي: <span id="total">0</span> ريال</div>
-        <textarea id="notes" style="width:100%; padding:15px; border-radius:15px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:#fff; margin-bottom:20px; font-family:inherit;" rows="3" placeholder="ملاحظاتك الإضافية..."></textarea>
-        <button class="send-btn" onclick="submitOrder()">إرسال الطلب ✅</button>
+    <div class="section">
+        <h3>🎨 براند الكافيه والمظهر</h3>
+        <label>اسم الكافيه</label><input type="text" id="cafeName">
+        <label>رابط اللوجو (الدائرة)</label><input type="text" id="logoUrl">
+        <label>رابط الخلفية الجدارية (Wallpaper)</label>
+        <input type="text" id="bgUrl" placeholder="حط رابط الصورة هنا">
+        <button class="btn-save btn-gold" onclick="saveSettings('branding')">تحديث البراند 💾</button>
+    </div>
+
+    <div class="section">
+        <h3>🖼️ إدارة عروض الصور</h3>
+        <label>رابط صورة العرض</label>
+        <input type="text" id="offerImg" placeholder="رابط الصورة">
+        <button class="btn-save" onclick="addOffer()">إضافة عرض جديد 📸</button>
+        <div id="offersList"></div>
+    </div>
+
+    <div class="section">
+        <h3>🎟️ كوبونات الخصم المتكاملة</h3>
+        <label>كود الخصم (مثلاً: Shadow10)</label>
+        <input type="text" id="couponCode" placeholder="اكتب الكود هنا">
+        <label>نوع الخصم</label>
+        <select id="discountType">
+            <option value="fixed">خصم مبلغ ثابت (ريال)</option>
+            <option value="percent">خصم نسبة مئوية (%)</option>
+        </select>
+        <label>القيمة (رقم فقط)</label>
+        <input type="number" id="couponValue" placeholder="مثلاً: 10">
+        <button class="btn-save btn-gold" onclick="addCoupon()">تفعيل الكوبون ✅</button>
+        <div id="couponsList"></div>
+    </div>
+
+    <div class="section">
+        <h3>☕ إضافة صنف جديد</h3>
+        <label>الاسم (عربي)</label><input type="text" id="itemAr">
+        <label>الاسم (EN)</label><input type="text" id="itemEn">
+        <label>السعر</label><input type="number" id="itemPrice">
+        <label>رابط الصورة</label><input type="text" id="itemImg">
+        <label>توجيه الطلب</label>
+        <select id="itemDept">
+            <option value="barista">☕ شاشة الباريستا</option>
+            <option value="kitchen">🍔 شاشة المطبخ</option>
+            <option value="dessert">🍰 شاشة الحلا</option>
+        </select>
+        <button class="btn-save" onclick="addItem()">إضافة للمنيو ✅</button>
+    </div>
+
+    <div class="section">
+        <h3>📋 المنيو الحالي</h3>
+        <div id="itemsList"></div>
+    </div>
+
+    <div class="section">
+        <h3>➕ الإضافات</h3>
+        <label>اسم الإضافة</label><input type="text" id="extAr">
+        <label>السعر</label><input type="number" id="extPrice" value="0">
+        <button class="btn-save" onclick="addExtra()">إضافة خيار ✅</button>
+        <div id="extrasList"></div>
     </div>
 </div>
 
@@ -186,261 +119,134 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    const TARGET_LAT = 21.521256;
-    const TARGET_LON = 39.156226;
-    const ALLOWED_DISTANCE = 0.50; 
+    function checkPass() {
+        if(document.getElementById('passInput').value === 'Lovely333') {
+            document.getElementById('lock-screen').style.display = 'none';
+            document.getElementById('adminContent').style.display = 'block';
+            loadData();
+        } else { alert("كلمة السر خطأ!"); }
+    }
 
-    let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
-    let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
-    let discountValReal = 0; let discountType = "percent"; let activePromo = "";
-
-    window.onload = () => {
-        validateGeo(() => {
-            document.getElementById('geo-shield').style.display = 'none';
-            document.getElementById('welcome-screen').style.display = 'flex';
-        }, () => {
-            document.getElementById('geo-status').innerText = "❌ خارج نطاق الإمبراطورية (حي النسيم)";
+    // دالة حفظ الأصوات الجديدة
+    function saveAudioSettings() {
+        const audioData = {
+            welcome: document.getElementById('welcomeMsgInput').value,
+            ready: document.getElementById('readyMsgInput').value,
+            msgText: document.getElementById('toastMsgInput').value
+        };
+        database.ref('settings/audio').set(audioData);
+        // سطر الحماية
+        database.ref('settings').update({ pass: 'Lovely333' }).then(() => {
+            alert("تم تحديث التنبيهات الصوتية بنجاح! 😎");
         });
-    };
-
-    function validateGeo(onSuccess, onError) {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                const dist = calculateDist(pos.coords.latitude, pos.coords.longitude, TARGET_LAT, TARGET_LON);
-                if (dist <= ALLOWED_DISTANCE) onSuccess(); else onError();
-            }, onError, { enableHighAccuracy: true });
-        } else { alert("GPS غير مدعوم"); }
     }
 
-    function calculateDist(lat1, lon1, lat2, lon2) {
-        const R = 6371;
-        const dLat = (lat2-lat1) * Math.PI/180;
-        const dLon = (lon2-lon1) * Math.PI/180;
-        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    }
-
-    database.ref('settings').on('value', snap => {
-        const s = snap.val();
-        if(s) {
-            // 🎨 جزء البراند والمظهر (الخانات اللي تحت في لوحة التحكم)
-            if(s.branding) {
-                document.getElementById('nameW').innerText = s.branding.name || "Alpha Shadow";
-                document.getElementById('logoW').src = s.branding.logo || "";
-                
-                // ربط خانة "رابط صورة الخلفية" من لوحة التحكم بالسورس كود
-                if(s.branding.bg) {
-                    document.body.style.backgroundImage = `url('${s.branding.bg}')`;
-                    document.body.style.backgroundSize = "cover";
-                    document.body.style.backgroundPosition = "center";
-                    document.body.style.backgroundAttachment = "fixed";
-                }
-            }
-            // 🔊 جزء التنبيهات والتحكم الصوتي (الخانات اللي فوق - ملمستهاش)
-            if(s.audio) {
-                welcomeAudio = s.audio.welcome;
-                readyAudio = s.audio.ready;
-                successMsg = s.audio.msgText;
-            }
+    function addOffer() {
+        const img = document.getElementById('offerImg').value;
+        if(img) { 
+            database.ref('offers').push({ img }); 
+            database.ref('settings').update({ pass: 'Lovely333' });
+            document.getElementById('offerImg').value = ''; 
         }
-    });
+    }
 
-    database.ref('extras_options').on('value', snap => {
-        extrasStr = `<option value="">بدون إضافات</option>`;
-        snap.forEach(c => extrasStr += `<option value="${c.val().en}" data-ar="${c.val().ar}" data-p="${c.val().price}">${c.val().ar}</option>`);
-        loadMenu();
-    });
+    function addCoupon() {
+        const code = document.getElementById('couponCode').value.trim();
+        const type = document.getElementById('discountType').value;
+        const val = document.getElementById('couponValue').value;
+        if(code && val) {
+            database.ref('coupons').child(code).set({ type: type, discount: parseFloat(val) });
+            database.ref('settings').update({ pass: 'Lovely333' });
+            alert("تم التفعيل بنجاح!");
+            document.getElementById('couponCode').value = ''; document.getElementById('couponValue').value = '';
+        }
+    }
 
-    function loadMenu() {
-        database.ref('menu_items').on('value', snap => {
+    function addItem() {
+        const ar = document.getElementById('itemAr').value;
+        const en = document.getElementById('itemEn').value;
+        const price = document.getElementById('itemPrice').value;
+        const img = document.getElementById('itemImg').value;
+        const dept = document.getElementById('itemDept').value;
+        if(ar && price) { 
+            database.ref('menu_items').push({ ar, en, price: parseFloat(price), img, dept }); 
+            database.ref('settings').update({ pass: 'Lovely333' });
+            alert("تمت الإضافة!"); 
+        }
+    }
+
+    function addExtra() {
+        const ar = document.getElementById('extAr').value;
+        const price = document.getElementById('extPrice').value;
+        if(ar) { 
+            database.ref('extras_options').push({ ar, price: parseFloat(price) }); 
+            database.ref('settings').update({ pass: 'Lovely333' });
+        }
+    }
+
+    function saveSettings(type) {
+        if(type === 'branding') {
+            database.ref('settings/branding').update({
+                name: document.getElementById('cafeName').value,
+                logo: document.getElementById('logoUrl').value,
+                bg: document.getElementById('bgUrl').value
+            });
+            // سطر الحماية وتحديث الخلفية
+            database.ref('settings').update({ pass: 'Lovely333' }).then(() => {
+                alert("تم تحديث الخلفية والبراند بنجاح! 🚀");
+            });
+        }
+    }
+
+    function loadData() {
+        // تحميل إعدادات الصوت والرسائل
+        database.ref('settings/audio').once('value', snap => {
+            const d = snap.val();
+            if(d) {
+                document.getElementById('welcomeMsgInput').value = d.welcome || "";
+                document.getElementById('readyMsgInput').value = d.ready || "";
+                document.getElementById('toastMsgInput').value = d.msgText || "";
+            }
+        });
+
+        database.ref('offers').on('value', snap => {
+            let h = "";
+            snap.forEach(child => { h += `<div class="item-row"><img src="${child.val().img}" width="50"> <button class="btn-del" onclick="database.ref('offers/${child.key}').remove(); database.ref('settings').update({ pass: 'Lovely333' });">حذف</button></div>`; });
+            document.getElementById('offersList').innerHTML = h;
+        });
+
+        database.ref('coupons').on('value', snap => {
             let h = "";
             snap.forEach(child => {
-                const item = child.val();
-                const itemDept = item.dept ? item.dept.toLowerCase().trim() : 'barista'; 
-                h += `<div class="item-card">
-                    <img src="${item.img}">
-                    <h4>${item.ar}</h4>
-                    <span style="color:var(--gold);font-weight:700;display:block;margin-bottom:10px;">${item.price} ريال</span>
-                    <select class="extra-sel" id="ex-${child.key}">${extrasStr}</select>
-                    <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price},'${itemDept}')">إضافة +</button>
-                </div>`;
+                const data = child.val();
+                const sign = data.type === 'percent' ? '%' : 'ريال';
+                h += `<div class="item-row"><span><b>${child.key}</b> (خصم ${data.discount} ${sign})</span> <button class="btn-del" onclick="database.ref('coupons/${child.key}').remove(); database.ref('settings').update({ pass: 'Lovely333' });">حذف</button></div>`;
             });
-            document.getElementById('menu').innerHTML = h;
+            document.getElementById('couponsList').innerHTML = h;
         });
-    }
 
-    function startOrder(type) {
-        oType = type; tNum = document.getElementById('tblNo').value;
-        if(type === 'محلي' && !tNum) return alert("الرجاء إدخال رقم الطاولة");
-        document.getElementById('typeLbl').innerText = type;
-        document.getElementById('tblLbl').innerText = tNum ? `(طاولة ${tNum})` : "";
-        document.getElementById('welcome-screen').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('welcome-screen').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-            if(welcomeAudio) talk(welcomeAudio);
-        }, 500);
-    }
-
-    function addToCart(k, ar, en, p, dept) {
-        const s = document.getElementById('ex-'+k);
-        const exEn = s.value; 
-        const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
-        const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
-        const existingItem = cart.find(i => i.k === k && i.exEn === exEn);
-        if (existingItem) { 
-            existingItem.qty += 1; 
-        } 
-        else { 
-            cart.push({k, ar, en, p, exAr, exEn, exP, qty: 1, dept: dept}); 
-        }
-        talk(en + (exEn ? " with " + exEn : ""));
-        renderCart();
-    }
-
-    function renderCart() {
-        let h = ""; let subTotal = 0;
-        cart.forEach((i, x) => {
-            let itemTotal = (i.p + i.exP) * i.qty;
-            subTotal += itemTotal;
-            h += `<div class="cart-item">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span class="item-name"><span class="item-qty">${i.qty}x</span> ${i.ar}</span>
-                        <span>${itemTotal.toFixed(2)} ريال </span>
-                    </div>
-                    ${i.exAr ? `<div style="color:var(--gold); font-size:13px; margin-top:5px;">+ إضافة: ${i.exAr}</div>` : ''}
-                    <div style="margin-top:10px;">
-                        <button onclick="updateQty(${x}, -1)" style="border:none;background:rgba(255,255,255,0.1);color:#fff;padding:5px 15px;border-radius:8px;cursor:pointer;">➖</button>
-                        <button onclick="updateQty(${x}, 1)" style="border:none;background:rgba(255,255,255,0.1);color:#fff;padding:5px 15px;border-radius:8px;cursor:pointer;margin-right:5px;">➕</button>
-                    </div>
-                  </div>`;
+        database.ref('menu_items').on('value', snap => {
+            let h = "";
+            snap.forEach(child => { h += `<div class="item-row"><span>${child.val().ar}</span><button class="btn-del" onclick="database.ref('menu_items/${child.key}').remove(); database.ref('settings').update({ pass: 'Lovely333' });">حذف</button></div>`; });
+            document.getElementById('itemsList').innerHTML = h;
         });
-        let dAmt = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
-        let finalT = subTotal - dAmt;
-        document.getElementById('total').innerText = (finalT < 0 ? 0 : finalT).toFixed(2);
-        document.getElementById('cartList').innerHTML = h;
-        if(dAmt > 0) {
-            document.getElementById('discountInfo').style.display='flex';
-            document.getElementById('discountVal').innerText = `-${dAmt.toFixed(2)} ريال`;
-        } else {
-            document.getElementById('discountInfo').style.display='none';
-        }
-    }
 
-    function applyPromo() {
-        const code = document.getElementById('promoCode').value.trim().toUpperCase();
-        if (!code) return showToast("الرجاء إدخال الكود أولاً");
+        database.ref('extras_options').on('value', snap => {
+            let h = "";
+            snap.forEach(child => { h += `<div class="item-row">${child.val().ar} <button class="btn-del" onclick="database.ref('extras_options/${child.key}').remove(); database.ref('settings').update({ pass: 'Lovely333' });">حذف</button></div>`; });
+            document.getElementById('extrasList').innerHTML = h;
+        });
 
-        database.ref('coupons/' + code).once('value', snap => {
-            const promo = snap.val();
-            if (promo) {
-                let val = promo.value || promo.discount || promo.amount || 0;
-                discountValReal = parseFloat(val);
-                let type = (promo.type || "").toString().toLowerCase();
-                if (type.includes("نسبة") || type === "percent") {
-                    discountType = "percent";
-                } else {
-                    discountType = "fixed";
-                }
-                activePromo = code;
-                showToast(`✅ تم تفعيل خصم: ${discountValReal}${discountType === 'percent' ? '%' : ' ريال'}`);
-                renderCart();
-            } else {
-                discountValReal = 0; activePromo = "";
-                showToast("❌ كود الخصم غير صحيح");
-                renderCart();
+        database.ref('settings/branding').once('value', snap => {
+            const s = snap.val();
+            if(s) { 
+                document.getElementById('cafeName').value = s.name || ""; 
+                document.getElementById('logoUrl').value = s.logo || ""; 
+                document.getElementById('bgUrl').value = s.bg || ""; 
             }
         });
-    }
-
-    function updateQty(index, change) {
-        cart[index].qty += change;
-        if (cart[index].qty <= 0) cart.splice(index, 1);
-        renderCart();
-    }
-
-    function talk(t) {
-        window.speechSynthesis.cancel();
-        const m = new SpeechSynthesisUtterance(t); m.lang = 'en-US';
-        window.speechSynthesis.speak(m);
-    }
-
-    function submitOrder() {
-        if(!cart.length) return alert("السلة فارغة");
-        
-        validateGeo(() => {
-            const finalTotal = document.getElementById('total').innerText;
-            const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
-            let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
-            
-            const deptsNeeded = [...new Set(cart.map(item => (item.dept || 'barista').toLowerCase().trim()))];
-
-            // دمج الاسم مع الإضافة للشاشات مع الحفاظ على المنطق
-            const finalItemsForSystem = cart.map(item => {
-                return {
-                    ...item,
-                    ar: item.exAr ? `${item.ar} [+${item.exAr}]` : item.ar
-                };
-            });
-
-            const orderData = {
-                items: finalItemsForSystem,
-                type: oType, 
-                table: tNum || 'سفري',
-                notes: document.getElementById('notes').value, 
-                promoUsed: activePromo, 
-                discountAmount: dAmount.toFixed(2),
-                totalPrice: finalTotal, 
-                status: 'قيد التحضير ⏳',
-                time: new Date().toLocaleTimeString('ar-SA'),
-                deptsNeeded: deptsNeeded,
-                baristaReady: false, 
-                kitchenReady: false, 
-                dessertReady: false
-            };
-
-            const orderRef = database.ref('live_orders').push();
-            currentOrderId = orderRef.key;
-            orderRef.set(orderData);
-
-            document.getElementById('order-status-bar').style.display = 'block';
-            
-            database.ref('live_orders/' + currentOrderId).on('value', s => {
-                const order = s.val();
-                if(order) {
-                    const statusElement = document.getElementById('order-status-bar');
-                    let allDeptsDone = true;
-                    if(order.deptsNeeded.includes('barista') && !order.baristaReady) allDeptsDone = false;
-                    if(order.deptsNeeded.includes('kitchen') && !order.kitchenReady) allDeptsDone = false;
-                    if(order.deptsNeeded.includes('dessert') && !order.dessertReady) allDeptsDone = false;
-
-                    if (allDeptsDone) {
-                        statusElement.innerText = "حالة الطلب: جاهز للاستلام ✅";
-                        statusElement.style.background = "var(--gold)";
-                        statusElement.style.color = "#000";
-                        if(readyAudio) talk(readyAudio);
-                        showToast(successMsg || "طلبك جاهز! تفضل للاستلام");
-                    } else {
-                        statusElement.innerText = "حالة الطلب: " + (order.status || "قيد التحضير ⏳");
-                    }
-                }
-            });
-
-            let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'[طاولة '+tNum+']':''}\n`;
-            cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
-            msg += `\n*الإجمالي النهائي*: ${finalTotal} ريال`;
-            
-            window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-            
-            cart = []; renderCart(); activePromo = ""; discountValReal = 0;
-            showToast("تم إرسال الطلب بنجاح! 🎉");
-        }, () => alert("❌ فشل التحقق الجغرافي: يجب التواجد داخل الفرع لإتمام الطلب"));
-    }
-
-    function showToast(m) {
-        const t = document.getElementById('toast'); t.innerText = m;
-        t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 5000);
-    }
+    } 
 </script>
 </body>
 </html>
+
