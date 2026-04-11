@@ -167,11 +167,7 @@
         <button class="send-btn" onclick="submitOrder()">إرسال الطلب ✅</button>
     </div>
 </div>
-database.ref('slider_images').on('value', snap => {
-    let sliderHtml = "";
-    snap.forEach(child => { sliderHtml += `<img src="${child.val()}" class="slider-img">`; });
-    document.getElementById('slider').innerHTML = sliderHtml;
-});
+
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
@@ -181,6 +177,16 @@ database.ref('slider_images').on('value', snap => {
     };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
+    const database = firebase.database(); // ده سطر 179 اللي عندك
+
+    // ضيف الكود هنا بالظبط:
+    database.ref('slider_images').on('value', snap => {
+        let sliderHtml = "";
+        snap.forEach(child => { 
+            sliderHtml += `<img src="${child.val()}" class="slider-img">`; 
+        });
+        document.getElementById('slider').innerHTML = sliderHtml;
+    });
 
     const TARGET_LAT = 21.522492;
     const TARGET_LON = 39.229700;
