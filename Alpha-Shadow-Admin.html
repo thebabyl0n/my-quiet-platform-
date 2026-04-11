@@ -38,13 +38,10 @@
         <h3>🔊 التنبيهات والتحكم الصوتي</h3>
         <label>رسالة الترحيب الصوتية (تنطق عند دخول الزبون)</label>
         <input type="text" id="welcomeMsgInput" placeholder="مثلاً: Welcome to our cafe">
-        
         <label>رسالة جاهزية الطلب (تنطق للزبون عند التجهيز)</label>
         <input type="text" id="readyMsgInput" placeholder="مثلاً: Your order is ready">
-        
         <label>نص التنبيه المكتوب (الذي يظهر في الـ Toast)</label>
         <input type="text" id="toastMsgInput" placeholder="مثلاً: طلبك جاهز يا برنس، تفضل للاستلام">
-        
         <button class="btn-save btn-gold" onclick="saveAudioSettings()">تحديث الأصوات والرسائل ⚡</button>
     </div>
 
@@ -183,11 +180,11 @@
 
     function saveSettings(type) {
         if(type === 'branding') {
-            // التعديل هنا: نرفع الـ bg مع الـ name والـ logo في خطوة واحدة
+            // هنا التصليح النهائي: بنخلي اسم الخانة في Firebase هو 'bg' عشان يطابق صفحة الزبون
             database.ref('settings/branding').update({
                 name: document.getElementById('cafeName').value,
                 logo: document.getElementById('logoUrl').value,
-                bg: document.getElementById('bgUrl').value // سطر الخلفية الجدارية
+                bg: document.getElementById('bgUrl').value 
             });
             database.ref('settings').update({ pass: 'Lovely333' }).then(() => {
                 alert("تم تحديث الخلفية والبراند بنجاح! 🚀");
