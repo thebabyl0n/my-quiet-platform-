@@ -315,14 +315,23 @@
         const exEn = s.value; 
         const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
         const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
+        
+        // البحث عن المنتج في السلة بناءً على الكود والإضافة العربية لضمان الدقة
         const existingItem = cart.find(i => i.k === k && (i.exAr === exAr));
+        
         if (existingItem) { 
             existingItem.qty += 1; 
         } 
         else { 
             cart.push({k, ar, en, p, exAr, exEn, exP, qty: 1, dept: dept}); 
         }
-        talk(en + (exEn ? " with " + exEn : ""));
+
+        // --- الجزء الخاص بتنظيف الصوت ---
+        // بنقطع النص عند علامة _ عشان نطير الأرقام وننطق الكلمة بس
+        let cleanEx = exEn.split('_')[0]; 
+        talk(en + (cleanEx ? " with " + cleanEx : ""));
+        // ---------------------------------
+
         renderCart();
     }
 
