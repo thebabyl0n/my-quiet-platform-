@@ -234,11 +234,14 @@
   }
     // دالة إضافة الخيارات (الإضافات) - دي اللي كانت ناقصة يا حودة
     function addExtra() {
-        const ar = document.getElementById('extAr').value;
+        const ar = document.getElementById('extAr').value.trim();
         const price = document.getElementById('extPrice').value;
+        
         if(ar) {
             database.ref('extras_options').push({
                 ar: ar,
+                // السطر اللي جاي ده هو اللي بيحل مشكلة التكرار (بيعمل اسم EN وهمي من العربي)
+                en: ar.replace(/\s/g, "_").toLowerCase() + "_" + Date.now(),
                 price: parseFloat(price) || 0
             }).then(() => {
                 alert("تم إضافة الخيار بنجاح! ✅");
