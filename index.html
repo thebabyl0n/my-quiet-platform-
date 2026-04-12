@@ -210,6 +210,27 @@
         const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
+    // جلب صور العروض من قسم offers وتحديث السلايدر تلقائياً
+    database.ref('offers').on('value', snap => {
+        let sliderHtml = "";
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const data = child.val();
+                // التأكد إن فيه رابط صورة موجود عشان ميطلعش إطار فاضي
+                if(data && data.img){
+                    sliderHtml += `<img src="${data.img}" class="slider-img">`;
+                }
+            });
+        } else {
+            // رسالة بديلة أو صورة افتراضية لو مفيش عروض حالياً
+            sliderHtml = `<p style="text-align:center; width:100%; color:var(--gold);">انتظروا عروضنا الملكية قريباً...</p>`;
+        }
+        
+        const sliderDiv = document.getElementById('slider');
+        if(sliderDiv) {
+            sliderDiv.innerHTML = sliderHtml;
+        }
+    });
 
     database.ref('settings').on('value', snap => {
         const s = snap.val();
@@ -294,7 +315,7 @@
         const exEn = s.value; 
         const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
         const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
-        const existingItem = cart.find(i => i.k === k && i.exEn === exEn);
+        const existingItem = cart.find(i => i.k === k && (i.exAr === exAr));
         if (existingItem) { 
             existingItem.qty += 1; 
         } 
