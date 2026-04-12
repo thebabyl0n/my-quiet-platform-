@@ -179,7 +179,7 @@
     const database = firebase.database();
 
     // كود العروض (Slider) - يتحط هنا مرة واحدة بس
-    database.ref('slider_images').on('value', snap => {
+    database.ref('offers').on('value', snap => {
         let sliderHtml = "";
         snap.forEach(child => { 
             sliderHtml += `<img src="${child.val()}" class="slider-img">`; 
@@ -262,31 +262,21 @@
     });
 
     // 2. تحديث كود الإضافات (التحميل الآمن)
-database.ref('extras_options').on('value', snap => {
-    let tempExtras = `<option value="" data-p="0">بدون إضافات</option>`;
-
-    if (!snap.exists()) {
-        extrasStr = tempExtras;
-        loadMenu();
-        return;
-    }
-
-    snap.forEach(c => {
-        const data = c.val();
-        if (data && data.ar) {
-            tempExtras += `
-                <option 
-                    value="${data.en || ''}" 
-                    data-ar="${data.ar}" 
-                    data-p="${parseFloat(data.price) || 0}">
-                    ${data.ar} (+${data.price || 0} ريال)
-                </option>`;
-        }
+    database.ref('extras_options').on('value', snap => {
+        // بنصفر القائمة ونبنيها من جديد لو حصل تغيير في لوحة التحكم
+        let tempExtras = `<option value="" data-p="0">بدون إضافات</option>`;
+        
+        snap.forEach(c => {
+            const data = c.val();
+            if(data.ar) {
+                // بنحط السعر في data-p عشان الحسابات تشتغل صح في السلة
+                tempExtras += `<option value="${data.en || ''}" data-ar="${data.ar}" data-p="${data.price || 0}">${data.ar} (+${data.price || 0} ريال)</option>`;
+            }
+        });
+        
+        extrasStr = tempExtras; // بنحدث المتغير العام
+        loadMenu(); // دلوقتي المنيو يشتغل وهو مطمن إن الإضافات موجودة
     });
-
-    extrasStr = tempExtras;
-    loadMenu();
-});
 
     function loadMenu() {
         database.ref('menu_items').on('value', snap => {
