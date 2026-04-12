@@ -100,33 +100,52 @@
             margin-top: 40px; background: rgba(255,255,255,0.03); 
             padding: 20px; border-radius: 25px; border: 1px solid rgba(200, 162, 124, 0.2); 
         }
+
+        /* تعديل أزرار الزائد والناقص - دهبي غامق */
         .cart-item button {
-            border: 1px solid var(--gold); 
+            border: 1px solid #a67c52; 
             background: #0f141e; 
-            color: #ffffff; 
+            color: #c8a27c; 
             padding: 8px 15px; 
-            border-radius: 50px; /* خليهم مدورين */
+            border-radius: 50px; 
             cursor: pointer;
             font-weight: bold;
-            font-size: 16px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5); /* ظل عشان الزرار يبان بارز */
+            font-size: 18px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             margin-right: 5px;
             transition: 0.3s;
         }
+
         .cart-item button:active {
-            background: var(--gold);
+            background: #a67c52;
             color: #000;
         }
         
         .total-price { 
-            font-size: 26px; font-weight: 900; color: #ffffff; /* أبيض صريح عشان ينور */
+            font-size: 26px; font-weight: 900; color: #ffffff; 
             text-align: center; margin: 25px 0; 
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.9); /* ظل أسود خلف النص عشان يبرزه */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
         }
 
         .promo-container { display: flex; gap: 8px; margin-bottom: 15px; }
-        .promo-input { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; outline: none; }
-        .promo-btn { background: var(--gold); border: none; padding: 0 20px; border-radius: 12px; color: #000; font-weight: bold; cursor: pointer; }
+
+        /* تعديل مربع كود الخصم - دهبي غامق */
+        .promo-input { 
+            flex: 1; 
+            padding: 12px; 
+            border-radius: 12px; 
+            border: 1px solid #a67c52; 
+            background: rgba(255,255,255,0.05); 
+            color: #c8a27c; 
+            outline: none; 
+        }
+
+        /* تعديل لون جملة "لديك كود خصم" */
+        .promo-input::placeholder {
+            color: #a67c52;
+            opacity: 0.8;
+        }
+
 
         .discount-row { display: flex; justify-content: space-between; color: #ff4d4d; font-weight: bold; margin-bottom: 10px; font-size: 14px; }
 
