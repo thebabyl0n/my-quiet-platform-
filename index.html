@@ -154,29 +154,10 @@
             width: 100%; padding: 18px; border-radius: 20px; 
             font-size: 18px; font-weight: bold; box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
         }
-                /* دريم - شاشة الاستقبال الملكية */
-        #dream-overlay {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 12000; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        #dreamVideo {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
     </style>
 </head>
 <body>
-<div id="dream-overlay">
-    <video id="dreamVideo" autoplay muted playsinline>
-        <source src="dream.mp4" type="video/mp4">
-    </video>
-</div>
+
 <div id="toast"></div>
 
 <div id="geo-shield">
@@ -512,48 +493,52 @@
         }, () => alert("❌ فشل التحقق الجغرافي: يجب التواجد داخل الفرع لإتمام الطلب"));
     }
 
-    (function() {
-    const v = document.getElementById('dreamVideo');
-    const o = document.getElementById('dream-overlay');
-
-    if (v) {
-        v.muted = false;
-        v.onended = function() {
-            if (o) {
-                o.style.display = 'none'; // دي اللي هتفتح لك الموقع
-                // رجعنا الدوال الأساسية اللي كانت بتتمسح
-                document.getElementById('geo-shield').style.display = 'none';
-                document.getElementById('welcome-screen').style.display = 'flex';
-            }
-        };
+    function showToast(m) {
+        const t = document.getElementById('toast'); t.innerText = m;
+        t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 5000);
     }
-
-    // كود المايك (النبضة الذكية)
+    // تفعيل عقل دريم
     const micBtn = document.getElementById('ai-chat-trigger');
     if (micBtn) {
-        micBtn.onclick = async () => {
-            const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            rec.lang = 'ar-SA';
-            rec.start();
-            rec.onresult = async (e) => {
-                const query = e.results[0][0].transcript;
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyB3vJKyLfKtn5gaTtZ4nxWl8vaZyF4MA5Y`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: "ردي بلهجة سعودية قصيرة جداً: " + query }] }] })
-                });
-                const data = await res.json();
-                const reply = data.candidates[0].content.parts[0].text;
-                window.speechSynthesis.cancel();
-                const msg = new SpeechSynthesisUtterance(reply);
-                msg.lang = 'ar-SA';
-                window.speechSynthesis.speak(msg);
+        micBtn.onclick = () => {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'ar-SA';
+            recognition.start();
+            showToast("دريم بتسمعك... 🎤");
+
+            recognition.onresult = async (event) => {
+                const query = event.results[0][0].transcript;
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyB3vJKyLfKtn5gaTtZ4nxWl8vaZyF4MA5Y`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: "أنتِ دريم مساعدة كافيه ألفا شادو بجدة. ردي بلهجة سعودية فخمة وقصيرة جداً: " + query }] }]
+                        })
+                    });
+                    const data = await response.json();
+                    const reply = data.candidates[0].content.parts[0].text;
+
+                    window.speechSynthesis.cancel();
+                    const msg = new SpeechSynthesisUtterance(reply);
+                    msg.lang = 'ar-SA';
+                    msg.pitch = 1.2;
+                    window.speechSynthesis.speak(msg);
+                    showToast("دريم: " + reply);
+                } catch (e) { console.error(e); }
             };
         };
     }
 
 </script>
 
+<div id="ai-chat-trigger" style="position: fixed; bottom: 30px; right: 30px; z-index: 13000; cursor: pointer;">
+    <div style="background: var(--gold); width: 65px; height: 65px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 5px 20px rgba(200, 162, 124, 0.4); border: 2px solid rgba(255,255,255,0.2);">
+        <span style="font-size: 32px;">🎤</span>
+    </div>
+    <div style="color: var(--gold); text-align: center; font-size: 11px; margin-top: 5px; font-weight: bold; background: rgba(0,0,0,0.5); border-radius: 10px; padding: 2px;">اسأل دريم</div>
+</div>
+
 </body>
 </html>
-
