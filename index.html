@@ -513,63 +513,45 @@
     }
 
     (function() {
-        const v = document.getElementById('dreamVideo');
-        const o = document.getElementById('dream-overlay');
-        const API_KEY = "AIzaSyB3vJKyLfKtn5gaTtZ4nxWl8vaZyF4MA5Y"; 
+    const v = document.getElementById('dreamVideo');
+    const o = document.getElementById('dream-overlay');
 
-        if (v) {
-            v.muted = false;
-            v.onended = function() {
-                if (o) {
-                    o.style.transition = 'opacity 1.5s ease';
-                    o.style.opacity = '0';
-                    setTimeout(() => { o.style.display = 'none'; }, 1500);
-                }
+    if (v) {
+        v.muted = false;
+        v.onended = function() {
+            if (o) {
+                o.style.display = 'none'; // دي اللي هتفتح لك الموقع
+                // رجعنا الدوال الأساسية اللي كانت بتتمسح
+                document.getElementById('geo-shield').style.display = 'none';
+                document.getElementById('welcome-screen').style.display = 'flex';
+            }
+        };
+    }
+
+    // كود المايك (النبضة الذكية)
+    const micBtn = document.getElementById('ai-chat-trigger');
+    if (micBtn) {
+        micBtn.onclick = async () => {
+            const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            rec.lang = 'ar-SA';
+            rec.start();
+            rec.onresult = async (e) => {
+                const query = e.results[0][0].transcript;
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyB3vJKyLfKtn5gaTtZ4nxWl8vaZyF4MA5Y`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "ردي بلهجة سعودية قصيرة جداً: " + query }] }] })
+                });
+                const data = await res.json();
+                const reply = data.candidates[0].content.parts[0].text;
+                window.speechSynthesis.cancel();
+                const msg = new SpeechSynthesisUtterance(reply);
+                msg.lang = 'ar-SA';
+                window.speechSynthesis.speak(msg);
             };
-        }
+        };
+    }
 
-        // تفعيل المايك بضغطة الزرار الدهبي
-        const micBtn = document.getElementById('ai-chat-trigger');
-        if (micBtn) {
-            micBtn.addEventListener('click', () => {
-                const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-                recognition.lang = 'ar-SA';
-                recognition.start();
-                
-                // أول ما تضغط المايك، دريم بتستعد
-                if(v) { v.play(); v.muted = true; }
-
-                recognition.onresult = async (event) => {
-                    const query = event.results[0][0].transcript;
-                    
-                    try {
-                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ 
-                                contents: [{ parts: [{ text: "أنتِ دريم، مساعدة ذكية في كافيه ألفا شادو بجدة. محمود صلاح هو القائد والإمبراطور. ردي بلهجة سعودية فخمة ومختصرة جداً: " + query }] }] 
-                            })
-                        });
-
-                        const data = await res.json();
-                        if(data.candidates && data.candidates[0].content.parts[0].text) {
-                            const reply = data.candidates[0].content.parts[0].text;
-
-                            // 🔊 النطق (ده اللي هيثبت إنك عبقري)
-                            window.speechSynthesis.cancel();
-                            const msg = new SpeechSynthesisUtterance(reply);
-                            msg.lang = 'ar-SA';
-                            msg.pitch = 1.3; 
-                            msg.rate = 0.85; 
-                            window.speechSynthesis.speak(msg);
-                        }
-                    } catch (e) {
-                        // لو النت غدر بينا، هنسكت بوقار
-                    }
-                };
-            });
-        }
-    })();
 </script>
 
 </body>
