@@ -154,10 +154,29 @@
             width: 100%; padding: 18px; border-radius: 20px; 
             font-size: 18px; font-weight: bold; box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
         }
+                /* دريم - شاشة الاستقبال الملكية */
+        #dream-overlay {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 12000; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #dreamVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
     </style>
 </head>
 <body>
-
+<div id="dream-overlay">
+    <video id="dreamVideo" autoplay muted playsinline>
+        <source src="dream.mp4" type="video/mp4">
+    </video>
+</div>
 <div id="toast"></div>
 
 <div id="geo-shield">
@@ -494,9 +513,37 @@
     }
 
     function showToast(m) {
-        const t = document.getElementById('toast'); t.innerText = m;
-        t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 5000);
+        const t = document.getElementById('toast'); 
+        if(t) {
+            t.innerText = m;
+            t.classList.add('show'); 
+            setTimeout(() => t.classList.remove('show'), 5000);
+        }
     }
 </script>
+
+<script>
+    (function() {
+        const v = document.getElementById('dreamVideo');
+        const o = document.getElementById('dream-overlay');
+
+        if (v) {
+            v.muted = false; // تفعيل الصوت
+            v.onended = function() {
+                if (o) {
+                    o.style.transition = 'opacity 1.5s ease';
+                    o.style.opacity = '0';
+                    setTimeout(() => { o.style.display = 'none'; }, 1500);
+                }
+            };
+        }
+
+        document.addEventListener('click', () => {
+            if (v && v.paused) { v.play(); v.muted = false; }
+        }, { once: true });
+    })();
+</script>
+
 </body>
 </html>
+
