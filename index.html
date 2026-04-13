@@ -511,6 +511,12 @@
             showToast("تم إرسال الطلب بنجاح! 🎉");
         }, () => alert("❌ فشل التحقق الجغرافي: يجب التواجد داخل الفرع لإتمام الطلب"));
     }
+    <div id="ai-chat-trigger" style="position: fixed; bottom: 30px; right: 30px; z-index: 13000; cursor: pointer;">
+    <div style="background: var(--gold); width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 20px rgba(200, 162, 124, 0.5);">
+        <span style="font-size: 30px;">🎤</span>
+    </div>
+    <p style="color: var(--gold); text-align: center; font-size: 12px; margin-top: 5px; font-weight: bold;">تحدث مع دريم</p>
+</div>
 
     (function() {
         const v = document.getElementById('dreamVideo');
