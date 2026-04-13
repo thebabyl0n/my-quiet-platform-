@@ -522,13 +522,20 @@
     }
 </script>
 
+<div id="ai-chat-trigger" style="position: fixed; bottom: 30px; right: 30px; z-index: 13000; cursor: pointer;">
+    <div style="background: var(--gold); width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 20px rgba(200, 162, 124, 0.5);">
+        <span style="font-size: 30px;">🎤</span>
+    </div>
+    <p style="color: var(--gold); text-align: center; font-size: 12px; margin-top: 5px; font-weight: bold;">تحدث مع دريم</p>
+</div>
+
 <script>
     (function() {
         const v = document.getElementById('dreamVideo');
         const o = document.getElementById('dream-overlay');
 
         if (v) {
-            v.muted = false; // تفعيل الصوت
+            v.muted = false;
             v.onended = function() {
                 if (o) {
                     o.style.transition = 'opacity 1.5s ease';
@@ -541,6 +548,42 @@
         document.addEventListener('click', () => {
             if (v && v.paused) { v.play(); v.muted = false; }
         }, { once: true });
+
+        // تفعيل الاستماع عند الضغط على الميكروفون
+        const micBtn = document.getElementById('ai-chat-trigger');
+        if (micBtn) {
+            micBtn.addEventListener('click', () => {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    return alert("متصفحك لا يدعم التعرف على الصوت");
+                }
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'ar-SA';
+                
+                showToast("🎤 دريم بتسمعك دلوقتي...");
+                recognition.start();
+
+                recognition.onresult = (event) => {
+                    const speechToText = event.results[0][0].transcript;
+                    processDreamResponse(speechToText);
+                };
+            });
+        }
+
+        function processDreamResponse(text) {
+            let response = "نورت إمبراطوريتنا! أنا دريم، أؤمرني يا غالي تحب تجرب إيه النهاردة؟";
+            
+            if(text.includes("أشرب إيه") || text.includes("ترشحيلي") || text.includes("أفضل")) {
+                response = "لو محتاج نصيحتي، لازم تجرب الـ سبانش لاتيه المثلج بتاعنا، ده المفضل عند الملوك هنا!";
+            } else if(text.includes("عرض") || text.includes("هدايا") || text.includes("خصم")) {
+                response = "أبشر! حالياً فيه عرض على القهوة السوداء، لو طلبتها لك قطعة كوكيز مجاناً من إيدينا.";
+            }
+
+            const msg = new SpeechSynthesisUtterance(response);
+            msg.lang = 'ar-SA';
+            window.speechSynthesis.speak(msg);
+            showToast("💬 دريم: " + response);
+        }
     })();
 </script>
 
