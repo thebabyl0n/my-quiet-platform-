@@ -9,35 +9,35 @@
     <style>
         :root { --gold: #c8a27c; --dark: #0f141e; --card-bg: rgba(255, 255, 255, 0.05); }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
-        .header { text-align: center; padding: 20px; border-bottom: 2px solid var(--gold); margin-bottom: 30px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-        .card { background: var(--card-bg); border: 1px solid var(--gold); padding: 25px; border-radius: 20px; text-align: center; }
-        .card h3 { color: var(--gold); margin: 0; font-size: 18px; }
-        .card span { font-size: 32px; font-weight: bold; display: block; margin-top: 10px; }
-        .table-container { margin-top: 40px; overflow-x: auto; background: var(--card-bg); border-radius: 20px; border: 1px solid rgba(200,162,124,0.2); }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th, td { padding: 15px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .card { background: var(--card-bg); border: 1px solid var(--gold); padding: 20px; border-radius: 15px; text-align: center; }
+        .card h3 { color: var(--gold); margin: 0; font-size: 16px; }
+        .card span { font-size: 28px; font-weight: bold; display: block; margin-top: 5px; }
+        .table-container { margin-top: 30px; overflow-x: auto; background: var(--card-bg); border-radius: 15px; border: 1px solid rgba(200,162,124,0.2); }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
         th { background: var(--gold); color: black; }
+        .timer-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .timer-new { background: #28a745; color: white; }
+        .timer-late { background: #dc3545; color: white; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>📊 لوحة التقارير الإدارية</h1>
-        <p>مراقبة حية للأداء الفعلي</p>
-    </div>
+    <h1 style="text-align:center; color:var(--gold);">📊 لوحة الرقابة والتحليل</h1>
     
     <div class="grid">
         <div class="card">
-            <h3>💰 إجمالي الدخل اليومي</h3>
+            <h3>💰 صافي دخل اليوم</h3>
             <span id="dailySales">0.00</span> <small>ريال</small>
         </div>
         <div class="card">
-            <h3>📊 عدد طلبات اليوم</h3>
-            <span id="ordersCount">0</span> <small>طلب</small>
+            <h3>📊 طلبات جارية</h3>
+            <span id="ordersCount">0</span>
         </div>
         <div class="card">
-            <h3>🏆 الصنف الأكثر طلباً</h3>
+            <h3>🏆 الصنف الأكثر مبيعاً</h3>
             <span id="topItem">-</span>
         </div>
     </div>
@@ -46,11 +46,11 @@
         <table>
             <thead>
                 <tr>
-                    <th>الوقت</th>
-                    <th>نوع الطلب</th>
-                    <th>الأصناف المطلوبة</th>
+                    <th>وقت الطلب</th>
+                    <th>النوع</th>
+                    <th>الأصناف</th>
                     <th>المجموع</th>
-                    <th>الكوبون</th>
+                    <th>مدة الانتظار</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -65,42 +65,61 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // استماع حي - مفيش بيانات وهمية
+    function calculateTimeDiff(orderTime) {
+        try {
+            // تحويل وقت النص (مثلاً ٤:٠١ م) لوقت حقيقي للمقارنة
+            const now = new Date();
+            const [time, period] = orderTime.split(' ');
+            let [hours, minutes] = time.split(':');
+            hours = parseInt(hours);
+            if (period === 'م' && hours !== 12) hours += 12;
+            if (period === 'ص' && hours === 12) hours = 0;
+            
+            const orderDate = new Date();
+            orderDate.setHours(hours, minutes, 0);
+            
+            const diffMs = now - orderDate;
+            const diffMins = Math.floor(diffMs / 60000);
+            return diffMins > 0 ? diffMins : 0;
+        } catch(e) { return 0; }
+    }
+
     database.ref('live_orders').on('value', snap => {
         let totalRev = 0; let oCount = 0; let itemsMap = {}; let rows = "";
 
-        if (snap.exists()) {
-            snap.forEach(child => {
-                const o = child.val();
-                // التأكد إن الأوردر سليم وفيه سعر (عشان نتجنب الـ undefined)
-                if (o.totalPrice && o.totalPrice !== "undefined") {
-                    totalRev += parseFloat(o.totalPrice);
-                    oCount++;
-                    
-                    if (o.items) {
-                        o.items.forEach(i => { itemsMap[i.ar] = (itemsMap[i.ar] || 0) + (i.qty || 1); });
-                    }
+        snap.forEach(child => {
+            const o = child.val();
+            // إصلاح حساب السعر: تحويل لأرقام وحذف أي نصوص
+            let price = parseFloat(String(o.totalPrice).replace(/[^\d.]/g, '')) || 0;
+            totalRev += price;
+            oCount++;
+            
+            if (o.items) {
+                o.items.forEach(i => { itemsMap[i.ar] = (itemsMap[i.ar] || 0) + (i.qty || 1); });
+            }
 
-                    let list = o.items ? o.items.map(i => i.ar).join(' + ') : "---";
-                    rows = `<tr>
-                        <td>${o.time || '--:--'}</td>
-                        <td>${o.type || 'سفري'}</td>
-                        <td>${list}</td>
-                        <td style="color:var(--gold); font-weight:bold;">${o.totalPrice} ريال</td>
-                        <td>${o.promoUsed || '-'}</td>
-                    </tr>` + rows;
-                }
-            });
-        }
+            const waitTime = calculateTimeDiff(o.time);
+            const timerClass = waitTime > 10 ? 'timer-late' : 'timer-new';
+
+            rows = `<tr>
+                <td>${o.time || '--:--'}</td>
+                <td>${o.type || 'سفري'}</td>
+                <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
+                <td style="color:var(--gold); font-weight:bold;">${price.toFixed(2)} ريال</td>
+                <td><span class="timer-badge ${timerClass}">${waitTime} دقيقة</span></td>
+            </tr>` + rows;
+        });
 
         document.getElementById('dailySales').innerText = totalRev.toFixed(2);
         document.getElementById('ordersCount').innerText = oCount;
-        document.getElementById('tableBody').innerHTML = rows || '<tr><td colspan="5">بانتظار أول أوردر ملكي... ⏳</td></tr>';
+        document.getElementById('tableBody').innerHTML = rows || '<tr><td colspan="5">بانتظار العمليات الحالية...</td></tr>';
         
         let top = Object.keys(itemsMap).sort((a, b) => itemsMap[b] - itemsMap[a])[0];
         document.getElementById('topItem').innerText = top || "-";
     });
+
+    // تحديث العداد كل دقيقة تلقائياً
+    setInterval(() => { location.reload(); }, 60000);
 </script>
 </body>
 </html>
-
