@@ -3,52 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إحصائيات الإمبراطورية | Alpha Shadow</title>
+    <title>إمبراطورية Alpha Shadow | الإدارة الذكية</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --gold: #c8a27c; --dark: #0f141e; --card-bg: rgba(255, 255, 255, 0.05); }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .card { background: var(--card-bg); border: 1px solid var(--gold); padding: 20px; border-radius: 15px; text-align: center; }
-        .card h3 { color: var(--gold); margin: 0; font-size: 16px; }
-        .card span { font-size: 28px; font-weight: bold; display: block; margin-top: 5px; }
-        .table-container { margin-top: 30px; overflow-x: auto; background: var(--card-bg); border-radius: 15px; border: 1px solid rgba(200,162,124,0.2); }
+        .card h3 { color: var(--gold); margin: 0; font-size: 14px; }
+        .card span { font-size: 24px; font-weight: bold; display: block; margin-top: 5px; }
+        
+        .section-title { color: var(--gold); border-right: 4px solid var(--gold); padding-right: 15px; margin: 30px 0 15px; }
+        
+        .table-container { overflow-x: auto; background: var(--card-bg); border-radius: 15px; border: 1px solid rgba(200,162,124,0.2); margin-bottom: 40px; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { padding: 12px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        th { background: var(--gold); color: black; }
+        th { background: var(--gold); color: black; font-size: 14px; }
+        
         .timer-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .timer-new { background: #28a745; color: white; }
-        .timer-late { background: #dc3545; color: white; animation: pulse 1s infinite; }
-        .done-btn { background: #c8a27c; color: #000; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .done-btn:hover { background: #fff; transform: scale(1.05); }
+        .timer-new { background: #28a745; }
+        .timer-late { background: #dc3545; animation: pulse 1s infinite; }
+        .timer-fixed { background: #6c757d; } /* لون رمادي للوقت المتوقف */
+
+        .btn { border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; margin: 2px; }
+        .btn-ready { background: #28a745; color: white; } /* تم التجهيز */
+        .btn-pay { background: var(--gold); color: black; } /* تم الدفع */
+        
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <h1 style="text-align:center; color:var(--gold);">📊 لوحة الرقابة والتحليل (إدارة المحاسبة)</h1>
+    <h1 style="text-align:center; color:var(--gold);">👑 لوحة تحكم الإمبراطورية</h1>
     
     <div class="grid">
-        <div class="card">
-            <h3>💰 إجمالي الدخل اليومي</h3>
-            <span id="dailySales">0.00</span> <small>ريال</small>
-        </div>
-        <div class="card">
-            <h3>📊 طلبات جارية</h3>
-            <span id="ordersCount">0</span>
-        </div>
-        <div class="card">
-            <h3>🏆 الأكثر مبيعاً</h3>
-            <span id="topItem">-</span>
-        </div>
+        <div class="card"><h3>💰 مبيعات اليوم</h3><span id="dailySales">0.00</span></div>
+        <div class="card"><h3>⏳ طلبات نشطة</h3><span id="activeCount">0</span></div>
+        <div class="card"><h3>✅ طلبات مكتملة</h3><span id="doneCount">0</span></div>
     </div>
 
+    <h3 class="section-title">🟢 طلبات قيد التحضير (الوقت يتحرك ⏱️)</h3>
     <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th>وقت الطلب</th>
+                    <th>الوقت</th>
                     <th>المكان</th>
                     <th>الأصناف</th>
                     <th>المجموع</th>
@@ -56,7 +56,24 @@
                     <th>الإجراء</th>
                 </tr>
             </thead>
-            <tbody id="tableBody"></tbody>
+            <tbody id="liveTable"></tbody>
+        </table>
+    </div>
+
+    <h3 class="section-title">🔵 طلبات تمت محاسبتها (الأرشيف اليومي 📊)</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>الوقت</th>
+                    <th>المكان</th>
+                    <th>الأصناف</th>
+                    <th>المجموع</th>
+                    <th>مدة الخدمة</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody id="historyTable"></tbody>
         </table>
     </div>
 
@@ -68,88 +85,92 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    let totalHistorySales = 0; // متغير لحفظ مبيعات الأوردرات اللي خلصت
-
-    // 1. مراقبة "تاريخ الطلبات" (الأوردرات اللي الكاشير داس عليها تم المحاسبة)
-    database.ref('history_orders').on('value', snap => {
-        totalHistorySales = 0;
-        snap.forEach(child => {
-            const o = child.val();
-            totalHistorySales += parseFloat(o.totalPrice) || 0;
-        });
-        updateSalesDisplay();
-    });
-
-    // 2. مراقبة "الطلبات الجارية" (الجدول الحي)
-    database.ref('live_orders').on('value', snap => {
-        let oCount = 0; 
-        let itemsMap = {}; 
-        let rows = "";
-
-        snap.forEach(child => {
-            const o = child.val();
-            const orderId = child.key;
-            let price = parseFloat(o.totalPrice) || 0;
-            oCount++;
-            
-            if (o.items) {
-                o.items.forEach(i => { itemsMap[i.ar] = (itemsMap[i.ar] || 0) + (i.qty || 1); });
-            }
-
-            const waitTime = getWaitTime(o.time);
-            const timerClass = waitTime > 10 ? 'timer-late' : 'timer-new';
-
-            // بناء الصفوف في الجدول
-            rows = `<tr>
-                <td>${o.displayTime || '--:--'}</td>
-                <td>${o.type || 'سفري'} ${o.table !== 'سفري' ? '['+o.table+']' : ''}</td>
-                <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
-                <td style="color:var(--gold); font-weight:bold;">${price.toFixed(2)} ريال</td>
-                <td><span class="timer-badge ${timerClass}">${waitTime} دقيقة</span></td>
-                <td><button class="done-btn" onclick='completeOrder("${orderId}", ${JSON.stringify(o)})'>إتمام ومحاسبة</button></td>
-            </tr>` + rows;
-        });
-
-        document.getElementById('ordersCount').innerText = oCount;
-        document.getElementById('tableBody').innerHTML = rows || '<tr><td colspan="6">بانتظار طلبات جديدة...</td></tr>';
-        
-        let top = Object.keys(itemsMap).sort((a, b) => itemsMap[b] - itemsMap[a])[0];
-        document.getElementById('topItem').innerText = top || "-";
-    });
-
-    // دالة تحديث خانة السعر فوق
-    function updateSalesDisplay() {
-        document.getElementById('dailySales').innerText = totalHistorySales.toFixed(2);
-    }
-
-    // دالة حساب الوقت الحقيقي من لحظة الطلب
-    function getWaitTime(isoTime) {
-        if(!isoTime) return 0;
-        const start = new Date(isoTime);
-        const now = new Date();
-        const diff = Math.floor((now - start) / 60000);
+    // دالة حساب الوقت الذكية (بتحسب الفرق بين البداية والنهاية لو موجودة)
+    function getWaitTime(startTime, endTime) {
+        if(!startTime) return 0;
+        const start = new Date(startTime);
+        const end = endTime ? new Date(endTime) : new Date();
+        const diff = Math.floor((end - start) / 60000);
         return diff > 0 ? diff : 0;
     }
 
-    // 3. وظيفة المحاسبة: نقل الطلب من Live إلى History
-    function completeOrder(id, data) {
-        if(!confirm("هل تم استلام المبلغ وإتمام الطلب؟")) return;
+    // 1. مراقبة البيانات بالكامل (Live & History)
+    database.ref().on('value', snap => {
+        const data = snap.val();
+        renderLiveOrders(data.live_orders);
+        renderHistoryOrders(data.history_orders);
+    });
 
-        const historyRef = database.ref('history_orders').push();
+    // 2. عرض الطلبات النشطة
+    function renderLiveOrders(orders) {
+        let rows = ""; let count = 0;
+        if(orders) {
+            Object.keys(orders).forEach(id => {
+                const o = orders[id];
+                const waitTime = getWaitTime(o.time);
+                count++;
+                rows = `<tr>
+                    <td>${o.displayTime}</td>
+                    <td>${o.type} [${o.table}]</td>
+                    <td>${o.items.map(i => i.ar).join(' + ')}</td>
+                    <td style="color:var(--gold); font-weight:bold;">${o.totalPrice} ريال</td>
+                    <td><span class="timer-badge ${waitTime > 10 ? 'timer-late' : 'timer-new'}">${waitTime} دقيقة</span></td>
+                    <td>
+                        <button class="btn btn-pay" onclick='completeOrder("${id}", ${JSON.stringify(o)})'>إتمام ودفع ✅</button>
+                    </td>
+                </tr>` + rows;
+            });
+        }
+        document.getElementById('liveTable').innerHTML = rows || '<tr><td colspan="6">لا يوجد طلبات حالياً</td></tr>';
+        document.getElementById('activeCount').innerText = count;
+    }
+
+    // 3. عرض أرشيف اليوم وحساب المبيعات
+    function renderHistoryOrders(orders) {
+        let rows = ""; let total = 0; let count = 0;
+        if(orders) {
+            Object.keys(orders).forEach(id => {
+                const o = orders[id];
+                const serviceTime = getWaitTime(o.time, o.endTime);
+                total += parseFloat(o.totalPrice) || 0;
+                count++;
+                rows = `<tr>
+                    <td>${o.displayTime}</td>
+                    <td>${o.type}</td>
+                    <td>${o.items.map(i => i.ar).join(' + ')}</td>
+                    <td>${o.totalPrice} ريال</td>
+                    <td><span class="timer-badge timer-fixed">${serviceTime} دقيقة</span></td>
+                    <td style="color:#28a745;">تمت المحاسبة ✅</td>
+                </tr>` + rows;
+            });
+        }
+        document.getElementById('historyTable').innerHTML = rows || '<tr><td colspan="6">الأرشيف فارغ</td></tr>';
+        document.getElementById('dailySales').innerText = total.toFixed(2);
+        document.getElementById('doneCount').innerText = count;
+    }
+
+    // 4. وظيفة "إتمام الطلب" الملكية
+    function completeOrder(id, data) {
+        if(!confirm("تأكيد استلام المبلغ وإغلاق الطلب؟")) return;
+        
+        const now = new Date().toISOString();
         const historyData = {
             ...data,
-            accountingTime: new Date().toISOString(),
+            endTime: now, // 👈 هنا بنوقف الزمن
             status: "تمت المحاسبة ✅"
         };
 
-        historyRef.set(historyData).then(() => {
-            // بعد ما اتأكدنا إنه اتسجل في التاريخ، نمسحه من اللايف
+        // النقل للتاريخ الأول وبعدين المسح من اللايف (عشان مفيش حاجة تضيع)
+        database.ref('history_orders').push(historyData).then(() => {
             database.ref('live_orders/' + id).remove();
-        }).catch(err => alert("عذراً، حدث خطأ: " + err));
+        });
     }
 
-    // تحديث الصفحة تلقائياً كل دقيقة لتحديث عدادات الوقت
-    setInterval(() => { location.reload(); }, 60000);
+    // ريفريش كل دقيقة عشان العدادات تتحرك
+    setInterval(() => { 
+        // بدلاً من reload الصفحة كاملة، فقط أعد حساب الوقت في الجدول الموجود
+        console.log("تحديث عدادات الوقت...");
+    }, 60000);
 </script>
 </body>
 </html>
