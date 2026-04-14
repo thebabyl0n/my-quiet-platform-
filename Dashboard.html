@@ -20,26 +20,26 @@
         .timer-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         .timer-new { background: #28a745; color: white; }
         .timer-late { background: #dc3545; color: white; animation: pulse 1s infinite; }
-        .done-btn { background: #c8a27c; color: #000; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .done-btn:hover { background: #fff; }
+        .done-btn { background: #c8a27c; color: #000; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .done-btn:hover { background: #fff; transform: scale(1.05); }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <h1 style="text-align:center; color:var(--gold);">📊 لوحة الرقابة والتحليل (الإمبراطورية)</h1>
+    <h1 style="text-align:center; color:var(--gold);">📊 لوحة الرقابة والتحليل (إدارة المحاسبة)</h1>
     
     <div class="grid">
         <div class="card">
-            <h3>💰 صافي دخل اليوم (المحاسب عليه)</h3>
+            <h3>💰 إجمالي الدخل اليومي</h3>
             <span id="dailySales">0.00</span> <small>ريال</small>
         </div>
         <div class="card">
-            <h3>📊 طلبات جارية (قيد التحضير)</h3>
+            <h3>📊 طلبات جارية</h3>
             <span id="ordersCount">0</span>
         </div>
         <div class="card">
-            <h3>🏆 الصنف الأكثر مبيعاً</h3>
+            <h3>🏆 الأكثر مبيعاً</h3>
             <span id="topItem">-</span>
         </div>
     </div>
@@ -49,7 +49,7 @@
             <thead>
                 <tr>
                     <th>وقت الطلب</th>
-                    <th>النوع</th>
+                    <th>المكان</th>
                     <th>الأصناف</th>
                     <th>المجموع</th>
                     <th>الانتظار</th>
@@ -68,29 +68,23 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // دالة حساب الوقت الحقيقي بناءً على التنسيق العالمي ISO
-    function getWaitTime(isoTime) {
-        if(!isoTime) return 0;
-        const start = new Date(isoTime);
-        const now = new Date();
-        const diff = Math.floor((now - start) / 60000);
-        return diff > 0 ? diff : 0;
-    }
+    let totalHistorySales = 0; // متغير لحفظ مبيعات الأوردرات اللي خلصت
 
-    // 1. حساب المبيعات من "التاريخ" (الأوردرات اللي خلصت فعلاً)
+    // 1. مراقبة "تاريخ الطلبات" (الأوردرات اللي الكاشير داس عليها تم المحاسبة)
     database.ref('history_orders').on('value', snap => {
-        let historyTotal = 0;
+        totalHistorySales = 0;
         snap.forEach(child => {
             const o = child.val();
-            let p = parseFloat(o.totalPrice) || 0;
-            historyTotal += p;
+            totalHistorySales += parseFloat(o.totalPrice) || 0;
         });
-        document.getElementById('dailySales').innerText = historyTotal.toFixed(2);
+        updateSalesDisplay();
     });
 
-    // 2. مراقبة الطلبات الحية
+    // 2. مراقبة "الطلبات الجارية" (الجدول الحي)
     database.ref('live_orders').on('value', snap => {
-        let oCount = 0; let itemsMap = {}; let rows = "";
+        let oCount = 0; 
+        let itemsMap = {}; 
+        let rows = "";
 
         snap.forEach(child => {
             const o = child.val();
@@ -102,42 +96,59 @@
                 o.items.forEach(i => { itemsMap[i.ar] = (itemsMap[i.ar] || 0) + (i.qty || 1); });
             }
 
-            // استخدام الحساب الدقيق للوقت
             const waitTime = getWaitTime(o.time);
             const timerClass = waitTime > 10 ? 'timer-late' : 'timer-new';
 
+            // بناء الصفوف في الجدول
             rows = `<tr>
                 <td>${o.displayTime || '--:--'}</td>
                 <td>${o.type || 'سفري'} ${o.table !== 'سفري' ? '['+o.table+']' : ''}</td>
                 <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
                 <td style="color:var(--gold); font-weight:bold;">${price.toFixed(2)} ريال</td>
                 <td><span class="timer-badge ${timerClass}">${waitTime} دقيقة</span></td>
-                <td><button class="done-btn" onclick='completeOrder("${orderId}", ${JSON.stringify(o)})'>تم المحاسبة</button></td>
+                <td><button class="done-btn" onclick='completeOrder("${orderId}", ${JSON.stringify(o)})'>إتمام ومحاسبة</button></td>
             </tr>` + rows;
         });
 
         document.getElementById('ordersCount').innerText = oCount;
-        document.getElementById('tableBody').innerHTML = rows || '<tr><td colspan="6">لا يوجد طلبات جارية حالياً...</td></tr>';
+        document.getElementById('tableBody').innerHTML = rows || '<tr><td colspan="6">بانتظار طلبات جديدة...</td></tr>';
         
         let top = Object.keys(itemsMap).sort((a, b) => itemsMap[b] - itemsMap[a])[0];
         document.getElementById('topItem').innerText = top || "-";
     });
 
-    // 3. وظيفة إنهاء الطلب ونقله للتاريخ
+    // دالة تحديث خانة السعر فوق
+    function updateSalesDisplay() {
+        document.getElementById('dailySales').innerText = totalHistorySales.toFixed(2);
+    }
+
+    // دالة حساب الوقت الحقيقي من لحظة الطلب
+    function getWaitTime(isoTime) {
+        if(!isoTime) return 0;
+        const start = new Date(isoTime);
+        const now = new Date();
+        const diff = Math.floor((now - start) / 60000);
+        return diff > 0 ? diff : 0;
+    }
+
+    // 3. وظيفة المحاسبة: نقل الطلب من Live إلى History
     function completeOrder(id, data) {
+        if(!confirm("هل تم استلام المبلغ وإتمام الطلب؟")) return;
+
         const historyRef = database.ref('history_orders').push();
         const historyData = {
             ...data,
-            finishTime: new Date().toISOString(),
-            status: "تم التسليم ✅"
+            accountingTime: new Date().toISOString(),
+            status: "تمت المحاسبة ✅"
         };
 
         historyRef.set(historyData).then(() => {
+            // بعد ما اتأكدنا إنه اتسجل في التاريخ، نمسحه من اللايف
             database.ref('live_orders/' + id).remove();
-        }).catch(err => alert("حدث خطأ في النقل: " + err));
+        }).catch(err => alert("عذراً، حدث خطأ: " + err));
     }
 
-    // تحديث الشاشة كل دقيقة لتحديث عداد الوقت تلقائياً
+    // تحديث الصفحة تلقائياً كل دقيقة لتحديث عدادات الوقت
     setInterval(() => { location.reload(); }, 60000);
 </script>
 </body>
