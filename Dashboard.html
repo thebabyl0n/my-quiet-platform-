@@ -126,19 +126,30 @@
         </table>
     </div>
     
-    <div class="section-title">📊 تقارير الأداء والسيادة</div>
+<div class="section-title">📊 تقارير الأداء والسيادة</div>
 <div class="grid">
     <div class="card">
         <h3>الأكثر مبيعاً 🔥</h3>
-        <span id="topProduct" style="font-size: 20px;">---</span>
+        <span id="topProduct" style="font-size: 18px; color: var(--gold);">---</span>
     </div>
     <div class="card">
         <h3>الأقل مبيعاً ❄️</h3>
-        <span id="bottomProduct" style="font-size: 20px;">---</span>
+        <span id="bottomProduct" style="font-size: 18px; color: #3b82f6;">---</span>
+    </div>
+</div>
+
+<div class="grid" style="margin-top: 20px;">
+    <div class="card">
+        <h3>مبيعات اليوم 📅</h3>
+        <span id="reportDaily" style="font-size: 24px;">0.00 ريال</span>
     </div>
     <div class="card">
         <h3>مبيعات الأسبوع 📈</h3>
-        <span id="weeklySales">0.00</span>
+        <span id="reportWeekly" style="font-size: 24px;">0.00 ريال</span>
+    </div>
+    <div class="card">
+        <h3>مبيعات الشهر 🏆</h3>
+        <span id="reportMonthly" style="font-size: 24px;">0.00 ريال</span>
     </div>
 </div>
 
@@ -178,41 +189,47 @@
     }
 
     // --- دالة التقارير الذكية ---
-    function generateReports(allOrders) {
-        if (!allOrders) return;
-        let counts = {}; 
-        let weekly = 0;
-        const now = new Date();
-        const weekAgo = new Date(now.getTime() - 7*24*60*60*1000);
+function generateReports(allOrders) {
+    if (!allOrders) return;
+    let counts = {}; 
+    let daily = 0; let weekly = 0; let monthly = 0;
+    
+    const now = new Date();
+    const dayAgo = new Date(now.getTime() - 1*24*60*60*1000);
+    const weekAgo = new Date(now.getTime() - 7*24*60*60*1000);
+    const monthAgo = new Date(now.getTime() - 30*24*60*60*1000);
 
-        Object.values(allOrders).forEach(o => {
-            const oDate = o.time ? new Date(o.time) : null;
-            const price = parseFloat(o.totalPrice) || 0;
+    Object.values(allOrders).forEach(o => {
+        const oDate = o.time ? new Date(o.time) : null;
+        const price = parseFloat(o.totalPrice) || 0;
 
-            // حساب مبيعات الأسبوع (للطلبات المؤرشفة والنشطة)
-            if (oDate && oDate >= weekAgo) {
-                weekly += price;
-            }
-
-            // تحليل المنتجات الأكثر طلباً
-            if (o.items) {
-                o.items.forEach(i => {
-                    let n = i.ar || i.name;
-                    counts[n] = (counts[n] || 0) + 1;
-                });
-            }
-        });
-
-        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-        if (sorted.length > 0) {
-            document.getElementById('topProduct').innerText = sorted[0][0];
-            document.getElementById('bottomProduct').innerText = sorted[sorted.length-1][0];
-        } else {
-            document.getElementById('topProduct').innerText = "---";
-            document.getElementById('bottomProduct').innerText = "---";
+        if (oDate) {
+            if (oDate >= dayAgo) daily += price;
+            if (oDate >= weekAgo) weekly += price;
+            if (oDate >= monthAgo) monthly += price;
         }
-        document.getElementById('weeklySales').innerText = weekly.toFixed(2) + " ريال";
+
+        if (o.items) {
+            o.items.forEach(i => {
+                let n = i.ar || i.name;
+                counts[n] = (counts[n] || 0) + 1;
+            });
+        }
+    });
+
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    
+    // تحديث أسماء المنتجات (بشرط وجود أكثر من صنف)
+    if (sorted.length > 0) {
+        document.getElementById('topProduct').innerText = sorted[0][0];
+        document.getElementById('bottomProduct').innerText = (sorted.length > 1) ? sorted[sorted.length-1][0] : "في انتظار أصناف أخرى";
     }
+
+    // تحديث المبالغ
+    document.getElementById('reportDaily').innerText = daily.toFixed(2) + " ريال";
+    document.getElementById('reportWeekly').innerText = weekly.toFixed(2) + " ريال";
+    document.getElementById('reportMonthly').innerText = monthly.toFixed(2) + " ريال";
+}
 
     // --- مراقبة البيانات وتحديث الشاشة ---
     database.ref('live_orders').on('value', snapshot => {
