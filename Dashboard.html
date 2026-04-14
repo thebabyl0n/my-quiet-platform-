@@ -25,7 +25,7 @@
         .btn { border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; margin: 2px; font-size: 12px; }
         .btn-pay { background: var(--gold); color: black; }
         .btn-archive { background: #6366f1; color: white; }
-        .btn-clear { background: var(--red); color: white; margin-top: 10px; width: 100%; }
+        .btn-clear { background: var(--red); color: white; margin-top: 10px; width: 100%; border-radius: 8px; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
@@ -37,18 +37,18 @@
         <div class="card">
             <h3>💰 مبيعات اليوم</h3>
             <span id="dailySales">0.00</span>
-            <button class="btn btn-clear" onclick="clearArchive()">🗑️ تصفير الوردية</button>
+            <button class="btn btn-clear" onclick="clearArchive()">🗑️ تصفير وإغلاق الوردية</button>
         </div>
         <div class="card"><h3>⏳ طلبات نشطة</h3><span id="activeCount">0</span></div>
         <div class="card"><h3>📦 طلبات مؤرشفة</h3><span id="doneCount">0</span></div>
     </div>
 
-    <h3 class="section-title">🟢 شاشة المتابعة (الطلبات تثبت هنا ولا تختفي)</h3>
+    <h3 class="section-title">🟢 شاشة المتابعة (الطلبات النشطة)</h3>
     <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th>الوقت</th>
+                    <th>التاريخ | الوقت</th>
                     <th>المكان</th>
                     <th>الأصناف</th>
                     <th>المجموع</th>
@@ -66,7 +66,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>الوقت</th>
+                    <th>التاريخ | الوقت</th>
                     <th>المكان</th>
                     <th>الأصناف</th>
                     <th>المجموع</th>
@@ -107,6 +107,9 @@
             const id = child.key;
             const waitTime = getWaitTime(o);
             const price = parseFloat(o.totalPrice) || 0;
+            
+            // تنسيق التاريخ لعرض الشهر واليوم فقط (مثال: 04-14)
+            const dateStr = o.date ? o.date.slice(5) : '---';
 
             if (o.status !== "تم الترحيل للأرشيف 📦") {
                 activeCount++;
@@ -116,7 +119,7 @@
                 const statusColor = isPaid ? 'var(--green)' : (isReady ? 'var(--blue)' : 'white');
 
                 liveRows = `<tr>
-                    <td>${o.displayTime || '---'}</td>
+                    <td>${dateStr} | ${o.displayTime || '---'}</td>
                     <td>${o.type}</td>
                     <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
                     <td style="color:var(--gold); font-weight:bold;">${price.toFixed(2)}</td>
@@ -130,7 +133,7 @@
                 doneCount++;
                 totalSales += price;
                 historyRows = `<tr>
-                    <td>${o.displayTime || '---'}</td>
+                    <td>${dateStr} | ${o.displayTime || '---'}</td>
                     <td>${o.type}</td>
                     <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
                     <td>${price.toFixed(2)}</td>
@@ -152,19 +155,15 @@
         database.ref('live_orders/' + id).update({ status: "تم الترحيل للأرشيف 📦" });
     }
 
-    // دالة تصفير الوردية الاحترافية
     function clearArchive() {
-        if(!confirm("⚠️ هل أنت متأكد من تصفير الوردية؟ سيتم حذف جميع الطلبات المؤرشفة نهائياً!")) return;
-        
+        if(!confirm("⚠️ تصفير الوردية سيمسح كل الأرشيف والبيانات القديمة، هل أنت متأكد؟")) return;
         database.ref('live_orders').once('value', (snapshot) => {
-            let count = 0;
             snapshot.forEach((child) => {
                 if (child.val().status === "تم الترحيل للأرشيف 📦") {
                     child.ref.remove();
-                    count++;
                 }
             });
-            alert("✅ تم بنجاح حذف " + count + " طلب من الأرشيف وتصفير الوردية.");
+            alert("✅ تم تصفير الوردية بنجاح.");
         });
     }
 </script>
