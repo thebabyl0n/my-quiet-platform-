@@ -74,6 +74,9 @@
             const orderId = child.key;
             if (!order || !order.items) return;
 
+            // فلتر: لو الطلب تمت محاسبته، لا يظهر في أي شاشة (باريستا أو كاشير) عشان الزحمة
+            if (order.status === "تمت المحاسبة ✅") return;
+
             let itemsHtml = '';
             let forMe = false;
             const finalNote = order.notes || order.note || "";
@@ -106,8 +109,8 @@
 
                 const isDone = order[screenType + 'Ready'] === true;
                 const btn = isCashier 
-                    ? `<button class="btn btn-cashier" onclick="deleteOrder('${orderId}')">تحصيل المبلغ وحذف ✅</button>`
-                    : `<button class="btn btn-dept" ${isDone?'disabled':''} onclick="markReady('${orderId}','${screenType}')">${isDone?'تم إرسال الإشعار ✅':'تم التجهيز 📣'}</button>`;
+                    ? `<button class="btn btn-cashier" onclick="completeOrder('${orderId}')">تحصيل المبلغ وإتمام ✅</button>`
+                    : `<button class="btn btn-dept" ${isDone?'disabled':''} onclick='markReady("${orderId}", ${JSON.stringify(order)})'>${isDone?'تم إرسال الإشعار ✅':'تم التجهيز 📣'}</button>`;
 
                 grid.innerHTML += `
                     <div class="order-card">
@@ -138,8 +141,29 @@
         }
     });
 
-    function markReady(id, dept) { database.ref('live_orders/' + id).update({ [dept + 'Ready']: true }); }
-    function deleteOrder(id) { if(confirm('هل تم استلام المبلغ وحذف الطلب؟')) database.ref('live_orders/' + id).remove(); }
+    // دالة تم التجهيز: بتحسب الوقت وتجمده في finalWait
+    function markReady(id, orderData) { 
+        if (!orderData.time) return;
+        const start = new Date(orderData.time);
+        const now = new Date();
+        const diff = Math.floor((now - start) / 60000);
+        const finalWait = diff > 0 ? diff : 0;
+
+        database.ref('live_orders/' + id).update({ 
+            [screenType + 'Ready']: true,
+            finalWait: finalWait // 👈 تجميد الوقت للداشبورد
+        }); 
+    }
+
+    // دالة إتمام الطلب: بتحدث الحالة بدل ما تمسح
+    function completeOrder(id) { 
+        if(confirm('هل تم استلام المبلغ وإتمام الطلب؟')) {
+            database.ref('live_orders/' + id).update({
+                status: "تمت المحاسبة ✅",
+                accountingTime: new Date().toISOString()
+            });
+        }
+    }
 
     let wakeLock = null;
     async function requestWakeLock() {
@@ -174,4 +198,3 @@
 </script>
 </body>
 </html>
-
