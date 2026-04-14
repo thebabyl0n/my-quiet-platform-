@@ -3,41 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم الإمبراطورية 👑</title>
+    <title>لوحة الرقابة والتحكم 👑</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --gold: #c8a27c; --dark: #0f141e; --card-bg: rgba(255, 255, 255, 0.05); }
+        :root { --gold: #c8a27c; --dark: #0f141e; --card-bg: rgba(255, 255, 255, 0.05); --green: #22c55e; --blue: #3b82f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .card { background: var(--card-bg); border: 1px solid var(--gold); padding: 20px; border-radius: 15px; text-align: center; }
         .card h3 { color: var(--gold); margin: 0; font-size: 14px; }
         .card span { font-size: 24px; font-weight: bold; display: block; margin-top: 5px; }
-        .section-title { color: var(--gold); border-right: 4px solid var(--gold); padding-right: 15px; margin: 30px 0 15px; display: flex; align-items: center; gap: 10px; }
+        
+        .section-title { color: var(--gold); border-right: 4px solid var(--gold); padding-right: 15px; margin: 30px 0 15px; }
         .table-container { overflow-x: auto; background: var(--card-bg); border-radius: 15px; border: 1px solid rgba(200,162,124,0.2); margin-bottom: 40px; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
         th, td { padding: 12px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
         th { background: var(--gold); color: black; font-size: 14px; }
+        
         .timer-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .timer-running { background: #28a745; color: white; }
+        .timer-running { background: var(--green); color: white; }
         .timer-late { background: #dc3545; color: white; animation: pulse 1s infinite; }
         .timer-fixed { background: #6c757d; color: white; }
-        .btn-pay { background: var(--gold); color: black; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-pay:hover { background: white; transform: scale(1.05); }
+
+        .btn { border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; margin: 2px; font-size: 12px; }
+        .btn-pay { background: var(--gold); color: black; }
+        .btn-archive { background: #6366f1; color: white; }
+        
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <h1 style="text-align:center; color:var(--gold);">👑 لوحة تحكم الإمبراطورية</h1>
+    <h1 style="text-align:center; color:var(--gold);">👑 لوحة تحكم الإمبراطورية | الرقابة الإدارية</h1>
     
     <div class="grid">
         <div class="card"><h3>💰 مبيعات اليوم</h3><span id="dailySales">0.00</span></div>
         <div class="card"><h3>⏳ طلبات نشطة</h3><span id="activeCount">0</span></div>
-        <div class="card"><h3>✅ طلبات مكتملة</h3><span id="doneCount">0</span></div>
+        <div class="card"><h3>📦 طلبات مؤرشفة</h3><span id="doneCount">0</span></div>
     </div>
 
-    <h3 class="section-title">🟢 طلبات قيد التحضير (الوقت يتحرك ⏱️)</h3>
+    <h3 class="section-title">🟢 شاشة المتابعة الفورية (الطلبات لا تختفي حتى الترحيل)</h3>
     <div class="table-container">
         <table>
             <thead>
@@ -47,14 +52,15 @@
                     <th>الأصناف</th>
                     <th>المجموع</th>
                     <th>الانتظار</th>
-                    <th>الإجراء</th>
+                    <th>حالة الطلب</th>
+                    <th>إجراءات إدارية</th>
                 </tr>
             </thead>
             <tbody id="liveTable"></tbody>
         </table>
     </div>
 
-    <h3 class="section-title">🔵 أرشيف اليوم (تمت المحاسبة 📊)</h3>
+    <h3 class="section-title">🔵 الأرشيف النهائي (الطلبات المرحّلة 📊)</h3>
     <div class="table-container">
         <table>
             <thead>
@@ -63,7 +69,7 @@
                     <th>المكان</th>
                     <th>الأصناف</th>
                     <th>المجموع</th>
-                    <th>مدة التحضير</th>
+                    <th>مدة الخدمة</th>
                     <th>الحالة</th>
                 </tr>
             </thead>
@@ -101,18 +107,31 @@
             const waitTime = getWaitTime(o);
             const price = parseFloat(o.totalPrice) || 0;
 
-            if (o.status !== "تمت المحاسبة ✅") {
+            // 👈 الشرط: الطلب يفضل فوق طالما لم يتم ترحيله للأرشيف بواسطة المدير
+            if (o.status !== "تم الترحيل للأرشيف 📦") {
                 activeCount++;
-                const timerClass = o.finalWait !== undefined ? 'timer-fixed' : (waitTime > 10 ? 'timer-late' : 'timer-running');
+                
+                // تحديد شكل العداد ولون الحالة
+                const isReady = o.finalWait !== undefined;
+                const isPaid = o.status === "تمت المحاسبة ✅";
+                const timerClass = isReady ? 'timer-fixed' : (waitTime > 10 ? 'timer-late' : 'timer-running');
+                const statusColor = isPaid ? 'var(--green)' : (isReady ? 'var(--blue)' : 'white');
+
                 liveRows = `<tr>
                     <td>${o.displayTime || '---'}</td>
                     <td>${o.type} ${o.table ? '['+o.table+']' : ''}</td>
                     <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
                     <td style="color:var(--gold); font-weight:bold;">${price.toFixed(2)} ريال</td>
                     <td><span class="timer-badge ${timerClass}">${waitTime} دقيقة</span></td>
-                    <td><button class="btn-pay" onclick="completeOrder('${id}')">إتمام ودفع ✅</button></td>
+                    <td style="color:${statusColor}; font-weight:bold;">${o.status || "قيد التحضير ⏳"}</td>
+                    <td>
+                        ${!isPaid ? `<button class="btn btn-pay" onclick="completeOrder('${id}')">تحصيل الكاشير 💰</button>` : ''}
+                        <button class="btn btn-archive" onclick="archiveOrder('${id}')">مراجعة وترحيل 📦</button>
+                    </td>
                 </tr>` + liveRows;
-            } else {
+            } 
+            // الطلب ينزل الأرشيف فقط عند الضغط على مراجعة وترحيل
+            else {
                 doneCount++;
                 totalSales += price;
                 historyRows = `<tr>
@@ -121,27 +140,39 @@
                     <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
                     <td>${price.toFixed(2)} ريال</td>
                     <td><span class="timer-badge timer-fixed">${waitTime} دقيقة</span></td>
-                    <td style="color:#28a745; font-weight:bold;">تمت المحاسبة ✅</td>
+                    <td style="color:gray;">مؤرشف 📁</td>
                 </tr>` + historyRows;
             }
         });
 
-        document.getElementById('liveTable').innerHTML = liveRows || '<tr><td colspan="6">لا يوجد طلبات حالياً</td></tr>';
+        document.getElementById('liveTable').innerHTML = liveRows || '<tr><td colspan="7">لا يوجد طلبات حالياً</td></tr>';
         document.getElementById('historyTable').innerHTML = historyRows || '<tr><td colspan="6">الأرشيف فارغ</td></tr>';
         document.getElementById('activeCount').innerText = activeCount;
         document.getElementById('doneCount').innerText = doneCount;
         document.getElementById('dailySales').innerText = totalSales.toFixed(2);
     });
 
+    // تحصيل الكاشير (يغير الحالة واللون والوقت ثابت)
     function completeOrder(id) {
-        if(!confirm("تأكيد استلام المبلغ وإغلاق الطلب؟")) return;
+        if(!confirm("تأكيد استلام المبلغ؟ (سيبقى الطلب للمراجعة)")) return;
         database.ref('live_orders/' + id).update({
             status: "تمت المحاسبة ✅",
             accountingTime: new Date().toISOString()
         });
     }
 
-    setInterval(() => { location.reload(); }, 60000);
+    // ترحيل المدير (ينقل الطلب للأرشيف تحت)
+    function archiveOrder(id) {
+        if(!confirm("هل تود ترحيل الطلب للأرشيف النهائي؟ (سيختفي من الشاشة العلوية)")) return;
+        database.ref('live_orders/' + id).update({
+            status: "تم الترحيل للأرشيف 📦"
+        });
+    }
+
+    setInterval(() => { 
+        // التحديث التلقائي شغال، الـ Reload فقط لضمان دقة الساعات
+        console.log("تحديث العدادات..."); 
+    }, 60000);
 </script>
 </body>
 </html>
