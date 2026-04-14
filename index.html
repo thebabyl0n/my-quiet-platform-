@@ -458,8 +458,8 @@
     function submitOrder() {
         if(!cart.length) return alert("السلة فارغة");
         
-        ValidateGeo(() => {
-            // 1. استخراج السعر وتحويله لرقم صافي فوراً (عشان الداشبورد تحسب صح)
+        validateGeo(() => {
+            // 1. استخراج السعر وتحويله لرقم صافي
             const finalTotalRaw = document.getElementById('total').innerText;
             const finalTotalNum = parseFloat(finalTotalRaw.replace(/[^\d.]/g, '')) || 0;
             
@@ -479,7 +479,7 @@
                 };
             });
 
-            // 2. تجهيز البيانات (السر هنا في الـ ISOString والـ Num)
+            // 2. تجهيز البيانات
             const orderData = {
                 items: finalItemsForSystem,
                 type: oType, 
@@ -487,9 +487,8 @@
                 notes: document.getElementById('notes').value, 
                 promoUsed: activePromo || "بدون كوبون", 
                 discountAmount: dAmount.toFixed(2),
-                totalPrice: finalTotalNum, // هيروح رقم صافي (25.50)
+                totalPrice: finalTotalNum,
                 status: 'قيد التحضير ⏳',
-                // نبعت وقتين: واحد للحسابات وواحد للعرض
                 time: new Date().toISOString(), 
                 displayTime: new Date().toLocaleTimeString('ar-SA'),
                 deptsNeeded: deptsNeeded,
@@ -498,40 +497,41 @@
                 dessertReady: false
             };
 
-            // 3. الإرسال بنظام الدفع (push) لضمان عدم مسح الأوردرات السابقة
+            // 3. الإرسال بنظام push
             const orderRef = database.ref('live_orders').push();
             orderRef.set(orderData).then(() => {
-                console.log("البيانات وصلت الإمبراطورية ✅");
+                console.log("البيانات وصلت ✅");
             });
             
             // 4. إظهار شريط الحالة
-            document.getElementById('order-status-bar').style.display = 'block';
+            if(document.getElementById('order-status-bar')) {
+                document.getElementById('order-status-bar').style.display = 'block';
+            }
             
-            // 5. رسالة الواتساب الاحترافية
+            // 5. رسالة الواتساب
             let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum ? '[طاولة '+tNum+']' : ''}\n`;
             cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
             msg += `\n*الإجمالي النهائي*: ${finalTotalNum.toFixed(2)} ريال`;
             
             window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
             
-            // 6. تنظيف السلة وكود الخصم والواجهة (الفنش الملكي)
+            // 6. الفنش الملكي (تنظيف كل شيء)
             cart = []; 
             renderCart(); 
-            
             activePromo = ""; 
             discountValReal = 0; 
             
-            // التعديل الصغير هنا عشان اسم الـ ID
             if(document.getElementById('promoCode')) {
                 document.getElementById('promoCode').value = ""; 
             }
-            // -----------------------------------
-
-            document.getElementById('notes').value = ""; // تنظيف الملاحظات
+            if(document.getElementById('notes')) {
+                document.getElementById('notes').value = ""; 
+            }
+            
             showToast("تم إرسال الطلب بنجاح! 🎉");
 
         }, () => alert("❌ فشل التحقق الجغرافي: يجب التواجد داخل الفرع لإتمام الطلب"));
-    }
+    } // نهاية وظيفة submitOrder
 
     function showToast(m) {
         const t = document.getElementById('toast'); 
@@ -544,7 +544,7 @@
 </script>
 
 <script>
-    // كود تشغيل الفيديو "دريم" مع معالجة سياسة كتم الصوت
+    // كود الفيديو دريم
     (function() {
         const v = document.getElementById('dreamVideo');
         const o = document.getElementById('dream-overlay');
@@ -562,7 +562,7 @@
 
         document.addEventListener('click', () => {
             if (v && v.paused) { 
-                v.play().catch(e => console.log("تحتاج لمس الشاشة أولاً")); 
+                v.play().catch(e => console.log("تحتاج لمس الشاشة")); 
                 v.muted = false; 
             }
         }, { once: true });
