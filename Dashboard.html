@@ -13,22 +13,18 @@
         .card { background: var(--card-bg); border: 1px solid var(--gold); padding: 20px; border-radius: 15px; text-align: center; }
         .card h3 { color: var(--gold); margin: 0; font-size: 14px; }
         .card span { font-size: 24px; font-weight: bold; display: block; margin-top: 5px; }
-        
         .section-title { color: var(--gold); border-right: 4px solid var(--gold); padding-right: 15px; margin: 30px 0 15px; }
         .table-container { overflow-x: auto; background: var(--card-bg); border-radius: 15px; border: 1px solid rgba(200,162,124,0.2); margin-bottom: 40px; }
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
         th, td { padding: 12px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
         th { background: var(--gold); color: black; font-size: 14px; }
-        
         .timer-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         .timer-running { background: var(--green); color: white; }
         .timer-late { background: #dc3545; color: white; animation: pulse 1s infinite; }
         .timer-fixed { background: #6c757d; color: white; }
-
         .btn { border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; margin: 2px; font-size: 12px; }
         .btn-pay { background: var(--gold); color: black; }
         .btn-archive { background: #6366f1; color: white; }
-        
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
@@ -42,7 +38,7 @@
         <div class="card"><h3>📦 طلبات مؤرشفة</h3><span id="doneCount">0</span></div>
     </div>
 
-    <h3 class="section-title">🟢 شاشة المتابعة الفورية (الطلبات لا تختفي حتى الترحيل)</h3>
+    <h3 class="section-title">🟢 شاشة المتابعة (الطلبات تثبت هنا ولا تختفي)</h3>
     <div class="table-container">
         <table>
             <thead>
@@ -53,14 +49,14 @@
                     <th>المجموع</th>
                     <th>الانتظار</th>
                     <th>حالة الطلب</th>
-                    <th>إجراءات إدارية</th>
+                    <th>الإجراء</th>
                 </tr>
             </thead>
             <tbody id="liveTable"></tbody>
         </table>
     </div>
 
-    <h3 class="section-title">🔵 الأرشيف النهائي (الطلبات المرحّلة 📊)</h3>
+    <h3 class="section-title">🔵 الأرشيف النهائي (المُرحّل فقط)</h3>
     <div class="table-container">
         <table>
             <thead>
@@ -86,7 +82,7 @@
     const database = firebase.database();
 
     function getWaitTime(o) {
-        if (o.finalWait !== undefined) return o.finalWait;
+        if (o.finalWait !== undefined && o.finalWait !== null) return o.finalWait;
         if (!o.time) return 0;
         const start = new Date(o.time);
         const now = new Date();
@@ -107,72 +103,50 @@
             const waitTime = getWaitTime(o);
             const price = parseFloat(o.totalPrice) || 0;
 
-            // 👈 الشرط: الطلب يفضل فوق طالما لم يتم ترحيله للأرشيف بواسطة المدير
+            // الطلب يفضل فوق طالما لم يرحله صاحب الكافيه
             if (o.status !== "تم الترحيل للأرشيف 📦") {
                 activeCount++;
-                
-                // تحديد شكل العداد ولون الحالة
-                const isReady = o.finalWait !== undefined;
-                const isPaid = o.status === "تمت المحاسبة ✅";
+                const isPaid = (o.status === "تمت المحاسبة ✅");
+                const isReady = (o.finalWait !== undefined);
                 const timerClass = isReady ? 'timer-fixed' : (waitTime > 10 ? 'timer-late' : 'timer-running');
                 const statusColor = isPaid ? 'var(--green)' : (isReady ? 'var(--blue)' : 'white');
 
                 liveRows = `<tr>
                     <td>${o.displayTime || '---'}</td>
-                    <td>${o.type} ${o.table ? '['+o.table+']' : ''}</td>
+                    <td>${o.type}</td>
                     <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
-                    <td style="color:var(--gold); font-weight:bold;">${price.toFixed(2)} ريال</td>
+                    <td style="color:var(--gold); font-weight:bold;">${price.toFixed(2)}</td>
                     <td><span class="timer-badge ${timerClass}">${waitTime} دقيقة</span></td>
                     <td style="color:${statusColor}; font-weight:bold;">${o.status || "قيد التحضير ⏳"}</td>
                     <td>
-                        ${!isPaid ? `<button class="btn btn-pay" onclick="completeOrder('${id}')">تحصيل الكاشير 💰</button>` : ''}
                         <button class="btn btn-archive" onclick="archiveOrder('${id}')">مراجعة وترحيل 📦</button>
                     </td>
                 </tr>` + liveRows;
-            } 
-            // الطلب ينزل الأرشيف فقط عند الضغط على مراجعة وترحيل
-            else {
+            } else {
                 doneCount++;
                 totalSales += price;
                 historyRows = `<tr>
                     <td>${o.displayTime || '---'}</td>
                     <td>${o.type}</td>
                     <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
-                    <td>${price.toFixed(2)} ريال</td>
+                    <td>${price.toFixed(2)}</td>
                     <td><span class="timer-badge timer-fixed">${waitTime} دقيقة</span></td>
-                    <td style="color:gray;">مؤرشف 📁</td>
+                    <td>مؤرشف ✅</td>
                 </tr>` + historyRows;
             }
         });
 
-        document.getElementById('liveTable').innerHTML = liveRows || '<tr><td colspan="7">لا يوجد طلبات حالياً</td></tr>';
+        document.getElementById('liveTable').innerHTML = liveRows || '<tr><td colspan="7">لا يوجد طلبات</td></tr>';
         document.getElementById('historyTable').innerHTML = historyRows || '<tr><td colspan="6">الأرشيف فارغ</td></tr>';
         document.getElementById('activeCount').innerText = activeCount;
         document.getElementById('doneCount').innerText = doneCount;
         document.getElementById('dailySales').innerText = totalSales.toFixed(2);
     });
 
-    // تحصيل الكاشير (يغير الحالة واللون والوقت ثابت)
-    function completeOrder(id) {
-        if(!confirm("تأكيد استلام المبلغ؟ (سيبقى الطلب للمراجعة)")) return;
-        database.ref('live_orders/' + id).update({
-            status: "تمت المحاسبة ✅",
-            accountingTime: new Date().toISOString()
-        });
-    }
-
-    // ترحيل المدير (ينقل الطلب للأرشيف تحت)
     function archiveOrder(id) {
-        if(!confirm("هل تود ترحيل الطلب للأرشيف النهائي؟ (سيختفي من الشاشة العلوية)")) return;
-        database.ref('live_orders/' + id).update({
-            status: "تم الترحيل للأرشيف 📦"
-        });
+        if(!confirm("ترحيل الطلب للأرشيف النهائي؟")) return;
+        database.ref('live_orders/' + id).update({ status: "تم الترحيل للأرشيف 📦" });
     }
-
-    setInterval(() => { 
-        // التحديث التلقائي شغال، الـ Reload فقط لضمان دقة الساعات
-        console.log("تحديث العدادات..."); 
-    }, 60000);
 </script>
 </body>
 </html>
