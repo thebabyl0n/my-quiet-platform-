@@ -155,15 +155,18 @@
         }); 
     }
 
-    // دالة إتمام الطلب: بتحدث الحالة بدل ما تمسح
-    function completeOrder(id) { 
-        if(confirm('هل تم استلام المبلغ وإتمام الطلب؟')) {
-            database.ref('live_orders/' + id).update({
-                status: "تمت المحاسبة ✅",
-                accountingTime: new Date().toISOString()
-            });
-        }
+// 👈 دي الدالة اللي كانت بتمسح .. عدلها لكدة:
+function completeOrder(id) { 
+    if(confirm('هل تم استلام المبلغ وإتمام الطلب؟')) {
+        // بدل remove() هنستخدم update()
+        database.ref('live_orders/' + id).update({
+            status: "تمت المحاسبة ✅", // دي اللي الداشبورد مستنياها عشان تلون الأوردر وتثبته
+            accountingTime: new Date().toISOString()
+        }).then(() => {
+            console.log("تم تحديث حالة الدفع بنجاح");
+        });
     }
+}
 
     let wakeLock = null;
     async function requestWakeLock() {
