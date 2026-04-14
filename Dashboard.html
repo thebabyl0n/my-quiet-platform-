@@ -108,8 +108,15 @@
             const waitTime = getWaitTime(o);
             const price = parseFloat(o.totalPrice) || 0;
             
-            // تنسيق التاريخ لعرض الشهر واليوم فقط (مثال: 04-14)
-            const dateStr = o.date ? o.date.slice(5) : '---';
+            // 🛠️ الحركة الذكية هنا: لو التاريخ مش موجود، هاته من وقت الطلب
+            let dateStr = '---';
+            if (o.date) {
+                dateStr = o.date.slice(5); // بياخد الشهر واليوم بس
+            } else if (o.time) {
+                const tempDate = new Date(o.time);
+                dateStr = (tempDate.getMonth() + 1).toString().padStart(2, '0') + '-' + 
+                          tempDate.getDate().toString().padStart(2, '0');
+            }
 
             if (o.status !== "تم الترحيل للأرشيف 📦") {
                 activeCount++;
@@ -169,3 +176,5 @@
 </script>
 </body>
 </html>
+
+دتش بورد بزار الارشيف تحت تجربه التاريخ
