@@ -7,7 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --gold: #c8a27c; --dark: #0f141e; --card-bg: rgba(255, 255, 255, 0.05); --green: #22c55e; --blue: #3b82f6; }
+        :root { --gold: #c8a27c; --dark: #0f141e; --card-bg: rgba(255, 255, 255, 0.05); --green: #22c55e; --blue: #3b82f6; --red: #ef4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .card { background: var(--card-bg); border: 1px solid var(--gold); padding: 20px; border-radius: 15px; text-align: center; }
@@ -25,6 +25,7 @@
         .btn { border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; margin: 2px; font-size: 12px; }
         .btn-pay { background: var(--gold); color: black; }
         .btn-archive { background: #6366f1; color: white; }
+        .btn-clear { background: var(--red); color: white; margin-top: 10px; width: 100%; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
@@ -33,7 +34,11 @@
     <h1 style="text-align:center; color:var(--gold);">👑 لوحة تحكم الإمبراطورية | الرقابة الإدارية</h1>
     
     <div class="grid">
-        <div class="card"><h3>💰 مبيعات اليوم</h3><span id="dailySales">0.00</span></div>
+        <div class="card">
+            <h3>💰 مبيعات اليوم</h3>
+            <span id="dailySales">0.00</span>
+            <button class="btn btn-clear" onclick="clearArchive()">🗑️ تصفير الوردية</button>
+        </div>
         <div class="card"><h3>⏳ طلبات نشطة</h3><span id="activeCount">0</span></div>
         <div class="card"><h3>📦 طلبات مؤرشفة</h3><span id="doneCount">0</span></div>
     </div>
@@ -103,7 +108,6 @@
             const waitTime = getWaitTime(o);
             const price = parseFloat(o.totalPrice) || 0;
 
-            // الطلب يفضل فوق طالما لم يرحله صاحب الكافيه
             if (o.status !== "تم الترحيل للأرشيف 📦") {
                 activeCount++;
                 const isPaid = (o.status === "تمت المحاسبة ✅");
@@ -146,6 +150,22 @@
     function archiveOrder(id) {
         if(!confirm("ترحيل الطلب للأرشيف النهائي؟")) return;
         database.ref('live_orders/' + id).update({ status: "تم الترحيل للأرشيف 📦" });
+    }
+
+    // دالة تصفير الوردية الاحترافية
+    function clearArchive() {
+        if(!confirm("⚠️ هل أنت متأكد من تصفير الوردية؟ سيتم حذف جميع الطلبات المؤرشفة نهائياً!")) return;
+        
+        database.ref('live_orders').once('value', (snapshot) => {
+            let count = 0;
+            snapshot.forEach((child) => {
+                if (child.val().status === "تم الترحيل للأرشيف 📦") {
+                    child.ref.remove();
+                    count++;
+                }
+            });
+            alert("✅ تم بنجاح حذف " + count + " طلب من الأرشيف وتصفير الوردية.");
+        });
     }
 </script>
 </body>
