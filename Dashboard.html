@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إحصائيات الإمبراطورية | Alpha Shadow</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        :root { --gold: #c8a27c; --dark: #0f141e; --card-bg: rgba(255, 255, 255, 0.05); }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
+        .header { text-align: center; padding: 20px; border-bottom: 2px solid var(--gold); margin-bottom: 30px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .card { background: var(--card-bg); border: 1px solid var(--gold); padding: 25px; border-radius: 20px; text-align: center; transition: 0.3s; }
+        .card h3 { color: var(--gold); margin: 0 0 10px 0; font-size: 18px; }
+        .card span { font-size: 32px; font-weight: bold; display: block; margin-top: 10px; }
+        .table-container { margin-top: 40px; overflow-x: auto; background: var(--card-bg); border-radius: 20px; border: 1px solid rgba(200,162,124,0.2); }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 15px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { background: var(--gold); color: black; font-weight: bold; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>📊 لوحة التقارير الإدارية</h1>
+        <p>مراقبة أداء كافيه كالي لحظة بلحظة</p>
+    </div>
+    
+    <div class="grid">
+        <div class="card">
+            <h3>💰 إجمالي الدخل اليومي</h3>
+            <span id="dailySales">0</span> <small>ريال</small>
+        </div>
+        <div class="card">
+            <h3>📊 عدد طلبات اليوم</h3>
+            <span id="ordersCount">0</span> <small>طلب</small>
+        </div>
+        <div class="card">
+            <h3>🏆 الصنف الأكثر طلباً</h3>
+            <span id="topItem" style="font-size: 24px;">-</span>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>الوقت</th>
+                    <th>نوع الطلب</th>
+                    <th>الأصناف المطلوبة</th>
+                    <th>المجموع</th>
+                    <th>الكوبون المستخدم</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+    </div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
+        authDomain: "alphashadow-23689.firebaseapp.com",
+        projectId: "alphashadow-23689",
+        databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // استماع حي للبيانات من Firebase
+    database.ref('live_orders').on('value', snap => {
+        let totalRevenue = 0;
+        let ordersTotal = 0;
+        let itemFrequency = {};
+        let htmlRows = "";
+
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const order = child.val();
+                totalRevenue += parseFloat(order.totalPrice || 0);
+                ordersTotal++;
+                
+                // تحليل الأصناف الأكثر مبيعاً
+                if (order.items && Array.isArray(order.items)) {
+                    order.items.forEach(item => {
+                        const name = item.ar || "صنف غير معروف";
+                        itemFrequency[name] = (itemFrequency[name] || 0) + (item.qty || 1);
+                    });
+                }
+
+                // تجهيز صفوف الجدول
+                let itemsList = order.items ? order.items.map(i => i.ar).join(' + ') : "بدون أصناف";
+                htmlRows = `<tr>
+                    <td>${order.time || '--:--'}</td>
+                    <td>${order.type || 'غير محدد'}</td>
+                    <td>${itemsList}</td>
+                    <td style="color:var(--gold); font-weight:bold;">${order.totalPrice} ريال</td>
+                    <td>${order.promoUsed || '<span style="opacity:0.3;">لا يوجد</span>'}</td>
+                </tr>` + htmlRows; // عرض الأحدث في الأعلى
+            });
+        }
+
+        // تحديث الواجهة
+        document.getElementById('dailySales').innerText = totalRevenue.toFixed(2);
+        document.getElementById('ordersCount').innerText = ordersTotal;
+        document.getElementById('tableBody').innerHTML = htmlRows || '<tr><td colspan="5">لا توجد طلبات اليوم بعد</td></tr>';
+
+        // حساب الأكثر مبيعاً
+        let topSorted = Object.keys(itemFrequency).sort((a, b) => itemFrequency[b] - itemFrequency[a]);
+        document.getElementById('topItem').innerText = topSorted[0] || "-";
+    });
+</script>
+</body>
+</html>
