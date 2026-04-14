@@ -231,8 +231,8 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    const TARGET_LAT = 21.506491;
-    const TARGET_LON = 39.179351;
+    const TARGET_LAT = 21.522492;
+    const TARGET_LON = 39.229700;
     const ALLOWED_DISTANCE = 0.50; 
     let cart = []; let welcomeAudio = ""; let readyAudio = ""; let successMsg = "";
     let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
@@ -458,14 +458,16 @@
     function submitOrder() {
         if(!cart.length) return alert("السلة فارغة");
         
-        validateGeo(() => {
-            const finalTotal = document.getElementById('total').innerText;
+        ValidateGeo(() => {
+            // 1. استخراج السعر وتحويله لرقم صافي فوراً (عشان الداشبورد تحسب صح)
+            const finalTotalRaw = document.getElementById('total').innerText;
+            const finalTotalNum = parseFloat(finalTotalRaw.replace(/[^\d.]/g, '')) || 0;
+            
             const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
             let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
             
             const deptsNeeded = [...new Set(cart.map(item => (item.dept || 'barista').toLowerCase().trim()))];
 
-            // دمج الاسم مع الإضافة عشان تظهر في لوحة التحكم (مهم جداً)
             const finalItemsForSystem = cart.map(item => {
                 return {
                     k: item.k,
@@ -477,38 +479,57 @@
                 };
             });
 
+            // 2. تجهيز البيانات (السر هنا في الـ ISOString والـ Num)
             const orderData = {
-                items: finalItemsForSystem, // هنا التعديل: بنبعت القائمة النهائية
+                items: finalItemsForSystem,
                 type: oType, 
                 table: tNum || 'سفري',
                 notes: document.getElementById('notes').value, 
-                promoUsed: activePromo, 
+                promoUsed: activePromo || "بدون كوبون", 
                 discountAmount: dAmount.toFixed(2),
-                totalPrice: finalTotal, 
+                totalPrice: finalTotalNum, // هيروح رقم صافي (25.50)
                 status: 'قيد التحضير ⏳',
-                time: new Date().toLocaleTimeString('ar-SA'),
+                // نبعت وقتين: واحد للحسابات وواحد للعرض
+                time: new Date().toISOString(), 
+                displayTime: new Date().toLocaleTimeString('ar-SA'),
                 deptsNeeded: deptsNeeded,
                 baristaReady: false, 
                 kitchenReady: false, 
                 dessertReady: false
             };
 
+            // 3. الإرسال بنظام الدفع (push) لضمان عدم مسح الأوردرات السابقة
             const orderRef = database.ref('live_orders').push();
-            currentOrderId = orderRef.key;
-            orderRef.set(orderData);
+            orderRef.set(orderData).then(() => {
+                console.log("البيانات وصلت الإمبراطورية ✅");
+            });
             
-            // باقي الكود (StatusBar و WhatsApp) زي ما هو تمام...
+            // 4. إظهار شريط الحالة
             document.getElementById('order-status-bar').style.display = 'block';
             
-            let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum?'[طاولة '+tNum+']':''}\n`;
+            // 5. رسالة الواتساب الاحترافية
+            let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum ? '[طاولة '+tNum+']' : ''}\n`;
             cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
-            msg += `\n*الإجمالي النهائي*: ${finalTotal} ريال`;
+            msg += `\n*الإجمالي النهائي*: ${finalTotalNum.toFixed(2)} ريال`;
             
             window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
             
-            cart = []; renderCart(); activePromo = ""; discountValReal = 0;
-            document.getElementById('notes').value = ""; // تنظيف الملاحظات بعد الإرسال
+            // 6. تنظيف السلة وكود الخصم والواجهة (الفنش الملكي)
+            cart = []; 
+            renderCart(); 
+            
+            activePromo = ""; 
+            discountValReal = 0; 
+            
+            // التعديل الصغير هنا عشان اسم الـ ID
+            if(document.getElementById('promoCode')) {
+                document.getElementById('promoCode').value = ""; 
+            }
+            // -----------------------------------
+
+            document.getElementById('notes').value = ""; // تنظيف الملاحظات
             showToast("تم إرسال الطلب بنجاح! 🎉");
+
         }, () => alert("❌ فشل التحقق الجغرافي: يجب التواجد داخل الفرع لإتمام الطلب"));
     }
 
@@ -523,12 +544,13 @@
 </script>
 
 <script>
+    // كود تشغيل الفيديو "دريم" مع معالجة سياسة كتم الصوت
     (function() {
         const v = document.getElementById('dreamVideo');
         const o = document.getElementById('dream-overlay');
 
         if (v) {
-            v.muted = false; // تفعيل الصوت
+            v.muted = false; 
             v.onended = function() {
                 if (o) {
                     o.style.transition = 'opacity 1.5s ease';
@@ -539,12 +561,16 @@
         }
 
         document.addEventListener('click', () => {
-            if (v && v.paused) { v.play(); v.muted = false; }
+            if (v && v.paused) { 
+                v.play().catch(e => console.log("تحتاج لمس الشاشة أولاً")); 
+                v.muted = false; 
+            }
         }, { once: true });
     })();
 </script>
 
 </body>
 </html>
+
 
 كود منيو شغال ميه ميه بفيديو دريم
