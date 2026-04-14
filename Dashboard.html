@@ -13,22 +13,17 @@
         .card { background: var(--card-bg); border: 1px solid var(--gold); padding: 20px; border-radius: 15px; text-align: center; }
         .card h3 { color: var(--gold); margin: 0; font-size: 14px; }
         .card span { font-size: 24px; font-weight: bold; display: block; margin-top: 5px; }
-        
         .section-title { color: var(--gold); border-right: 4px solid var(--gold); padding-right: 15px; margin: 30px 0 15px; display: flex; align-items: center; gap: 10px; }
-        
         .table-container { overflow-x: auto; background: var(--card-bg); border-radius: 15px; border: 1px solid rgba(200,162,124,0.2); margin-bottom: 40px; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { padding: 12px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
         th { background: var(--gold); color: black; font-size: 14px; }
-        
         .timer-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         .timer-running { background: #28a745; color: white; }
         .timer-late { background: #dc3545; color: white; animation: pulse 1s infinite; }
-        .timer-fixed { background: #6c757d; color: white; } /* وقت مجمد */
-
+        .timer-fixed { background: #6c757d; color: white; }
         .btn-pay { background: var(--gold); color: black; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-pay:hover { background: white; transform: scale(1.05); }
-        
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
@@ -59,7 +54,7 @@
         </table>
     </div>
 
-    <h3 class="section-title">🔵 طلبات تمت محاسبتها (الأرشيف اليومي 📊)</h3>
+    <h3 class="section-title">🔵 أرشيف اليوم (تمت المحاسبة 📊)</h3>
     <div class="table-container">
         <table>
             <thead>
@@ -68,7 +63,7 @@
                     <th>المكان</th>
                     <th>الأصناف</th>
                     <th>المجموع</th>
-                    <th>مدة الخدمة</th>
+                    <th>مدة التحضير</th>
                     <th>الحالة</th>
                 </tr>
             </thead>
@@ -77,7 +72,6 @@
     </div>
 
 <script>
-    // إعدادات Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
         databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
@@ -85,13 +79,8 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // دالة حساب الوقت الذكية
     function getWaitTime(o) {
-        // 1. لو المطبخ سجل وقت نهائي (finalWait)، اعرضه واثبت عليه
-        if (o.finalWait !== undefined) {
-            return o.finalWait;
-        }
-        // 2. لو لسه شغال، احسب الفرق بين دلوقتي ووقت الطلب (ISO)
+        if (o.finalWait !== undefined) return o.finalWait;
         if (!o.time) return 0;
         const start = new Date(o.time);
         const now = new Date();
@@ -99,36 +88,31 @@
         return diff > 0 ? diff : 0;
     }
 
-    // مراقبة قاعدة البيانات بالكامل
-    database.ref('live_orders').on('value', snap => {
+    database.ref('live_orders').on('value', snapshot => {
         let liveRows = "";
         let historyRows = "";
         let activeCount = 0;
         let doneCount = 0;
         let totalSales = 0;
 
-        snap.forEach(child => {
+        snapshot.forEach((child) => {
             const o = child.val();
             const id = child.key;
             const waitTime = getWaitTime(o);
             const price = parseFloat(o.totalPrice) || 0;
 
-            // الحالة أ: الطلب لسه متحاسبش (يظهر في الجدول الأخضر)
             if (o.status !== "تمت المحاسبة ✅") {
                 activeCount++;
                 const timerClass = o.finalWait !== undefined ? 'timer-fixed' : (waitTime > 10 ? 'timer-late' : 'timer-running');
-                
                 liveRows = `<tr>
                     <td>${o.displayTime || '---'}</td>
                     <td>${o.type} ${o.table ? '['+o.table+']' : ''}</td>
                     <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
                     <td style="color:var(--gold); font-weight:bold;">${price.toFixed(2)} ريال</td>
                     <td><span class="timer-badge ${timerClass}">${waitTime} دقيقة</span></td>
-                    <td><button class="btn-pay" onclick='completeOrder("${id}")'>إتمام ودفع ✅</button></td>
+                    <td><button class="btn-pay" onclick="completeOrder('${id}')">إتمام ودفع ✅</button></td>
                 </tr>` + liveRows;
-            } 
-            // الحالة ب: الطلب تم محاسبته (ينتقل للجدول الأزرق)
-            else {
+            } else {
                 doneCount++;
                 totalSales += price;
                 historyRows = `<tr>
@@ -137,7 +121,7 @@
                     <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
                     <td>${price.toFixed(2)} ريال</td>
                     <td><span class="timer-badge timer-fixed">${waitTime} دقيقة</span></td>
-                    <td style="color:#28a745; font-weight:bold;">محاسب ✅</td>
+                    <td style="color:#28a745; font-weight:bold;">تمت المحاسبة ✅</td>
                 </tr>` + historyRows;
             }
         });
@@ -149,21 +133,15 @@
         document.getElementById('dailySales').innerText = totalSales.toFixed(2);
     });
 
-    // وظيفة المحاسبة (تحديث الحالة فقط)
     function completeOrder(id) {
         if(!confirm("تأكيد استلام المبلغ وإغلاق الطلب؟")) return;
-        
         database.ref('live_orders/' + id).update({
             status: "تمت المحاسبة ✅",
             accountingTime: new Date().toISOString()
         });
     }
 
-    // تحديث الصفحة كل دقيقة لتحديث عدادات الوقت الجارية
-    setInterval(() => { 
-        // التحديث يتم تلقائياً لأن Firebase 'on' مستمر، لكن Reload يضمن دقة العداد
-        location.reload(); 
-    }, 60000);
+    setInterval(() => { location.reload(); }, 60000);
 </script>
 </body>
 </html>
