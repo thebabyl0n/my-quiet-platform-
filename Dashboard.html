@@ -125,6 +125,23 @@
             <tbody id="liveTable"></tbody>
         </table>
     </div>
+    
+    <div class="section-title">📊 تقارير الأداء والسيادة</div>
+<div class="grid">
+    <div class="card">
+        <h3>الأكثر مبيعاً 🔥</h3>
+        <span id="topProduct" style="font-size: 20px;">---</span>
+    </div>
+    <div class="card">
+        <h3>الأقل مبيعاً ❄️</h3>
+        <span id="bottomProduct" style="font-size: 20px;">---</span>
+    </div>
+    <div class="card">
+        <h3>مبيعات الأسبوع 📈</h3>
+        <span id="weeklySales">0.00</span>
+    </div>
+</div>
+
 
     <h3 class="section-title">🔵 الأرشيف النهائي (المُرحّل فقط)</h3>
     <div class="table-container">
@@ -220,7 +237,32 @@
         document.getElementById('activeCount').innerText = activeCount;
         document.getElementById('doneCount').innerText = doneCount;
         document.getElementById('dailySales').innerText = totalSales.toFixed(2);
+        generateReports(snapshot.val());
     });
+    function generateReports(allOrders) {
+    if (!allOrders) return;
+    let counts = {}; let weekly = 0;
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7*24*60*60*1000);
+
+    Object.values(allOrders).forEach(o => {
+        const oDate = o.time ? new Date(o.time) : null;
+        if (oDate && oDate >= weekAgo) weekly += parseFloat(o.totalPrice) || 0;
+        if (o.items) {
+            o.items.forEach(i => {
+                let n = i.ar || i.name;
+                counts[n] = (counts[n] || 0) + 1;
+            });
+        }
+    });
+
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    if (sorted.length > 0) {
+        document.getElementById('topProduct').innerText = sorted[0][0];
+        document.getElementById('bottomProduct').innerText = sorted[sorted.length-1][0];
+    }
+    document.getElementById('weeklySales').innerText = weekly.toFixed(2) + " ريال";
+}
 
     function archiveOrder(id) {
         if(!confirm("ترحيل الطلب للأرشيف النهائي؟")) return;
@@ -237,9 +279,9 @@
             });
             alert("✅ تم تصفير الوردية بنجاح.");
         });
-    }
+    } 
 </script>
 </body>
 </html>
 
-دتش بورد بزار الارشيف تحت تجربه الاستيل
+دتش بورد بزار الارشيف تحت تجربه التقرير
