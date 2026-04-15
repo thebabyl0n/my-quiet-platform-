@@ -275,7 +275,7 @@ function enterApp(message) {
         const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
-// --- جلب العروض التفاعلية (نسخة واحدة نضيفة) ---
+// 1. جلب العروض وربطها بالضغط (النسخة الذكية)
 database.ref('offers').on('value', snap => {
     let sliderHtml = "";
     if (snap.exists()) {
@@ -294,7 +294,7 @@ database.ref('offers').on('value', snap => {
     if(sliderDiv) { sliderDiv.innerHTML = sliderHtml; }
 });
 
-// دالة الإضافة السريعة
+// 2. محرك الإضافة للسلة (بدونه الضغط على الصورة مش هيشتغل)
 function quickAddOffer(k, ar, p, dept) {
     if(!ar || !p) return; 
     cart.push({
@@ -305,15 +305,6 @@ function quickAddOffer(k, ar, p, dept) {
     showToast("✅ تم إضافة العرض الملكي للسلة!");
 }
 
-            // رسالة بديلة أو صورة افتراضية لو مفيش عروض حالياً
-            sliderHtml = `<p style="text-align:center; width:100%; color:var(--gold);">انتظروا عروضنا الملكية قريباً...</p>`;
-        }
-        
-        const sliderDiv = document.getElementById('slider');
-        if(sliderDiv) {
-            sliderDiv.innerHTML = sliderHtml;
-        }
-    });
 
     database.ref('settings').on('value', snap => {
         const s = snap.val();
