@@ -630,38 +630,58 @@ async function submitOrder() {
     }
 </script>
 <script>
-// ⚡️ أمر القائد محمود: تفعيل رنين الوفاء (الإشعارات الملكية)
+let deferredPrompt;
+
+// 1. الجزء الخاص بتفعيل الإشعارات الملكية بمفتاح الـ VAPID
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('firebase-messaging-sw.js')
     .then((registration) => {
       console.log('تم تسجيل الحارس بنجاح! 🛡️');
-      
       const messaging = firebase.messaging();
       
-      // 🏗️ طلب الإذن السيادي من الزبون
       messaging.requestPermission()
         .then(() => {
-          console.log('الزبون وافق على الإشعارات ✅');
-          // 🔑 استخدام مفتاح الـ VAPID اللي إنت جبته
           return messaging.getToken({
             vapidKey: 'BPvVGFq8fJ1BFunCn5sqVTDoDMfPxdNx2wX0I7F6mJIV7XTxe-eTRHUPa899Ed4isWJajHqyQ_iVcxYLLEH_0FI'
           });
         })
         .then((token) => {
           console.log('هذا هو توكن السيادة: ', token);
-          // حفظ التوكن في قاعدة البيانات عشان نعرف نبعت للزبون ده بالذات
           if(token) {
             firebase.database().ref('user_tokens/' + token.substring(0, 20)).set({
               token: token,
               last_active: Date.now()
             });
           }
-        })
-        .catch((err) => {
-          console.log('حدث خطأ أو الزبون رفض الإذن ❌', err);
         });
     });
 }
+
+// 2. الجزء الخاص بظهور زرار "تثبيت التطبيق" للزبون تلقائياً
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  
+  // ظهور الزرار الذهبي الشيك
+  const installBtn = document.createElement('div');
+  installBtn.innerHTML = `
+    <div id="install-banner" style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#c8a27c; color:#fff; padding:15px 25px; border-radius:30px; z-index:9999; cursor:pointer; box-shadow:0 5px 15px rgba(0,0,0,0.3); font-weight:bold; font-family:sans-serif; direction:rtl;">
+      📥 ثبّت تطبيق Alpha Shadow الآن
+    </div>
+  `;
+  document.body.appendChild(installBtn);
+
+  installBtn.addEventListener('click', () => {
+    installBtn.style.display = 'none';
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('الزبون وافق على التثبيت');
+      }
+      deferredPrompt = null;
+    });
+  });
+});
 </script>
 </body>
 </html>
