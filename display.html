@@ -111,9 +111,10 @@
                 }
 
                 const isDone = order[screenType + 'Ready'] === true;
-                const btn = isCashier 
-                    ? `<button class="btn btn-cashier" onclick="completeOrder('${orderId}')">تحصيل المبلغ وإتمام ✅</button>`
-                    : `<button class="btn btn-dept" ${isDone?'disabled':''} onclick='markReady("${orderId}", ${JSON.stringify(order)})'>${isDone?'تم إرسال الإشعار ✅':'تم التجهيز 📣'}</button>`;
+const btn = isCashier
+    ? `<button class="btn btn-cashier" onclick="completeOrder('${orderId}')">تحصيل المبلغ وإتمام ✅</button>
+       <button class="btn" style="background: #ef4444; margin-top: 8px;" onclick="requestCancel('${orderId}')">⚠️ طلب إلغاء الطلب</button>`
+    : `<button class="btn btn-dept" ${isDone?'disabled':''} onclick='markReady("${orderId}", ${JSON.stringify(order)})'>${isDone?'تم إرسال الإشعار ✅':'تم التجهيز 📣'}</button>`;
 
                 grid.innerHTML += `
                     <div class="order-card">
@@ -170,6 +171,17 @@ function completeOrder(id) {
         });
     }
 }
+function requestCancel(id) {
+    if(confirm('هل تريد إرسال طلب إلغاء للمدير؟')) {
+        database.ref('live_orders/' + id).update({
+            status: "طلب إلغاء ⚠️",
+            cancelRequested: true,
+            cancelTime: new Date().toISOString()
+        }).then(() => {
+            alert("تم إرسال الطلب للمدير.. في انتظار الموافقة.");
+        });
+    }
+}
 
     let wakeLock = null;
     async function requestWakeLock() {
@@ -204,3 +216,4 @@ function completeOrder(id) {
 </script>
 </body>
 </html>
+
