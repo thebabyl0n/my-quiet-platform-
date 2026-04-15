@@ -275,40 +275,33 @@ function enterApp(message) {
         const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
-// جلب صور العروض وتفعيل "الطلب بضغطة واحدة"
+// --- جلب العروض التفاعلية (نسخة واحدة نضيفة) ---
 database.ref('offers').on('value', snap => {
     let sliderHtml = "";
     if (snap.exists()) {
         snap.forEach(child => {
             const data = child.val();
             if(data && data.img){
-                // 👈 هنا السر: ضفنا onclick بياخد بيانات العرض اللي أنت مدخلها في لوحتك السرية
                 sliderHtml += `<img src="${data.img}" class="slider-img" 
                                onclick="quickAddOffer('${data.k}', '${data.itemAr}', ${data.price}, '${data.dept}')" 
                                style="cursor: pointer; border: 1px solid var(--gold); border-radius:15px; margin:5px;">`;
             }
         });
     } else {
-        sliderHtml = `<p style="text-align:center; width:100%; color:#94a3b8;">انتظروا عروضنا القادمة.. 🌟</p>`;
+        sliderHtml = `<p style="text-align:center; width:100%; color:var(--gold);">انتظروا عروضنا الملكية قريباً...</p>`;
     }
-    
     const sliderDiv = document.getElementById('slider');
     if(sliderDiv) { sliderDiv.innerHTML = sliderHtml; }
 });
+
+// دالة الإضافة السريعة
 function quickAddOffer(k, ar, p, dept) {
     if(!ar || !p) return; 
-    
-    // إضافة المنتج للسلة أوتوماتيكياً
     cart.push({
-        k: k || 'OFFER', 
-        ar: ar, 
-        en: 'Special Offer', 
-        p: parseFloat(p), 
-        exAr: '', exEn: '', exP: 0, qty: 1, 
-        dept: dept || 'barista'
+        k: k || 'OFFER', ar: ar, en: 'Special Offer', p: parseFloat(p), 
+        exAr: '', exEn: '', exP: 0, qty: 1, dept: dept || 'barista'
     }); 
-    
-    renderCart(); // تحديث شكل السلة للزبون
+    renderCart(); 
     showToast("✅ تم إضافة العرض الملكي للسلة!");
 }
 
