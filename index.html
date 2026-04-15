@@ -630,13 +630,38 @@ async function submitOrder() {
     }
 </script>
 <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-    navigator.serviceWorker.register('firebase-messaging-sw.js')
-        .then(reg => console.log('تم تسجيل النظام بنجاح!'))
-        .catch(err => console.log('فيه مشكلة بسيطة'));
+// ⚡️ أمر القائد محمود: تفعيل رنين الوفاء (الإشعارات الملكية)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('firebase-messaging-sw.js')
+    .then((registration) => {
+      console.log('تم تسجيل الحارس بنجاح! 🛡️');
+      
+      const messaging = firebase.messaging();
+      
+      // 🏗️ طلب الإذن السيادي من الزبون
+      messaging.requestPermission()
+        .then(() => {
+          console.log('الزبون وافق على الإشعارات ✅');
+          // 🔑 استخدام مفتاح الـ VAPID اللي إنت جبته
+          return messaging.getToken({
+            vapidKey: 'BPvVGFq8fJ1BFunCn5sqVTDoDMfPxdNx2wX0I7F6mJIV7XTxe-eTRHUPa899Ed4isWJajHqyQ_iVcxYLLEH_0FI'
+          });
+        })
+        .then((token) => {
+          console.log('هذا هو توكن السيادة: ', token);
+          // حفظ التوكن في قاعدة البيانات عشان نعرف نبعت للزبون ده بالذات
+          if(token) {
+            firebase.database().ref('user_tokens/' + token.substring(0, 20)).set({
+              token: token,
+              last_active: Date.now()
+            });
+          }
+        })
+        .catch((err) => {
+          console.log('حدث خطأ أو الزبون رفض الإذن ❌', err);
+        });
     });
-  }
+}
 </script>
 </body>
 </html>
