@@ -307,13 +307,27 @@ sliderHtml += `<div class="offer-container" style="position:relative; display:in
 });
 
 // 2. محرك الإضافة للسلة (بدونه الضغط على الصورة مش هيشتغل)
-function quickAddOffer(k, ar, p, dept) {
-    if(!ar || !p) return; 
+function quickAddOffer(ar, p, dept) {
+    // التأكد إن السعر رقم حقيقي وليس نص أو فاضي
+    const priceNum = parseFloat(p);
+    if (!ar || isNaN(priceNum)) {
+        alert("عذراً، حدث خطأ في بيانات العرض!");
+        return;
+    }
+
     cart.push({
-        k: k || 'OFFER', ar: ar, en: 'Special Offer', p: parseFloat(p), 
-        exAr: '', exEn: '', exP: 0, qty: 1, dept: dept || 'barista'
-    }); 
-    renderCart(); 
+        k: 'OFFER_' + Date.now(), 
+        ar: ar, 
+        en: 'Special Offer', 
+        p: priceNum, // السعر هنا بقى رقم نظيف
+        exAr: "", 
+        exEn: "", 
+        exP: 0, 
+        qty: 1, 
+        dept: dept || 'barista'
+    });
+
+    renderCart();
     showToast("✅ تم إضافة العرض الملكي للسلة!");
 }
 
