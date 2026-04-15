@@ -275,18 +275,43 @@ function enterApp(message) {
         const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
-    // جلب صور العروض من قسم offers وتحديث السلايدر تلقائياً
-    database.ref('offers').on('value', snap => {
-        let sliderHtml = "";
-        if (snap.exists()) {
-            snap.forEach(child => {
-                const data = child.val();
-                // التأكد إن فيه رابط صورة موجود عشان ميطلعش إطار فاضي
-                if(data && data.img){
-                    sliderHtml += `<img src="${data.img}" class="slider-img">`;
-                }
-            });
-        } else {
+// جلب صور العروض وتفعيل "الطلب بضغطة واحدة"
+database.ref('offers').on('value', snap => {
+    let sliderHtml = "";
+    if (snap.exists()) {
+        snap.forEach(child => {
+            const data = child.val();
+            if(data && data.img){
+                // 👈 هنا السر: ضفنا onclick بياخد بيانات العرض اللي أنت مدخلها في لوحتك السرية
+                sliderHtml += `<img src="${data.img}" class="slider-img" 
+                               onclick="quickAddOffer('${data.k}', '${data.itemAr}', ${data.price}, '${data.dept}')" 
+                               style="cursor: pointer; border: 1px solid var(--gold); border-radius:15px; margin:5px;">`;
+            }
+        });
+    } else {
+        sliderHtml = `<p style="text-align:center; width:100%; color:#94a3b8;">انتظروا عروضنا القادمة.. 🌟</p>`;
+    }
+    
+    const sliderDiv = document.getElementById('slider');
+    if(sliderDiv) { sliderDiv.innerHTML = sliderHtml; }
+});
+function quickAddOffer(k, ar, p, dept) {
+    if(!ar || !p) return; 
+    
+    // إضافة المنتج للسلة أوتوماتيكياً
+    cart.push({
+        k: k || 'OFFER', 
+        ar: ar, 
+        en: 'Special Offer', 
+        p: parseFloat(p), 
+        exAr: '', exEn: '', exP: 0, qty: 1, 
+        dept: dept || 'barista'
+    }); 
+    
+    renderCart(); // تحديث شكل السلة للزبون
+    showToast("✅ تم إضافة العرض الملكي للسلة!");
+}
+
             // رسالة بديلة أو صورة افتراضية لو مفيش عروض حالياً
             sliderHtml = `<p style="text-align:center; width:100%; color:var(--gold);">انتظروا عروضنا الملكية قريباً...</p>`;
         }
@@ -474,18 +499,27 @@ function toggleTableEntry() {
 
 // 👈 اضف "ماكينة الصوت الملكي" هنا بالظبط
 function callOrderNumber(num, type) {
-    let speechText = "";
-    if (type === 'سفري') {
-        speechText = `حياك الله ✨، طلبك السفري رقم ${num} صار قيد التحضير.. استلم بوقار السيادة`;
-    } else {
-        speechText = `طلب الطاولة رقم ${num} صار قيد التحضير يا فندم`;
-    }
-    let cleanText = speechText.replace(/[-_]/g, ' ').trim(); 
+    // 1. دي المقدمة الآلية اللي بتعرف الزبون نوع طلبه ورقمه
+    let intro = (type === 'سفري') 
+                ? `نعتز بخدمتكم. طلب السفري رقم ${num}. ` 
+                : `حياكم الله. طلب الطاولة رقم ${num}. `;
+
+    // 2. دي الجملة اللي أنت بتتحكم فيها من لوحة التحكم (السرية)
+    // لو الخانة عندك فاضية، السيستم هينطق جملة بسيطة "طلبكم جاهز"
+    let yourSecretWord = readyAudio || "طلبكم أصبح جاهزاً الآن.";
+
+    // 3. هنا بيحصل الدمج الآلي (المقدمة + جملتك)
+    let speechText = intro + yourSecretWord;
+
+    // 4. فلتر الأمان عشان النطق يطلع "سبيكة" واحدة بدون تشويش
+    let cleanText = speechText.replace(/[{}]/g, '').replace(/[-_]/g, ' ').trim(); 
+
     const msg = new SpeechSynthesisUtterance(cleanText);
-    msg.lang = "ar-SA";
-    msg.rate = 0.85; 
-    msg.pitch = 1.1;
+    msg.lang = "ar-SA"; // نبرة سعودية فخمة
+    msg.rate = 0.8;    // سرعة وقورة وواضحة
+    msg.pitch = 1.0;
     msg.volume = 1;
+
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(msg);
 }
@@ -551,10 +585,16 @@ async function submitOrder() {
             dessertReady: false
         };
 
+        // الإرسال للـ Firebase وتصفير السلة
         database.ref('live_orders').push().set(orderData).then(() => {
+            // النداء الصوتي الفوري (الوقور)
             callOrderNumber(orderNumber, oType); 
+
+            // التنبيهات المرئية
             showToast("تم إرسال الطلب بنجاح! رقمك: " + orderNumber);
             alert("طلبك رقم [" + orderNumber + "].. استلم بوقار السيادة! 🎉");
+
+            // تنظيف السلة (الفنش الملكي)
             cart = []; 
             renderCart(); 
             activePromo = ""; 
@@ -565,6 +605,7 @@ async function submitOrder() {
                 document.getElementById('order-status-bar').style.display = 'block';
             }
         });
+
     }, () => alert("❌ فشل التحقق الجغرافي: يجب التواجد داخل الفرع لإتمام الطلب"));
 }
 
@@ -579,6 +620,3 @@ async function submitOrder() {
 </script>
 </body>
 </html>
-
-
-كود منيو شغال ميه ميه بفيديو دريم تحت التجربه عداد سفري داوله بباركود
