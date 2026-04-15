@@ -92,6 +92,36 @@
         padding: 12px;
         margin-top: 15px;
     }
+    @keyframes blinkRed {
+    0% { background: rgba(239, 68, 68, 0.1); }
+    50% { background: rgba(239, 68, 68, 0.3); }
+    100% { background: rgba(239, 68, 68, 0.1); }
+}
+.cancel-request-row {
+    animation: blinkRed 1.5s infinite;
+    border: 2px solid var(--red) !important;
+}
+.btn-approve-cancel { 
+    background: var(--red); 
+    color: white; 
+    padding: 8px 15px; 
+    border-radius: 8px; 
+    border: none; 
+    cursor: pointer; 
+    margin-left: 5px; 
+    font-weight: bold; 
+}
+
+.btn-reject-cancel { 
+    background: var(--text-muted); 
+    color: white; 
+    padding: 8px 15px; 
+    border-radius: 8px; 
+    border: none; 
+    cursor: pointer; 
+    font-weight: bold; 
+}
+
 </style>
 </head>
 <body>
@@ -255,23 +285,38 @@ function generateReports(allOrders) {
                           tempDate.getDate().toString().padStart(2, '0');
             }
 
+            // لو الطلب لسه ما اترحمش للأرشيف
             if (o.status !== "تم الترحيل للأرشيف 📦") {
                 activeCount++;
                 const isPaid = (o.status === "تمت المحاسبة ✅");
+                const isCancelRequest = (o.status === "طلب إلغاء ⚠️"); // كشف طلب الإلغاء
                 const isReady = (o.finalWait !== undefined);
+                
                 const timerClass = isReady ? 'timer-fixed' : (waitTime > 10 ? 'timer-late' : 'timer-running');
-                const statusColor = isPaid ? 'var(--green)' : (isReady ? 'var(--blue)' : 'white');
+                const rowClass = isCancelRequest ? 'cancel-request-row' : ''; // تفعيل الوميض الأحمر
+                const statusColor = isCancelRequest ? 'var(--red)' : (isPaid ? 'var(--green)' : (isReady ? 'var(--blue)' : 'white'));
 
-                liveRows = `<tr>
+                // أزرار التحكم: لو طلب إلغاء يظهر موافقة/رفض، لو عادي يظهر ترحيل
+                let actionButtons = `<button class="btn btn-archive" onclick="archiveOrder('${id}')">مراجعة وترحيل 📦</button>`;
+                
+                if (isCancelRequest) {
+                    actionButtons = `
+                        <button class="btn-approve-cancel" onclick="confirmCancel('${id}')">✅ موافقة</button>
+                        <button class="btn-reject-cancel" onclick="rejectCancel('${id}')">❌ رفض</button>
+                    `;
+                }
+
+                liveRows = `<tr class="${rowClass}">
                     <td>${dateStr} | ${o.displayTime || '---'}</td>
                     <td>${o.type}</td>
                     <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
                     <td style="color:var(--gold); font-weight:bold;">${price.toFixed(2)}</td>
                     <td><span class="timer-badge ${timerClass}">${waitTime} دقيقة</span></td>
                     <td style="color:${statusColor}; font-weight:bold;">${o.status || "قيد التحضير ⏳"}</td>
-                    <td><button class="btn btn-archive" onclick="archiveOrder('${id}')">مراجعة وترحيل 📦</button></td>
+                    <td>${actionButtons}</td>
                 </tr>` + liveRows;
             } else {
+                // لو الطلب خلاص في الأرشيف
                 doneCount++;
                 totalSales += price;
                 historyRows = `<tr>
@@ -291,7 +336,6 @@ function generateReports(allOrders) {
         document.getElementById('doneCount').innerText = doneCount;
         document.getElementById('dailySales').innerText = totalSales.toFixed(2);
         
-        // تشغيل التقارير بعد تحديث كل البيانات
         generateReports(allData);
     });
 
@@ -310,9 +354,25 @@ function generateReports(allOrders) {
             });
             alert("✅ تم تصفير الوردية بنجاح.");
         });
-    } 
+    }
+function confirmCancel(id) {
+    if(confirm("⚠️ موافقة نهائية على إلغاء الطلب؟")) {
+        database.ref('live_orders/' + id).remove().then(() => {
+            alert("تم الحذف بنجاح.");
+        });
+    }
+}
+
+function rejectCancel(id) {
+    if(confirm("رفض الإلغاء؟")) {
+        database.ref('live_orders/' + id).update({
+            status: "قيد التحضير ⏳",
+            cancelRequested: false
+        });
+    }
+}
+ 
 </script>
 </body>
 </html>
 
-دتش بورد بزار الارشيف تحت تجربه التقرير
