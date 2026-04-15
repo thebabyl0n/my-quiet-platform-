@@ -551,13 +551,6 @@ async function submitOrder() {
             dessertReady: false
         };
 
-        // --- 4. الإرسال للـ Firebase وتصفير السلة ---
-        database.ref('live_orders').push().set(orderData).then(() => {
-            // شريط الحالة (لو موجود)
-            if(document.getElementById('order-status-bar')) {
-                document.getElementById('order-status-bar').style.display = 'block';
-            }
-
         database.ref('live_orders').push().set(orderData).then(() => {
             callOrderNumber(orderNumber, oType); 
             showToast("تم إرسال الطلب بنجاح! رقمك: " + orderNumber);
