@@ -154,29 +154,11 @@
             width: 100%; padding: 18px; border-radius: 20px; 
             font-size: 18px; font-weight: bold; box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
         }
-                /* دريم - شاشة الاستقبال الملكية */
-        #dream-overlay {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 12000; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        #dreamVideo {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        
     </style>
 </head>
 <body>
-<div id="dream-overlay">
-    <video id="dreamVideo" autoplay muted playsinline>
-        <source src="dream.mp4" type="video/mp4">
-    </video>
-</div>
+
 <div id="toast"></div>
 
 <div id="geo-shield">
@@ -188,7 +170,7 @@
     <img id="logoW" class="welcome-logo" src="">
     <h2 id="nameW" style="letter-spacing: 2px;">Alpha Shadow</h2>
     <button class="order-btn" onclick="startOrder('سفري')">🚗 سفري</button>
-    <button class="order-btn" onclick="document.getElementById('table-entry').style.display='block'">☕ محلي</button>
+    <button class="order-btn" onclick="toggleTableEntry()">☕ محلي</button>
     <div id="table-entry">
         <input type="number" id="tblNo" style="width: 80px; padding: 12px; border-radius: 12px; border: 1px solid var(--gold); background: transparent; color: #fff; text-align: center; font-size: 18px;" placeholder="طاولة">
         <br>
@@ -238,14 +220,44 @@
     let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
     let discountValReal = 0; let discountType = "percent"; let activePromo = "";
 
-    window.onload = () => {
-        validateGeo(() => {
-            document.getElementById('geo-shield').style.display = 'none';
+// --- الرادار الذكي (بيتحط قبل الـ onload) ---
+const urlParams = new URLSearchParams(window.location.search);
+const tableIdFromUrl = urlParams.get('table'); 
+const orderTypeFromUrl = urlParams.get('type'); 
+
+window.onload = () => {
+    validateGeo(() => {
+        document.getElementById('geo-shield').style.display = 'none';
+        
+        // التكتيك الاحترافي: فحص نوع الباركود
+        if (tableIdFromUrl) {
+            // باركود طاولة (محلي)
+            oType = 'محلي';
+            tNum = tableIdFromUrl;
+            enterApp(`أهلاً بك على طاولة رقم ${tNum} ☕️`);
+        } else if (orderTypeFromUrl === 'takeaway') {
+            // باركود الكاشير (سفري ثابت)
+            oType = 'سفري';
+            tNum = ""; 
+            enterApp("أهلاً بك.. طلبك سفري 🚗");
+        } else {
+            // اللينك العادي
             document.getElementById('welcome-screen').style.display = 'flex';
-        }, () => {
-            document.getElementById('geo-status').innerText = "❌ خارج نطاق الإمبراطورية (حي النسيم)";
-        });
-    };
+        }
+    }, () => {
+        document.getElementById('geo-status').innerText = "❌ خارج نطاق الإمبراطورية (حي النسيم)";
+    });
+};
+
+// وظيفة الدخول السريع (بتحطها بعد قفلة الـ onload)
+function enterApp(message) {
+    document.getElementById('welcome-screen').style.display = 'none'; 
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('typeLbl').innerText = oType;
+    document.getElementById('tblLbl').innerText = tNum ? `(طاولة ${tNum})` : "";
+    showToast(message);
+    if(welcomeAudio) talk(welcomeAudio);
+}
 
     function validateGeo(onSuccess, onError) {
         if (navigator.geolocation) {
@@ -454,84 +466,141 @@
         const m = new SpeechSynthesisUtterance(t); m.lang = 'en-US';
         window.speechSynthesis.speak(m);
     }
+    // --- دالة التحكم في إظهار مربع الطاولة ---
+function toggleTableEntry() {
+    const entry = document.getElementById('table-entry');
+    entry.style.display = entry.style.display === 'none' ? 'block' : 'none';
+}
 
-    function submitOrder() {
-        if(!cart.length) return alert("السلة فارغة");
-        
-        validateGeo(() => {
-            // 1. استخراج السعر وتحويله لرقم صافي
-            const finalTotalRaw = document.getElementById('total').innerText;
-            const finalTotalNum = parseFloat(finalTotalRaw.replace(/[^\d.]/g, '')) || 0;
-            
-            const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
-            let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
-            
-            const deptsNeeded = [...new Set(cart.map(item => (item.dept || 'barista').toLowerCase().trim()))];
 
-            const finalItemsForSystem = cart.map(item => {
-                return {
-                    k: item.k,
-                    ar: item.exAr ? `${item.ar} [+${item.exAr}]` : item.ar,
-                    p: item.p,
-                    exP: item.exP,
-                    qty: item.qty,
-                    dept: item.dept
-                };
-            });
+// --- دالة التحكم في إظهار مربع الطاولة ---
+function toggleTableEntry() {
+    // ... كودك اللي في الصورة ...
+}
 
-            // 2. تجهيز البيانات
-            const orderData = {
-                items: finalItemsForSystem,
-                type: oType, 
-                table: tNum || 'سفري',
-                notes: document.getElementById('notes').value, 
-                promoUsed: activePromo || "بدون كوبون", 
-                discountAmount: dAmount.toFixed(2),
-                totalPrice: finalTotalNum,
-                status: 'قيد التحضير ⏳',
-                time: new Date().toISOString(), 
-                displayTime: new Date().toLocaleTimeString('ar-SA'),
-                deptsNeeded: deptsNeeded,
-                baristaReady: false, 
-                kitchenReady: false, 
-                dessertReady: false
+// 👈 اضف "ماكينة الصوت الملكي" هنا بالظبط
+function callOrderNumber(num, type) {
+    let speechText = "";
+    if (type === 'سفري') {
+        speechText = `حياك الله ✨، طلبك السفري رقم ${num} صار قيد التحضير.. استلم بوقار السيادة`;
+    } else {
+        speechText = `طلب الطاولة رقم ${num} صار قيد التحضير يا فندم`;
+    }
+// استبدل من سطر 489 لـ 495 بهذا الجزء:
+
+    // 👈 السطر ده بيمسح أي علامات غريبة ويخلي الكلام "نضيف" للنطق الكامل
+    let cleanText = speechText.replace(/[-_]/g, ' ').trim(); 
+
+    const msg = new SpeechSynthesisUtterance(cleanText);
+    msg.lang = "ar-SA";
+    msg.rate = 0.85; 
+    msg.pitch = 1.1;
+    msg.volume = 1;
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(msg);
+}
+
+// اللي بعدهم علطول دالة الإرسال
+async function submitOrder() {
+    // ... باقي الكود ...
+}
+
+async function submitOrder() {
+    if(!cart.length) return alert("السلة فارغة");
+    
+    validateGeo(async () => {
+        // --- 1. حساباتك الدقيقة (سحبناها من كودك الأصلي) ---
+        const finalTotalRaw = document.getElementById('total').innerText;
+        const finalTotalNum = parseFloat(finalTotalRaw.replace(/[^\d.]/g, '')) || 0;
+        const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
+        let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
+        const deptsNeeded = [...new Set(cart.map(item => (item.dept || 'barista').toLowerCase().trim()))];
+
+        const finalItemsForSystem = cart.map(item => {
+            return {
+                k: item.k,
+                ar: item.exAr ? `${item.ar} [+${item.exAr}]` : item.ar,
+                p: item.p,
+                exP: item.exP,
+                qty: item.qty,
+                dept: item.dept
             };
+        });
 
-            // 3. الإرسال بنظام push
-            const orderRef = database.ref('live_orders').push();
-            orderRef.set(orderData).then(() => {
-                console.log("البيانات وصلت ✅");
+        // --- 2. ماكينة الأرقام (العداد اليومي الذكي) ---
+        const today = new Date().toLocaleDateString('en-GB'); 
+        const counterRef = database.ref('order_management/daily_counter');
+        
+        let orderNumber = 1;
+        try {
+            const snapshot = await counterRef.transaction(currentData => {
+                if (!currentData || currentData.date !== today) {
+                    return { count: 1, date: today }; 
+                } else {
+                    return { count: (currentData.count || 0) + 1, date: today }; 
+                }
             });
-            
-            // 4. إظهار شريط الحالة
+            orderNumber = snapshot.snapshot.val().count;
+        } catch (e) {
+            console.error("العداد تعثر، سيتم استخدام رقم عشوائي");
+            orderNumber = Math.floor(Math.random() * 100);
+        }
+
+        // --- 3. تجهيز البيانات النهائية للإرسال ---
+        const orderData = {
+            orderNum: orderNumber, // الرقم اللي هيظهر للعميل والكاشير
+            items: finalItemsForSystem,
+            type: oType, 
+            table: tNum || 'سفري',
+            notes: document.getElementById('notes').value, 
+            promoUsed: activePromo || "بدون كوبون", 
+            discountAmount: dAmount.toFixed(2),
+            totalPrice: finalTotalNum,
+            status: 'قيد التحضير ⏳',
+            time: new Date().toISOString(), 
+            displayTime: new Date().toLocaleTimeString('ar-SA'),
+            date: today,
+            deptsNeeded: deptsNeeded,
+            baristaReady: false, 
+            kitchenReady: false, 
+            dessertReady: false
+        };
+
+        // --- 4. الإرسال للـ Firebase وتصفير السلة ---
+        database.ref('live_orders').push().set(orderData).then(() => {
+            // شريط الحالة (لو موجود)
             if(document.getElementById('order-status-bar')) {
                 document.getElementById('order-status-bar').style.display = 'block';
             }
+
+        // 3. الإرسال للـ Firebase
+        database.ref('live_orders').push().set(orderData).then(() => {
             
-            // 5. رسالة الواتساب
-            let msg = `*طلب جديد* ☕\n*المكان*: ${oType} ${tNum ? '[طاولة '+tNum+']' : ''}\n`;
-            cart.forEach(i => { msg += `• ${i.qty}x ${i.ar} ${i.exAr ? '[+'+i.exAr+']' : ''}\n`; });
-            msg += `\n*الإجمالي النهائي*: ${finalTotalNum.toFixed(2)} ريال`;
-            
-            window.open(`https://wa.me/966579747707?text=${encodeURIComponent(msg)}`);
-            
-            // 6. الفنش الملكي (تنظيف كل شيء)
+            // أ. النداء الصوتي الفوري (الجديد)
+            callOrderNumber(orderNumber, oType); 
+
+            // ب. التنبيهات المرئية
+            showToast("تم إرسال الطلب بنجاح! رقمك: " + orderNumber);
+            alert("طلبك رقم [" + orderNumber + "].. استلم بوقار السيادة! 🎉");
+
+            // ج. تنظيف السلة وكل شيء (الفنش الملكي)
             cart = []; 
             renderCart(); 
             activePromo = ""; 
             discountValReal = 0; 
             
-            if(document.getElementById('promoCode')) {
-                document.getElementById('promoCode').value = ""; 
-            }
-            if(document.getElementById('notes')) {
-                document.getElementById('notes').value = ""; 
-            }
+            if(document.getElementById('promoCode')) document.getElementById('promoCode').value = ""; 
+            if(document.getElementById('notes')) document.getElementById('notes').value = ""; 
             
-            showToast("تم إرسال الطلب بنجاح! 🎉");
+            // د. إظهار شريط الحالة
+            if(document.getElementById('order-status-bar')) {
+                document.getElementById('order-status-bar').style.display = 'block';
+            }
+        });
 
-        }, () => alert("❌ فشل التحقق الجغرافي: يجب التواجد داخل الفرع لإتمام الطلب"));
-    } // نهاية وظيفة submitOrder
+    }, () => alert("❌ فشل التحقق الجغرافي: يجب التواجد داخل الفرع لإتمام الطلب"));
+}
 
     function showToast(m) {
         const t = document.getElementById('toast'); 
@@ -542,35 +611,8 @@
         }
     }
 </script>
-
-<script>
-    // كود الفيديو دريم
-    (function() {
-        const v = document.getElementById('dreamVideo');
-        const o = document.getElementById('dream-overlay');
-
-        if (v) {
-            v.muted = false; 
-            v.onended = function() {
-                if (o) {
-                    o.style.transition = 'opacity 1.5s ease';
-                    o.style.opacity = '0';
-                    setTimeout(() => { o.style.display = 'none'; }, 1500);
-                }
-            };
-        }
-
-        document.addEventListener('click', () => {
-            if (v && v.paused) { 
-                v.play().catch(e => console.log("تحتاج لمس الشاشة")); 
-                v.muted = false; 
-            }
-        }, { once: true });
-    })();
-</script>
-
 </body>
 </html>
 
 
-كود منيو شغال ميه ميه بفيديو دريم
+كود منيو شغال ميه ميه بفيديو دريم تحت التجربه عداد سفري داوله بباركود
