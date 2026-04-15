@@ -632,7 +632,7 @@ async function submitOrder() {
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    navigator.serviceWorker.register('firebase-messaging-sw.js')
         .then(reg => console.log('تم تسجيل النظام بنجاح!'))
         .catch(err => console.log('فيه مشكلة بسيطة'));
     });
