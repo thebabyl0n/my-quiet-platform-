@@ -218,25 +218,34 @@
         return diff > 0 ? diff : 0;
     }
 
-    // --- دالة التقارير الذكية ---
+// --- دالة التقارير الذكية بعد التعديل الجوهري ---
 function generateReports(allOrders) {
     if (!allOrders) return;
     let counts = {}; 
     let daily = 0; let weekly = 0; let monthly = 0;
     
     const now = new Date();
-    const dayAgo = new Date(now.getTime() - 1*24*60*60*1000);
-    const weekAgo = new Date(now.getTime() - 7*24*60*60*1000);
-    const monthAgo = new Date(now.getTime() - 30*24*60*60*1000);
+    
+    // 💡 التعديل هنا: بنجيب بداية اليوم الحالي (الساعة 00:00:00)
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // بداية الأسبوع (7 أيام كاملة من بداية اليوم)
+    const startOfWeek = new Date(startOfToday.getTime() - 7*24*60*60*1000);
+    
+    // بداية الشهر (30 يوم كاملة من بداية اليوم)
+    const startOfMonth = new Date(startOfToday.getTime() - 30*24*60*60*1000);
 
     Object.values(allOrders).forEach(o => {
         const oDate = o.time ? new Date(o.time) : null;
         const price = parseFloat(o.totalPrice) || 0;
 
         if (oDate) {
-            if (oDate >= dayAgo) daily += price;
-            if (oDate >= weekAgo) weekly += price;
-            if (oDate >= monthAgo) monthly += price;
+            // لو الأوردر حصل النهاردة بعد الساعة 12 بالليل
+            if (oDate >= startOfToday) daily += price;
+            // لو الأوردر في آخر 7 أيام
+            if (oDate >= startOfWeek) weekly += price;
+            // لو الأوردر في آخر 30 يوم
+            if (oDate >= startOfMonth) monthly += price;
         }
 
         if (o.items) {
@@ -375,4 +384,3 @@ function rejectCancel(id) {
 </script>
 </body>
 </html>
-
