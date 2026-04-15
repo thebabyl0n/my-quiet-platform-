@@ -8,14 +8,14 @@
   "description": "منيو الفا والظل الملكي",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/924/924514.png",
+      "src": "https://i.postimg.cc/wjrxy1Kq/IMG-20260411-WA0000.jpg",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/jpeg"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/924/924514.png",
+      "src": "https://i.postimg.cc/wjrxy1Kq/IMG-20260411-WA0000.jpg",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/jpeg"
     }
   ],
   "gcm_sender_id": "103953800507"
