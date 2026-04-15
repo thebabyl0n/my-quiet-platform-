@@ -480,17 +480,12 @@ function callOrderNumber(num, type) {
     } else {
         speechText = `طلب الطاولة رقم ${num} صار قيد التحضير يا فندم`;
     }
-// استبدل من سطر 489 لـ 495 بهذا الجزء:
-
-    // 👈 السطر ده بيمسح أي علامات غريبة ويخلي الكلام "نضيف" للنطق الكامل
     let cleanText = speechText.replace(/[-_]/g, ' ').trim(); 
-
     const msg = new SpeechSynthesisUtterance(cleanText);
     msg.lang = "ar-SA";
     msg.rate = 0.85; 
     msg.pitch = 1.1;
     msg.volume = 1;
-
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(msg);
 }
@@ -563,31 +558,20 @@ async function submitOrder() {
                 document.getElementById('order-status-bar').style.display = 'block';
             }
 
-        // 3. الإرسال للـ Firebase
         database.ref('live_orders').push().set(orderData).then(() => {
-            
-            // أ. النداء الصوتي الفوري (الجديد)
             callOrderNumber(orderNumber, oType); 
-
-            // ب. التنبيهات المرئية
             showToast("تم إرسال الطلب بنجاح! رقمك: " + orderNumber);
             alert("طلبك رقم [" + orderNumber + "].. استلم بوقار السيادة! 🎉");
-
-            // ج. تنظيف السلة وكل شيء (الفنش الملكي)
             cart = []; 
             renderCart(); 
             activePromo = ""; 
             discountValReal = 0; 
-            
             if(document.getElementById('promoCode')) document.getElementById('promoCode').value = ""; 
             if(document.getElementById('notes')) document.getElementById('notes').value = ""; 
-            
-            // د. إظهار شريط الحالة
             if(document.getElementById('order-status-bar')) {
                 document.getElementById('order-status-bar').style.display = 'block';
             }
         });
-
     }, () => alert("❌ فشل التحقق الجغرافي: يجب التواجد داخل الفرع لإتمام الطلب"));
 }
 
