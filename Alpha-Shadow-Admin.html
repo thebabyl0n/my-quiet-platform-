@@ -289,59 +289,134 @@
             alert("اكتب اسم الإضافة الأول يا بطل! ⚠️");
         }
     }
-// 1. إضافة قسم فرعي
-function addSubCategory() {
-    const name = document.getElementById('subName').value.trim();
-    const img = document.getElementById('subImg').value.trim();
-    const parent = document.getElementById('parentDept').value;
+    // 1. إعدادات Firebase (زي ما هي عندك)
+    const firebaseConfig = {
+        apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
+        authDomain: "alphashadow-23689.firebaseapp.com",
+        projectId: "alphashadow-23689",
+        databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-    if (name) {
-        database.ref('sub_categories').push({
-            name: name,
-            img: img || "",
-            parent: parent
-        }).then(() => {
-            alert("تم إضافة القسم الفرعي بنجاح! 🎯");
-            document.getElementById('subName').value = '';
-            document.getElementById('subImg').value = '';
-        });
-    } else {
-        alert("اكتب اسم القسم يا بطل! ⚠️");
+    // 2. دالة التأكد من كلمة السر
+    function checkPass() {
+        if(document.getElementById('passInput').value === 'Lovely333') {
+            document.getElementById('lock-screen').style.display = 'none';
+            document.getElementById('adminContent').style.display = 'block';
+            loadData();
+            updateItemSubDept(); // تشغيل تحديث الأقسام فور الدخول
+        } else { alert("كلمة السر خطأ!"); }
     }
-}
 
-// 2. تحديث قائمة الأقسام في المنيو + عرضها في لوحة التحكم للحذف
-function updateItemSubDept() {
-    database.ref('sub_categories').on('value', snap => {
-        let options = '<option value="none">بدون قسم فرعي</option>';
-        let listHtml = ""; // لعرض الأقسام عشان تمسحها
-
-        snap.forEach(child => {
-            const sub = child.val();
-            options += `<option value="${child.key}">${sub.name} (تابع لـ ${sub.parent})</option>`;
-            
-            // شكل القسم في القائمة عشان لو عايز تحذفه
-            listHtml += `
-                <div class="item-row" style="background:#fff3e0">
-                    <span><b>${sub.name}</b> (${sub.parent})</span>
-                    <button class="btn-del" onclick="deleteSubCategory('${child.key}')">حذف القسم</button>
-                </div>`;
-        });
-        document.getElementById('itemSubDept').innerHTML = options;
-        document.getElementById('subCategoriesList').innerHTML = listHtml;
-    });
-}
-
-// 3. دالة حذف القسم الفرعي
-function deleteSubCategory(id) {
-    if(confirm("هل تريد حذف هذا القسم الفرعي؟ لن يتم حذف المشروبات التابعة له.")) {
-        database.ref('sub_categories/' + id).remove();
+    // 3. إدارة الأقسام الفرعية (إضافة + حذف + تحديث القائمة)
+    function addSubCategory() {
+        const name = document.getElementById('subName').value.trim();
+        const img = document.getElementById('subImg').value.trim();
+        const parent = document.getElementById('parentDept').value;
+        if (name) {
+            database.ref('sub_categories').push({ name, img, parent }).then(() => {
+                alert("تم إضافة القسم الفرعي بنجاح! 🎯");
+                document.getElementById('subName').value = '';
+                document.getElementById('subImg').value = '';
+            });
+        } else { alert("اكتب اسم القسم يا بطل! ⚠️"); }
     }
-}
 
-// استمر في استخدام addItem اللي عندك فهي صحيحة 100%
+    function updateItemSubDept() {
+        database.ref('sub_categories').on('value', snap => {
+            let options = '<option value="none">بدون قسم فرعي</option>';
+            let listHtml = ""; 
+            snap.forEach(child => {
+                const sub = child.val();
+                options += `<option value="${child.key}">${sub.name} (تابع لـ ${sub.parent})</option>`;
+                listHtml += `
+                    <div class="item-row" style="background:#fff3e0">
+                        <span><b>${sub.name}</b> (${sub.parent})</span>
+                        <button class="btn-del" onclick="deleteSubCategory('${child.key}')">حذف القسم</button>
+                    </div>`;
+            });
+            document.getElementById('itemSubDept').innerHTML = options;
+            document.getElementById('subCategoriesList').innerHTML = listHtml;
+        });
+    }
+
+    function deleteSubCategory(id) {
+        if(confirm("حذف القسم؟ (المنتجات مش هتتمسح بس تصنيفها هيروح)")) {
+            database.ref('sub_categories/' + id).remove();
+        }
+    }
+
+    // 4. إدارة الأصناف (إضافة + حذف)
+    function addItem() {
+        const ar = document.getElementById('itemAr').value.trim();
+        const en = document.getElementById('itemEn').value.trim();
+        const price = document.getElementById('itemPrice').value;
+        const img = document.getElementById('itemImg').value;
+        const dept = document.getElementById('itemDept').value;
+        const subId = document.getElementById('itemSubDept').value;
+
+        if(ar && price) {
+            database.ref('menu_items').push({
+                ar, en: en || ar, price: parseFloat(price), img, dept, sub_id: subId
+            }).then(() => {
+                alert("تم الإضافة للمنيو! ✅");
+                document.getElementById('itemAr').value = '';
+                document.getElementById('itemPrice').value = '';
+            });
+        } else { alert("اكمل البيانات! ⚠️"); }
+    }
+
+    function deleteItem(id) {
+        if(confirm("حذف المنتج نهائياً؟")) {
+            database.ref('menu_items/' + id).remove();
+        }
+    }
+
+    // 5. تحميل البيانات وعرضها (المنيو، العروض، الكوبونات)
+    function loadData() {
+        // عرض المنيو الحالي مع زرار الحذف
+        database.ref('menu_items').on('value', snap => {
+            let h = "";
+            snap.forEach(child => {
+                const item = child.val();
+                h += `<div class="item-row"><span>${item.ar}</span><button class="btn-del" onclick="deleteItem('${child.key}')">حذف</button></div>`;
+            });
+            document.getElementById('itemsList').innerHTML = h;
+        });
+
+        // باقي تحميلاتك (عروض، كوبونات، براند)
+        database.ref('offers').on('value', snap => {
+            let h = "";
+            snap.forEach(child => { h += `<div class="item-row"><img src="${child.val().img}" width="50"> <button class="btn-del" onclick="database.ref('offers/${child.key}').remove()">حذف</button></div>`; });
+            document.getElementById('offersList').innerHTML = h;
+        });
+
+        database.ref('coupons').on('value', snap => {
+            let h = "";
+            snap.forEach(child => {
+                const data = child.val();
+                h += `<div class="item-row"><span><b>${child.key}</b></span> <button class="btn-del" onclick="database.ref('coupons/${child.key}').remove()">حذف</button></div>`;
+            });
+            document.getElementById('couponsList').innerHTML = h;
+        });
+
+        database.ref('settings/branding').once('value', snap => {
+            const s = snap.val();
+            if(s) { 
+                document.getElementById('cafeName').value = s.name || ""; 
+                document.getElementById('logoUrl').value = s.logo || ""; 
+            }
+        });
+    }
+
+    // دوال مساعدة تانية (اختياري)
+    function saveAudioSettings() { /* كودك القديم للاصوات */ }
+    function addCoupon() { /* كودك القديم للكوبونات */ }
+    function addOffer() { /* كودك القديم للعروض */ }
 
 </script>
+
 </body>
 </html>
 
