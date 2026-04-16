@@ -198,24 +198,40 @@
 </div>
 
 <section style="margin-top: 30px;">
-    <h3 class="section-title">🛠️ غرفة التحكم في الإمبراطورية (إدارة المنيو)</h3>
-    <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+    <h3 class="section-title">🛠️ غرفة التحكم (إدارة المنيو المطورة)</h3>
+    <div class="grid">
         
-        <div class="card" style="border: 1px dashed #c8a27c; padding: 20px; text-align: center;">
-            <h3 style="color: #c8a27c;">📂 إضافة قسم فرعي جديد</h3>
-            <input type="text" id="newSubName" placeholder="اسم القسم (مثلاً: حلا بارد)" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white; border: 1px solid #333;">
-            <input type="text" id="newSubImg" placeholder="رابط صورة القسم" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white; border: 1px solid #333;">
-            <button class="btn-archive" onclick="addNewSubCategory()" style="width:95%; background: #c8a27c; color: white;">حفظ القسم الجديد +</button>
+        <div class="card" style="border: 1px dashed #c8a27c;">
+            <h3>📂 إضافة قسم فرعي جديد</h3>
+            <select id="mainDeptSelect" style="width:95%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;">
+                <option value="barista">قسم الباريستا (مشروبات)</option>
+                <option value="sweets">قسم الحلا</option>
+            </select>
+            <input type="text" id="newSubName" placeholder="اسم القسم الفرعي (مثل: v60)" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;">
+            <button class="btn-archive" onclick="addNewSubCategory()" style="width:95%;">حفظ القسم الجديد +</button>
         </div>
 
-        <div class="card" style="border: 1px dashed #c8a27c; padding: 20px; text-align: center;">
-            <h3 style="color: #c8a27c;">☕ إضافة صنف جديد</h3>
-            <select id="selectSub" style="width:95%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white; border: 1px solid #333;"></select>
-            <input type="text" id="newItemAr" placeholder="اسم الصنف بالعربي" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white; border: 1px solid #333;">
-            <input type="number" id="newItemPrice" placeholder="السعر" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white; border: 1px solid #333;">
-            <button class="btn-archive" onclick="addNewItem()" style="width:95%; background: #28a745; color: white;">إضافة للمنيو 🚀</button>
+        <div class="card" style="border: 1px dashed #c8a27c;">
+            <h3>☕ إضافة صنف جديد</h3>
+            <select id="selectSub" style="width:95%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;"></select>
+            <input type="text" id="newItemAr" placeholder="الاسم بالعربي" style="width:43%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;">
+            <input type="text" id="newItemEn" placeholder="الاسم بالإنجليزي" style="width:43%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;">
+            <input type="text" id="newItemImg" placeholder="رابط صورة الصنف" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;">
+            <input type="number" id="newItemPrice" placeholder="السعر" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;">
+            <button class="btn-archive" onclick="addNewItem()" style="width:95%; background: #28a745;">إضافة للمنيو 🚀</button>
         </div>
         
+    </div>
+        <h3 class="section-title">🗑️ تنظيف الإمبراطورية (حذف الأقسام والأصناف)</h3>
+    <div class="grid">
+        <div class="card" style="border: 1px solid #ef4444;">
+            <h3>📂 الأقسام الحالية</h3>
+            <div id="deleteSubList" style="max-height: 200px; overflow-y: auto; text-align: right;"></div>
+        </div>
+        <div class="card" style="border: 1px solid #ef4444;">
+            <h3>☕ الأصناف الحالية</h3>
+            <div id="deleteItemList" style="max-height: 200px; overflow-y: auto; text-align: right;"></div>
+        </div>
     </div>
 </section>
 
@@ -446,22 +462,17 @@ firebase.auth().onAuthStateChanged((user) => {
 });
 
 // 3. نظام الإدارة (إضافة الأقسام والأصناف)
-function loadCategories() {
-    database.ref('sub_categories').on('value', snap => {
-        let options = '<option value="">اختر القسم الفرعي</option>';
-        snap.forEach(child => {
-            options += `<option value="${child.key}">${child.val().name}</option>`;
-        });
-        document.getElementById('selectSub').innerHTML = options;
-    });
-}
-
 function addNewSubCategory() {
     const name = document.getElementById('newSubName').value;
+    const dept = document.getElementById('mainDeptSelect').value; // القسم الرئيسي
     if(!name) return alert("اكتب اسم القسم يا حودة!");
     
-    database.ref('sub_categories').push({ name: name, img: "" }).then(() => {
-        alert("القسم نزل المنيو بنجاح! ✅");
+    database.ref('sub_categories').push({ 
+        name: name, 
+        dept: dept, // حفظ الربط
+        img: "" 
+    }).then(() => {
+        alert("تم إضافة القسم الفرعي بنجاح! ✅");
         document.getElementById('newSubName').value = "";
     });
 }
@@ -469,33 +480,69 @@ function addNewSubCategory() {
 function addNewItem() {
     const sub_id = document.getElementById('selectSub').value;
     const ar = document.getElementById('newItemAr').value;
+    const en = document.getElementById('newItemEn').value; // الاسم الإنجليزي
+    const img = document.getElementById('newItemImg').value; // الصورة
     const price = document.getElementById('newItemPrice').value;
     
-    if(!sub_id || !ar || !price) return alert("كمل البيانات يا بطل!");
+    if(!sub_id || !ar || !en || !price) return alert("كمل البيانات يا بطل!");
 
     database.ref('menu_items').push({
         sub_id: sub_id,
         ar: ar,
-        en: ar, 
+        en: en, 
         price: parseFloat(price),
-        img: "https://i.ibb.co/3yk8S7K/logo.png",
+        img: img || "https://i.ibb.co/3yk8S7K/logo.png", // لو محطش صورة يحط اللوجو
         dept: "barista"
     }).then(() => {
-        alert("الصنف انضاف وبقى جاهز للطلب! ☕🔥");
+        alert("الصنف انضاف وبقى جاهز بالصورة والاسم! ☕🔥");
         document.getElementById('newItemAr').value = "";
+        document.getElementById('newItemEn').value = "";
+        document.getElementById('newItemImg').value = "";
         document.getElementById('newItemPrice').value = "";
     });
 }
+// 1. نظام عرض الأقسام الحالية مع زرار الحذف
+database.ref('sub_categories').on('value', snap => {
+    let html = "";
+    snap.forEach(child => {
+        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <span style="color:#e2e8f0; font-size:14px;">📂 ${child.val().name}</span>
+                    <button onclick="deleteSub('${child.key}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold; font-size:12px;">❌ حذف</button>
+                 </div>`;
+    });
+    document.getElementById('deleteSubList').innerHTML = html || '<p style="font-size:12px; color:#666;">لا توجد أقسام</p>';
+});
 
-// 4. حركة الـ Enter عشان السرعة
-document.addEventListener('DOMContentLoaded', () => {
-    const passInput = document.getElementById("adminPass");
-    if(passInput) {
-        passInput.addEventListener("keyup", function(event) {
-            if (event.key === "Enter") { login(); }
+// 2. نظام عرض الأصناف الحالية مع زرار الحذف
+database.ref('menu_items').on('value', snap => {
+    let html = "";
+    snap.forEach(child => {
+        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <span style="color:#e2e8f0; font-size:14px;">☕ ${child.val().ar}</span>
+                    <button onclick="deleteItem('${child.key}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold; font-size:12px;">❌ حذف</button>
+                 </div>`;
+    });
+    document.getElementById('deleteItemList').innerHTML = html || '<p style="font-size:12px; color:#666;">لا توجد أصناف</p>';
+});
+
+// 3. دالة حذف القسم الفرعي
+function deleteSub(id) {
+    if(confirm("⚠️ يا إمبراطور، حذف القسم هيمسح اسمه من المنيو عند الزبائن، متأكد؟")) {
+        database.ref('sub_categories/' + id).remove().then(() => {
+            alert("تم نسف القسم بنجاح! 🗑️");
         });
     }
-});
+}
+
+// 4. دالة حذف الصنف
+function deleteItem(id) {
+    if(confirm("⚠️ هل أنت متأكد من حذف هذا الصنف نهائياً؟")) {
+        database.ref('menu_items/' + id).remove().then(() => {
+            alert("تم حذف الصنف من الوجود! 🗑️");
+        });
+    }
+}
+
 </script>
 </body>
 </html>
