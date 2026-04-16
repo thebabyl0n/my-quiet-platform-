@@ -474,42 +474,50 @@ function loadCategories() {
 
 // 3. نظام الإدارة (إضافة الأقسام والأصناف)
 function addNewSubCategory() {
-    const name = document.getElementById('newSubName').value;
-    const dept = document.getElementById('mainDeptSelect').value; // القسم الرئيسي
-    if(!name) return alert("اكتب اسم القسم يا حودة!");
-    
-    database.ref('sub_categories').push({ 
-        name: name, 
-        dept: dept, // حفظ الربط
-        img: "" 
+    const mainDept = document.getElementById('mainDeptSelect').value;
+    const subName = document.getElementById('newSubName').value;
+
+    if (!mainDept || !subName) {
+        alert("يا إمبراطور كمل البيانات الأول! ⚠️");
+        return;
+    }
+
+    const newKey = database.ref('sub_categories').push().key;
+    database.ref('sub_categories/' + newKey).set({
+        name: subName,
+        mainDept: mainDept // هنا بنربطه بالقسم الرئيسي (باريستا/مطبخ..)
     }).then(() => {
-        alert("تم إضافة القسم الفرعي بنجاح! ✅");
+        alert("تم إضافة القسم بنجاح! ✅");
         document.getElementById('newSubName').value = "";
     });
 }
 
 function addNewItem() {
-    const sub_id = document.getElementById('selectSub').value;
-    const ar = document.getElementById('newItemAr').value;
+    const subId = document.getElementById('selectSub').value;
+    const nameAr = document.getElementById('itemNameAr').value;
     const en = document.getElementById('newItemEn').value; // الاسم الإنجليزي
-    const img = document.getElementById('newItemImg').value; // الصورة
-    const price = document.getElementById('newItemPrice').value;
-    
-    if(!sub_id || !ar || !en || !price) return alert("كمل البيانات يا بطل!");
+    const price = document.getElementById('itemPrice').value;
+    const img = document.getElementById('itemImg').value;
 
-    database.ref('menu_items').push({
-        sub_id: sub_id,
-        ar: ar,
-        en: en, 
+    if (!subId || !nameAr || !price) {
+        alert("فيه بيانات ناقصة يا وحش! ⚠️");
+        return;
+    }
+
+    const newItemKey = database.ref('menu_items').push().key;
+    database.ref('menu_items/' + newItemKey).set({
+        subCategoryId: subId, // الربط بالقسم الفرعي
+        ar: nameAr,
         price: parseFloat(price),
-        img: img || "https://i.ibb.co/3yk8S7K/logo.png", // لو محطش صورة يحط اللوجو
-        dept: "barista"
+        img: img || "https://via.placeholder.com/150",
+        status: "available"
     }).then(() => {
-        alert("الصنف انضاف وبقى جاهز بالصورة والاسم! ☕🔥");
-        document.getElementById('newItemAr').value = "";
+        alert("الصنف نزل المنيو بنجاح! ☕🔥");
+        // مسح الخانات بعد الإضافة
+        document.getElementById('itemNameAr').value = "";
         document.getElementById('newItemEn').value = "";
-        document.getElementById('newItemImg').value = "";
-        document.getElementById('newItemPrice').value = "";
+        document.getElementById('itemPrice').value = "";
+        document.getElementById('itemImg').value = "";
     });
 }
 // 1. نظام عرض الأقسام الحالية مع زرار الحذف
@@ -557,6 +565,5 @@ function deleteItem(id) {
 </script>
 </body>
 </html>
-
 
 
