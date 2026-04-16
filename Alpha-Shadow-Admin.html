@@ -36,106 +36,58 @@
 
     <div class="section" style="border: 2px solid var(--gold);">
         <h3>🔊 التنبيهات والتحكم الصوتي</h3>
-        <label>رسالة الترحيب الصوتية (تنطق عند دخول الزبون)</label>
-        <input type="text" id="welcomeMsgInput" placeholder="مثلاً: Welcome to our cafe">
-        
-        <label>رسالة جاهزية الطلب (تنطق للزبون عند التجهيز)</label>
-        <input type="text" id="readyMsgInput" placeholder="مثلاً: Your order is ready">
-        
-        <label>نص التنبيه المكتوب (الذي يظهر في الـ Toast)</label>
-        <input type="text" id="toastMsgInput" placeholder="مثلاً: طلبك جاهز يا برنس، تفضل للاستلام">
-        
+        <label>رسالة الترحيب الصوتية</label>
+        <input type="text" id="welcomeMsgInput">
+        <label>رسالة جاهزية الطلب</label>
+        <input type="text" id="readyMsgInput">
+        <label>نص التنبيه المكتوب (Toast)</label>
+        <input type="text" id="toastMsgInput">
         <button class="btn-save btn-gold" onclick="saveAudioSettings()">تحديث الأصوات والرسائل ⚡</button>
     </div>
 
     <div class="section">
         <h3>🎨 براند الكافيه والمظهر</h3>
         <label>اسم الكافيه</label><input type="text" id="cafeName">
-        <label>رابط اللوجو (الدائرة)</label><input type="text" id="logoUrl">
-        <label>رابط الخلفية الجدارية (المنيو من الداخل)</label>
-        <input type="text" id="bgUrl" placeholder="رابط صورة المنيو">
-        
-        <label>رابط الصورة الخارجية (شاشة الترحيب)</label>
-        <input type="text" id="bg2Url" placeholder="رابط صورة شاشة الترحيب">
-        
+        <label>رابط اللوجو</label><input type="text" id="logoUrl">
+        <label>رابط خلفية المنيو</label><input type="text" id="bgUrl">
+        <label>رابط صورة الترحيب</label><input type="text" id="bg2Url">
         <button class="btn-save btn-gold" onclick="saveSettings('branding')">تحديث البراند 💾</button>
     </div>
 
-<div class="section">
-    <h3>🖼️ إدارة العروض الذكية (ضغطة واحدة للطلب)</h3>
-    <label>رابط صورة العرض</label>
-    <input type="text" id="offerImg" placeholder="رابط الصورة">
-    
-    <label>اسم الصنف في العرض (عربي)</label>
-    <input type="text" id="offerItemAr" placeholder="مثلاً: قهوة وحلا">
-    
-    <label>سعر العرض (ريال)</label>
-    <input type="number" id="offerPrice" placeholder="السعر داخل العرض">
-
-    <label>توجيه الطلب</label>
-    <select id="offerDept">
-        <option value="barista">☕ شاشة الباريستا</option>
-        <option value="kitchen">🍔 شاشة المطبخ</option>
-        <option value="dessert">🍰 شاشة الحلا</option>
-    </select>
-
-    <button class="btn-save" onclick="addOffer()">إضافة عرض تفاعلي 📸</button>
-    <div id="offersList"></div>
-</div>
-
-    <div class="section">
-        <h3>🎟️ كوبونات الخصم المتكاملة</h3>
-        <label>كود الخصم (مثلاً: Shadow10)</label>
-        <input type="text" id="couponCode" placeholder="اكتب الكود هنا">
-        <label>نوع الخصم</label>
-        <select id="discountType">
-            <option value="fixed">خصم مبلغ ثابت (ريال)</option>
-            <option value="percent">خصم نسبة مئوية (%)</option>
+    <div class="section" style="border: 2px solid var(--gold);">
+        <h3>📁 إدارة الأقسام الفرعية</h3>
+        <label>اسم القسم الفرعي (مثلاً: مشروبات باردة)</label>
+        <input type="text" id="subName" placeholder="اسم القسم الفرعي">
+        <label>رابط صورة القسم الفرعي</label>
+        <input type="text" id="subImg" placeholder="رابط صورة القسم">
+        <label>تابع لقسم رئيسي</label>
+        <select id="parentDept">
+            <option value="barista">☕ باريستا</option>
+            <option value="kitchen">🍔 مطبخ</option>
+            <option value="dessert">🍰 حلا</option>
         </select>
-        <label>القيمة (رقم فقط)</label>
-        <input type="number" id="couponValue" placeholder="مثلاً: 10">
-        <button class="btn-save btn-gold" onclick="addCoupon()">تفعيل الكوبون ✅</button>
-        <div id="couponsList"></div>
+        <button class="btn-save btn-gold" onclick="addSubCategory()">إضافة القسم الفرعي ➕</button>
+        <div id="subCategoriesList" style="margin-top:10px;"></div>
     </div>
 
-<div class="section" style="border: 2px solid var(--gold);">
-    <h3>📁 إدارة الأقسام الفرعية</h3>
-    <label>اسم القسم الفرعي (مثلاً: مشروبات باردة)</label>
-    <input type="text" id="subName" placeholder="اكتب اسم القسم هنا">
-    
-    <label>رابط صورة القسم</label>
-    <input type="text" id="subImg" placeholder="رابط الصورة">
-
-    <label>تابع لقسم رئيسي</label>
-    <select id="parentDept">
-        <option value="barista">☕ باريستا</option>
-        <option value="kitchen">🍔 مطبخ</option>
-        <option value="dessert">🍰 حلا</option>
-    </select> <button class="btn-save btn-gold" onclick="addSubCategory()">إضافة القسم الفرعي ➕</button>
-    <div id="subCategoriesList" style="margin-top: 15px;"></div>
-</div>
-
-<div class="section">
-    <h3>☕ إضافة صنف جديد</h3>
-    <label>الاسم (عربي)</label><input type="text" id="itemAr">
-    <label>الاسم (EN)</label><input type="text" id="itemEn">
-    <label>السعر</label><input type="number" id="itemPrice">
-    <label>رابط الصورة</label><input type="text" id="itemImg">
-    
-    <label>توجيه الطلب (القسم الرئيسي)</label>
-    <select id="itemDept">
-        <option value="barista">☕ شاشة الباريستا</option>
-        <option value="kitchen">🍔 شاشة المطبخ</option>
-        <option value="dessert">🍰 شاشة الحلا</option>
-    </select>
-
-    <label>اختر القسم الفرعي</label>
-    <select id="itemSubDept">
-        <option value="none">بدون قسم فرعي</option>
-    </select>
-    
-    <button class="btn-save" onclick="addItem()">إضافة للمنيو ✅</button>
-</div>
+    <div class="section">
+        <h3>☕ إضافة صنف جديد</h3>
+        <label>الاسم (عربي)</label><input type="text" id="itemAr">
+        <label>الاسم (EN)</label><input type="text" id="itemEn">
+        <label>السعر</label><input type="number" id="itemPrice">
+        <label>رابط الصورة</label><input type="text" id="itemImg">
+        <label>القسم الرئيسي</label>
+        <select id="itemDept">
+            <option value="barista">☕ باريستا</option>
+            <option value="kitchen">🍔 مطبخ</option>
+            <option value="dessert">🍰 حلا</option>
+        </select>
+        <label>القسم الفرعي</label>
+        <select id="itemSubDept">
+            <option value="none">بدون قسم فرعي</option>
+        </select>
+        <button class="btn-save" onclick="addItem()">إضافة للمنيو ✅</button>
+    </div>
 
     <div class="section">
         <h3>📋 المنيو الحالي</h3>
@@ -143,15 +95,36 @@
     </div>
 
     <div class="section">
+        <h3>🖼️ العروض الذكية</h3>
+        <input type="text" id="offerImg" placeholder="رابط الصورة">
+        <input type="text" id="offerItemAr" placeholder="اسم الصنف">
+        <input type="number" id="offerPrice" placeholder="السعر">
+        <select id="offerDept">
+            <option value="barista">☕ باريستا</option>
+            <option value="kitchen">🍔 مطبخ</option>
+            <option value="dessert">🍰 حلا</option>
+        </select>
+        <button class="btn-save" onclick="addOffer()">إضافة عرض 📸</button>
+        <div id="offersList"></div>
+    </div>
+
+    <div class="section">
+        <h3>🎟️ الكوبونات</h3>
+        <input type="text" id="couponCode" placeholder="كود الخصم">
+        <select id="discountType"><option value="fixed">مبلغ</option><option value="percent">نسبة</option></select>
+        <input type="number" id="couponValue" placeholder="القيمة">
+        <button class="btn-save btn-gold" onclick="addCoupon()">تفعيل ✅</button>
+        <div id="couponsList"></div>
+    </div>
+
+    <div class="section">
         <h3>➕ الإضافات</h3>
-        <label>اسم الإضافة</label>
-        <input type="text" id="extAr" placeholder="مثلاً: حليب لوز">
-        <label>السعر</label>
+        <input type="text" id="extAr" placeholder="اسم الإضافة">
         <input type="number" id="extPrice" value="0">
         <button class="btn-save" onclick="addExtra()">إضافة خيار ✅</button>
         <div id="extrasList"></div>
     </div>
-    </div> 
+</div>
 
 <script>
     const firebaseConfig = {
@@ -171,40 +144,13 @@
         } else { alert("كلمة السر خطأ!"); }
     }
 
-    // دالة حفظ الأصوات الجديدة
     function saveAudioSettings() {
         const audioData = {
             welcome: document.getElementById('welcomeMsgInput').value,
             ready: document.getElementById('readyMsgInput').value,
             msgText: document.getElementById('toastMsgInput').value
         };
-        database.ref('settings/audio').set(audioData).then(() => {
-            alert("تم تحديث التنبيهات الصوتية بنجاح! 😎");
-        });
-    }
-
-    function addOffer() {
-        const img = document.getElementById('offerImg').value;
-        const ar = document.getElementById('offerItemAr').value;
-        const price = document.getElementById('offerPrice').value;
-        const dept = document.getElementById('offerDept').value;
-
-        if(img && ar && price) { 
-            database.ref('offers').push({ 
-                img: img,
-                itemAr: ar,
-                price: parseFloat(price),
-                dept: dept,
-                k: "OFFER_" + Date.now() 
-            }).then(() => {
-                alert("تم إطلاق العرض الذكي بنجاح! 🚀");
-                document.getElementById('offerImg').value = '';
-                document.getElementById('offerItemAr').value = '';
-                document.getElementById('offerPrice').value = '';
-            });
-        } else {
-            alert("اكمل بيانات العرض يا مايسترو! ⚠️");
-        }
+        database.ref('settings/audio').set(audioData).then(() => alert("تم التحديث! 😎"));
     }
 
     function saveSettings(type) {
@@ -213,211 +159,120 @@
                 name: document.getElementById('cafeName').value,
                 logo: document.getElementById('logoUrl').value,
                 bg: document.getElementById('bgUrl').value,
-                bg2: document.getElementById('bg2Url').value // إرسال الصورة الخارجية
-            }).then(() => {
-                alert("تم تحديث البراند والصور بنجاح! 🚀");
+                bg2: document.getElementById('bg2Url').value
+            }).then(() => alert("تم التحديث! 🚀"));
+        }
+    }
+
+    // --- الجديد: الأقسام الفرعية ---
+    function addSubCategory() {
+        const name = document.getElementById('subName').value.trim();
+        const img = document.getElementById('subImg').value.trim();
+        const parent = document.getElementById('parentDept').value;
+        if(name) {
+            database.ref('sub_categories').push({ name, img, parent }).then(() => {
+                alert("تم إضافة القسم الفرعي! 🎯");
+                document.getElementById('subName').value = '';
+                document.getElementById('subImg').value = '';
             });
         }
     }
 
+    function addItem() {
+        const ar = document.getElementById('itemAr').value.trim();
+        const price = document.getElementById('itemPrice').value;
+        const subId = document.getElementById('itemSubDept').value;
+        if(ar && price) {
+            database.ref('menu_items').push({
+                ar, price: parseFloat(price), 
+                en: document.getElementById('itemEn').value || ar,
+                img: document.getElementById('itemImg').value,
+                dept: document.getElementById('itemDept').value,
+                sub_id: subId
+            }).then(() => alert("تمت الإضافة! ✅"));
+        }
+    }
+
     function loadData() {
-        // تحميل إعدادات الصوت والرسائل
+        // تحميل الأقسام الفرعية في القائمة وفي اللوحة
+        database.ref('sub_categories').on('value', snap => {
+            let options = '<option value="none">بدون قسم فرعي</option>';
+            let list = "";
+            snap.forEach(child => {
+                const s = child.val();
+                options += `<option value="${child.key}">${s.name} (${s.parent})</option>`;
+                list += `<div class="item-row"><span>${s.name}</span><button class="btn-del" onclick="database.ref('sub_categories/${child.key}').remove()">حذف</button></div>`;
+            });
+            document.getElementById('itemSubDept').innerHTML = options;
+            document.getElementById('subCategoriesList').innerHTML = list;
+        });
+
+        // المنيو مع زر الحذف
+        database.ref('menu_items').on('value', snap => {
+            let h = "";
+            snap.forEach(child => {
+                h += `<div class="item-row"><span>${child.val().ar}</span><button class="btn-del" onclick="database.ref('menu_items/${child.key}').remove()">حذف</button></div>`;
+            });
+            document.getElementById('itemsList').innerHTML = h;
+        });
+
+        // البراند، الأصوات، العروض، الكوبونات، الإضافات
+        database.ref('settings/branding').once('value', snap => {
+            const s = snap.val(); if(s) {
+                document.getElementById('cafeName').value = s.name || "";
+                document.getElementById('logoUrl').value = s.logo || "";
+                document.getElementById('bgUrl').value = s.bg || "";
+                document.getElementById('bg2Url').value = s.bg2 || "";
+            }
+        });
         database.ref('settings/audio').once('value', snap => {
-            const d = snap.val();
-            if(d) {
+            const d = snap.val(); if(d) {
                 document.getElementById('welcomeMsgInput').value = d.welcome || "";
                 document.getElementById('readyMsgInput').value = d.ready || "";
                 document.getElementById('toastMsgInput').value = d.msgText || "";
             }
         });
-
         database.ref('offers').on('value', snap => {
-            let h = "";
-            snap.forEach(child => { h += `<div class="item-row"><img src="${child.val().img}" width="50"> <button class="btn-del" onclick="database.ref('offers/${child.key}').remove()">حذف</button></div>`; });
+            let h = ""; snap.forEach(c => { h += `<div class="item-row">عرض: ${c.val().itemAr} <button class="btn-del" onclick="database.ref('offers/${c.key}').remove()">حذف</button></div>`; });
             document.getElementById('offersList').innerHTML = h;
         });
-
         database.ref('coupons').on('value', snap => {
-            let h = "";
-            snap.forEach(child => {
-                const data = child.val();
-                const sign = data.type === 'percent' ? '%' : 'ريال';
-                h += `<div class="item-row"><span><b>${child.key}</b> (خصم ${data.discount} ${sign})</span> <button class="btn-del" onclick="database.ref('coupons/${child.key}').remove()">حذف</button></div>`;
-            });
+            let h = ""; snap.forEach(c => { h += `<div class="item-row">كود: ${c.key} <button class="btn-del" onclick="database.ref('coupons/${c.key}').remove()">حذف</button></div>`; });
             document.getElementById('couponsList').innerHTML = h;
         });
-
-        database.ref('menu_items').on('value', snap => {
-            let h = "";
-            snap.forEach(child => { h += `<div class="item-row"><span>${child.val().ar}</span><button class="btn-del" onclick="database.ref('menu_items/${child.key}').remove()">حذف</button></div>`; });
-            document.getElementById('itemsList').innerHTML = h;
-        });
-
         database.ref('extras_options').on('value', snap => {
-            let h = "";
-            snap.forEach(child => { h += `<div class="item-row">${child.val().ar} <button class="btn-del" onclick="database.ref('extras_options/${child.key}').remove()">حذف</button></div>`; });
+            let h = ""; snap.forEach(c => { h += `<div class="item-row">${c.val().ar} <button class="btn-del" onclick="database.ref('extras_options/${c.key}').remove()">حذف</button></div>`; });
             document.getElementById('extrasList').innerHTML = h;
         });
+    }
 
-    database.ref('settings/branding').once('value', snap => {
-        const s = snap.val();
-        if(s) { 
-            document.getElementById('cafeName').value = s.name || ""; 
-            document.getElementById('logoUrl').value = s.logo || ""; 
-            document.getElementById('bgUrl').value = s.bg || ""; 
-            document.getElementById('bg2Url').value = s.bg2 || ""; // تحميل الصورة الخارجية
-        }
-    });
-  }
-    // دالة إضافة الخيارات (الإضافات) - دي اللي كانت ناقصة يا حودة
     function addExtra() {
         const ar = document.getElementById('extAr').value.trim();
-        const price = document.getElementById('extPrice').value;
-        
         if(ar) {
-            database.ref('extras_options').push({
-                ar: ar,
-                // السطر اللي جاي ده هو اللي بيحل مشكلة التكرار (بيعمل اسم EN وهمي من العربي)
-                en: ar.replace(/\s/g, "_").toLowerCase() + "_" + Date.now(),
-                price: parseFloat(price) || 0
-            }).then(() => {
-                alert("تم إضافة الخيار بنجاح! ✅");
-                document.getElementById('extAr').value = ''; 
-                document.getElementById('extPrice').value = '0';
-            });
-        } else {
-            alert("اكتب اسم الإضافة الأول يا بطل! ⚠️");
+            database.ref('extras_options').push({ ar, price: parseFloat(document.getElementById('extPrice').value) || 0, en: Date.now() })
+            .then(() => { alert("تم!"); document.getElementById('extAr').value = ''; });
         }
     }
-    // 1. إعدادات Firebase (زي ما هي عندك)
-    const firebaseConfig = {
-        apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
-        authDomain: "alphashadow-23689.firebaseapp.com",
-        projectId: "alphashadow-23689",
-        databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-
-    // 2. دالة التأكد من كلمة السر
-    function checkPass() {
-        if(document.getElementById('passInput').value === 'Lovely333') {
-            document.getElementById('lock-screen').style.display = 'none';
-            document.getElementById('adminContent').style.display = 'block';
-            loadData();
-            updateItemSubDept(); // تشغيل تحديث الأقسام فور الدخول
-        } else { alert("كلمة السر خطأ!"); }
-    }
-
-    // 3. إدارة الأقسام الفرعية (إضافة + حذف + تحديث القائمة)
-    function addSubCategory() {
-        const name = document.getElementById('subName').value.trim();
-        const img = document.getElementById('subImg').value.trim();
-        const parent = document.getElementById('parentDept').value;
-        if (name) {
-            database.ref('sub_categories').push({ name, img, parent }).then(() => {
-                alert("تم إضافة القسم الفرعي بنجاح! 🎯");
-                document.getElementById('subName').value = '';
-                document.getElementById('subImg').value = '';
-            });
-        } else { alert("اكتب اسم القسم يا بطل! ⚠️"); }
-    }
-
-    function updateItemSubDept() {
-        database.ref('sub_categories').on('value', snap => {
-            let options = '<option value="none">بدون قسم فرعي</option>';
-            let listHtml = ""; 
-            snap.forEach(child => {
-                const sub = child.val();
-                options += `<option value="${child.key}">${sub.name} (تابع لـ ${sub.parent})</option>`;
-                listHtml += `
-                    <div class="item-row" style="background:#fff3e0">
-                        <span><b>${sub.name}</b> (${sub.parent})</span>
-                        <button class="btn-del" onclick="deleteSubCategory('${child.key}')">حذف القسم</button>
-                    </div>`;
-            });
-            document.getElementById('itemSubDept').innerHTML = options;
-            document.getElementById('subCategoriesList').innerHTML = listHtml;
-        });
-    }
-
-    function deleteSubCategory(id) {
-        if(confirm("حذف القسم؟ (المنتجات مش هتتمسح بس تصنيفها هيروح)")) {
-            database.ref('sub_categories/' + id).remove();
+    
+    function addOffer() { /* دالة العروض المختصرة */
+        const img = document.getElementById('offerImg').value;
+        const ar = document.getElementById('offerItemAr').value;
+        const pr = document.getElementById('offerPrice').value;
+        if(img && ar && pr) {
+            database.ref('offers').push({ img, itemAr: ar, price: parseFloat(pr), dept: document.getElementById('offerDept').value })
+            .then(() => alert("تم العرض!"));
         }
     }
 
-    // 4. إدارة الأصناف (إضافة + حذف)
-    function addItem() {
-        const ar = document.getElementById('itemAr').value.trim();
-        const en = document.getElementById('itemEn').value.trim();
-        const price = document.getElementById('itemPrice').value;
-        const img = document.getElementById('itemImg').value;
-        const dept = document.getElementById('itemDept').value;
-        const subId = document.getElementById('itemSubDept').value;
-
-        if(ar && price) {
-            database.ref('menu_items').push({
-                ar, en: en || ar, price: parseFloat(price), img, dept, sub_id: subId
-            }).then(() => {
-                alert("تم الإضافة للمنيو! ✅");
-                document.getElementById('itemAr').value = '';
-                document.getElementById('itemPrice').value = '';
-            });
-        } else { alert("اكمل البيانات! ⚠️"); }
-    }
-
-    function deleteItem(id) {
-        if(confirm("حذف المنتج نهائياً؟")) {
-            database.ref('menu_items/' + id).remove();
+    function addCoupon() {
+        const code = document.getElementById('couponCode').value.trim();
+        const val = document.getElementById('couponValue').value;
+        if(code && val) {
+            database.ref('coupons/' + code).set({ type: document.getElementById('discountType').value, discount: parseFloat(val) })
+            .then(() => alert("تم الكوبون!"));
         }
     }
-
-    // 5. تحميل البيانات وعرضها (المنيو، العروض، الكوبونات)
-    function loadData() {
-        // عرض المنيو الحالي مع زرار الحذف
-        database.ref('menu_items').on('value', snap => {
-            let h = "";
-            snap.forEach(child => {
-                const item = child.val();
-                h += `<div class="item-row"><span>${item.ar}</span><button class="btn-del" onclick="deleteItem('${child.key}')">حذف</button></div>`;
-            });
-            document.getElementById('itemsList').innerHTML = h;
-        });
-
-        // باقي تحميلاتك (عروض، كوبونات، براند)
-        database.ref('offers').on('value', snap => {
-            let h = "";
-            snap.forEach(child => { h += `<div class="item-row"><img src="${child.val().img}" width="50"> <button class="btn-del" onclick="database.ref('offers/${child.key}').remove()">حذف</button></div>`; });
-            document.getElementById('offersList').innerHTML = h;
-        });
-
-        database.ref('coupons').on('value', snap => {
-            let h = "";
-            snap.forEach(child => {
-                const data = child.val();
-                h += `<div class="item-row"><span><b>${child.key}</b></span> <button class="btn-del" onclick="database.ref('coupons/${child.key}').remove()">حذف</button></div>`;
-            });
-            document.getElementById('couponsList').innerHTML = h;
-        });
-
-        database.ref('settings/branding').once('value', snap => {
-            const s = snap.val();
-            if(s) { 
-                document.getElementById('cafeName').value = s.name || ""; 
-                document.getElementById('logoUrl').value = s.logo || ""; 
-            }
-        });
-    }
-
-    // دوال مساعدة تانية (اختياري)
-    function saveAudioSettings() { /* كودك القديم للاصوات */ }
-    function addCoupon() { /* كودك القديم للكوبونات */ }
-    function addOffer() { /* كودك القديم للعروض */ }
-
 </script>
-
 </body>
 </html>
-
 
