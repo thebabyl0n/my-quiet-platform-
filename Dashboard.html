@@ -6,6 +6,7 @@
     <title>لوحة الرقابة والتحكم 👑</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <style>
     :root { 
         --gold: #c8a27c; 
@@ -125,6 +126,19 @@
 </style>
 </head>
 <body>
+<div id="loginOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#090c12; z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+    <div class="card" style="width:320px; border:1px solid #c8a27c; background: linear-gradient(145deg, #1a1f2b, #11151f); padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+        <h2 style="color:#c8a27c; margin-bottom: 20px;">دخول قلعة الإدارة 🏰</h2>
+        
+        <input type="email" id="adminEmail" placeholder="الإيميل الملكي" style="width:90%; padding:12px; margin-bottom:15px; border-radius:10px; border:1px solid #333; background:#1a1f2b; color:white; outline: none;">
+        
+        <input type="password" id="adminPass" placeholder="كلمة السر" style="width:90%; padding:12px; margin-bottom:15px; border-radius:10px; border:1px solid #333; background:#1a1f2b; color:white; outline: none;">
+        
+        <button class="btn-archive" onclick="login()" style="width:100%; padding: 12px; background: linear-gradient(135deg, #c8a27c, #a6855f); border: none; color: white; border-radius: 12px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(200, 162, 124, 0.3);">دخول 🔑</button>
+        
+        <p id="loginError" style="color:#ef4444; font-size:13px; margin-top:15px; display:none; font-weight: bold;">بيانات الدخول غلط يا وحش! ⚠️</p>
+    </div>
+</div>
 
     <h1 style="text-align:center; color:var(--gold);">👑 لوحة تحكم الإمبراطورية | الرقابة الإدارية</h1>
     
@@ -182,6 +196,28 @@
         <span id="reportMonthly" style="font-size: 24px;">0.00 ريال</span>
     </div>
 </div>
+
+<section style="margin-top: 30px;">
+    <h3 class="section-title">🛠️ غرفة التحكم في الإمبراطورية (إدارة المنيو)</h3>
+    <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        
+        <div class="card" style="border: 1px dashed #c8a27c; padding: 20px; text-align: center;">
+            <h3 style="color: #c8a27c;">📂 إضافة قسم فرعي جديد</h3>
+            <input type="text" id="newSubName" placeholder="اسم القسم (مثلاً: حلا بارد)" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white; border: 1px solid #333;">
+            <input type="text" id="newSubImg" placeholder="رابط صورة القسم" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white; border: 1px solid #333;">
+            <button class="btn-archive" onclick="addNewSubCategory()" style="width:95%; background: #c8a27c; color: white;">حفظ القسم الجديد +</button>
+        </div>
+
+        <div class="card" style="border: 1px dashed #c8a27c; padding: 20px; text-align: center;">
+            <h3 style="color: #c8a27c;">☕ إضافة صنف جديد</h3>
+            <select id="selectSub" style="width:95%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white; border: 1px solid #333;"></select>
+            <input type="text" id="newItemAr" placeholder="اسم الصنف بالعربي" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white; border: 1px solid #333;">
+            <input type="number" id="newItemPrice" placeholder="السعر" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white; border: 1px solid #333;">
+            <button class="btn-archive" onclick="addNewItem()" style="width:95%; background: #28a745; color: white;">إضافة للمنيو 🚀</button>
+        </div>
+        
+    </div>
+</section>
 
 
     <h3 class="section-title">🔵 الأرشيف النهائي (المُرحّل فقط)</h3>
@@ -380,7 +416,89 @@ function rejectCancel(id) {
         });
     }
 }
- 
+<script>
+// 1. نظام تسجيل الدخول (الأمان)
+function login() {
+    const email = document.getElementById('adminEmail').value;
+    const pass = document.getElementById('adminPass').value;
+    const errorMsg = document.getElementById('loginError');
+
+    firebase.auth().signInWithEmailAndPassword(email, pass)
+    .then(() => {
+        document.getElementById('loginOverlay').style.display = 'none';
+        console.log("تم دخول الإمبراطور ✅");
+    })
+    .catch(() => {
+        errorMsg.style.display = 'block';
+    });
+}
+
+// 2. مراقبة حالة الدخول (عشان البوابة تفتح وتقفل)
+firebase.auth().onAuthStateChanged((user) => {
+    const overlay = document.getElementById('loginOverlay');
+    if (user) {
+        overlay.style.display = 'none';
+        // لما يدخل بنجاح، بنشغل نظام سحب الأقسام من الداتابيز
+        loadCategories(); 
+    } else {
+        overlay.style.display = 'flex';
+    }
+});
+
+// 3. نظام الإدارة (إضافة الأقسام والأصناف)
+function loadCategories() {
+    database.ref('sub_categories').on('value', snap => {
+        let options = '<option value="">اختر القسم الفرعي</option>';
+        snap.forEach(child => {
+            options += `<option value="${child.key}">${child.val().name}</option>`;
+        });
+        document.getElementById('selectSub').innerHTML = options;
+    });
+}
+
+function addNewSubCategory() {
+    const name = document.getElementById('newSubName').value;
+    if(!name) return alert("اكتب اسم القسم يا حودة!");
+    
+    database.ref('sub_categories').push({ name: name, img: "" }).then(() => {
+        alert("القسم نزل المنيو بنجاح! ✅");
+        document.getElementById('newSubName').value = "";
+    });
+}
+
+function addNewItem() {
+    const sub_id = document.getElementById('selectSub').value;
+    const ar = document.getElementById('newItemAr').value;
+    const price = document.getElementById('newItemPrice').value;
+    
+    if(!sub_id || !ar || !price) return alert("كمل البيانات يا بطل!");
+
+    database.ref('menu_items').push({
+        sub_id: sub_id,
+        ar: ar,
+        en: ar, 
+        price: parseFloat(price),
+        img: "https://i.ibb.co/3yk8S7K/logo.png",
+        dept: "barista"
+    }).then(() => {
+        alert("الصنف انضاف وبقى جاهز للطلب! ☕🔥");
+        document.getElementById('newItemAr').value = "";
+        document.getElementById('newItemPrice').value = "";
+    });
+}
+
+// 4. حركة الـ Enter عشان السرعة
+document.addEventListener('DOMContentLoaded', () => {
+    const passInput = document.getElementById("adminPass");
+    if(passInput) {
+        passInput.addEventListener("keyup", function(event) {
+            if (event.key === "Enter") { login(); }
+        });
+    }
+});
 </script>
+
 </body>
 </html>
+
+
