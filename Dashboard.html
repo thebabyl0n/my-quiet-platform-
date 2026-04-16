@@ -451,17 +451,26 @@ function login() {
     });
 }
 
-// 2. مراقبة حالة الدخول (عشان البوابة تفتح وتقفل)
-firebase.auth().onAuthStateChanged((user) => {
-    const overlay = document.getElementById('loginOverlay');
-    if (user) {
-        overlay.style.display = 'none';
-        // لما يدخل بنجاح، بنشغل نظام سحب الأقسام من الداتابيز
-        loadCategories(); 
-    } else {
-        overlay.style.display = 'flex';
-    }
-});
+function loadCategories() {
+    // نظام سحب الأقسام (القديم والجديد) وتحديث القائمة فوراً
+    database.ref('sub_categories').on('value', (snap) => {
+        let options = '<option value="">اختر القسم الفرعي</option>';
+        
+        if (snap.exists()) {
+            snap.forEach((child) => {
+                const data = child.val();
+                // ربط الاسم بالـ ID عشان الأصناف تظهر صح
+                options += `<option value="${child.key}">${data.name}</option>`;
+            });
+        }
+
+        // تحديث الخانة اللي في صورة 1776354099260
+        const selectElement = document.getElementById('selectSub');
+        if (selectElement) {
+            selectElement.innerHTML = options;
+        }
+    });
+}
 
 // 3. نظام الإدارة (إضافة الأقسام والأصناف)
 function addNewSubCategory() {
@@ -548,5 +557,6 @@ function deleteItem(id) {
 </script>
 </body>
 </html>
+
 
 
