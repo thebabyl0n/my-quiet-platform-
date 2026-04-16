@@ -368,35 +368,81 @@ function quickAddOffer(ar, p, dept) {
         }
     });
 
-    database.ref('extras_options').on('value', snap => {
-        extrasStr = `<option value="" data-p="0">بدون إضافات</option>`;
-        snap.forEach(c => {
-            const data = c.val();
-            if(data.ar) {
-                // لاحظ هنا بنخزن السعر في data-p عشان الحسابات
-                extrasStr += `<option value="${data.en || ''}" data-ar="${data.ar}" data-p="${data.price || 0}">${data.ar} (+${data.price || 0} ريال)</option>`;
-            }
-        });
-        loadMenu(); // بيشغل المنيو بعد ما يجهز الإضافات
+database.ref('extras_options').on('value', snap => {
+    // البدء بخيار "بدون إضافات"
+    extrasStr = `<option value="" data-ar="بدون إضافات" data-p="0">بدون إضافات</option>`;
+    
+    snap.forEach(c => {
+        const data = c.val();
+        if(data.ar) {
+            // التعديل هنا: خليت الـ value هو data.ar عشان نضمن النطق بالعربي النظيف
+            // وطيرنا الـ data.en اللي كان بيجيب أرقام
+            extrasStr += `<option value="${data.ar}" data-ar="${data.ar}" data-p="${data.price || 0}">${data.ar} (+${data.price || 0} ريال)</option>`;
+        }
     });
+    loadMenu(); 
+});
 
-    function loadMenu() {
-        database.ref('menu_items').on('value', snap => {
-            let h = "";
+function loadMenu() {
+    // هنسأل فايربيز عن الأقسام الفرعية
+    database.ref('sub_categories').on('value', snap => {
+        let h = "";
+        
+        if (snap.exists()) {
+            // لو فيه أقسام، اعرضها هي الأول بشياكة
             snap.forEach(child => {
-                const item = child.val();
-                const itemDept = item.dept ? item.dept.toLowerCase().trim() : 'barista'; 
-                h += `<div class="item-card">
-                    <img src="${item.img}">
-                    <h4>${item.ar}</h4>
-                    <span style="color:var(--gold);font-weight:700;display:block;margin-bottom:10px;">${item.price} ريال</span>
-                    <select class="extra-sel" id="ex-${child.key}">${extrasStr}</select>
-                    <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price},'${itemDept}')">إضافة +</button>
-                </div>`;
+                const sub = child.val();
+                const subImg = sub.img || document.getElementById('logoW').src; 
+                h += `
+                    <div class="item-card" onclick="loadSubItems('${child.key}', '${sub.name}')" style="cursor:pointer; border: 1px solid var(--gold);">
+                        <img src="${subImg}">
+                        <h4>${sub.name}</h4>
+                        <span style="color:var(--gold); font-size:12px;">استعرض القائمة 📂</span>
+                    </div>`;
             });
             document.getElementById('menu').innerHTML = h;
+        } else {
+            // لو مفيش أقسام فرعية (الخطة البديلة)، اعرض المنيو القديم زي ما هو
+            database.ref('menu_items').on('value', snapItems => {
+                let itemsHtml = "";
+                snapItems.forEach(child => {
+                    const item = child.val();
+                    const itemDept = item.dept ? item.dept.toLowerCase().trim() : 'barista'; 
+                    itemsHtml += `<div class="item-card">
+                        <img src="${item.img}">
+                        <h4>${item.ar}</h4>
+                        <span style="color:var(--gold);font-weight:700;display:block;margin-bottom:10px;">${item.price} ريال</span>
+                        <select class="extra-sel" id="ex-${child.key}">${extrasStr}</select>
+                        <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price},'${itemDept}')">إضافة +</button>
+                    </div>`;
+                });
+                document.getElementById('menu').innerHTML = itemsHtml;
+            });
+        }
+    });
+}
+function loadSubItems(subId, subName) {
+    database.ref('menu_items').orderByChild('sub_id').equalTo(subId).on('value', snap => {
+        let h = `<div style="grid-column: 1/-1; text-align: right; margin-bottom: 10px;">
+                    <button onclick="loadMenu()" style="background:transparent; color:var(--gold); border:1px solid var(--gold); padding:5px 15px; border-radius:10px; cursor:pointer;">⬅️ العودة للأقسام</button>
+                    <h3 style="display:inline-block; margin-right:15px;">قائمة: ${subName}</h3>
+                 </div>`;
+        
+        snap.forEach(child => {
+            const item = child.val();
+            h += `<div class="item-card">
+                <img src="${item.img}">
+                <h4>${item.ar}</h4>
+                <span style="color:var(--gold);font-weight:700;display:block;margin-bottom:10px;">${item.price} ريال</span>
+                <select class="extra-sel" id="ex-${child.key}">${extrasStr}</select>
+                <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price},'${item.dept}')">إضافة +</button>
+            </div>`;
         });
-    }
+        document.getElementById('menu').innerHTML = h;
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // عشان يطلع لآول المنيو
+    });
+}
+
 
     function startOrder(type) {
         oType = type; tNum = document.getElementById('tblNo').value;
@@ -413,9 +459,23 @@ function quickAddOffer(ar, p, dept) {
 
     function addToCart(k, ar, en, p, dept) {
         const s = document.getElementById('ex-'+k);
-        const exEn = s.value; 
+        // التعديل هنا: هناخد الاسم العربي أو الإنجليزي النضيف
         const exAr = s.options[s.selectedIndex].getAttribute('data-ar') || "";
+        const exEn = s.value; // ده اللي كان فيه الأرقام
         const exP = parseFloat(s.options[s.selectedIndex].getAttribute('data-p') || 0);
+
+        // --- الفنش الملكي للنطق ---
+        // لو الزبون مختار إضافة، هينطق (المنتج + مع + الإضافة) بالعربي
+        // لو مش مختار، هينطق المنتج بس
+        let speechMsg = ar; 
+        if (exAr && exAr !== "بدون إضافات") {
+            speechMsg = ar + " مع " + exAr;
+        }
+        
+        talk(speechMsg); // ندهنا دالة الصوت اللي لسه مصلحينها
+        // --------------------------
+
+        // باقي الكود بتاع الـ cart.push زي ما هو كمل عليه...
         
         // البحث عن المنتج في السلة بناءً على الكود والإضافة العربية لضمان الدقة
         const existingItem = cart.find(i => i.k === k && (i.exAr === exAr));
@@ -497,11 +557,24 @@ function quickAddOffer(ar, p, dept) {
         renderCart();
     }
 
-    function talk(t) {
-        window.speechSynthesis.cancel();
-        const m = new SpeechSynthesisUtterance(t); m.lang = 'en-US';
-        window.speechSynthesis.speak(m);
+function talk(t) {
+    window.speechSynthesis.cancel();
+    const m = new SpeechSynthesisUtterance(t);
+    
+    // فحص ذكي: لو الكلام فيه حروف عربي، اقلب اللسان "عربي سعودي"
+    // لو كله إنجليزي، خليه "إنجليزي أمريكاني"
+    const isArabic = /[\u0600-\u06FF]/.test(t);
+    
+    if (isArabic) {
+        m.lang = 'ar-SA';
+        m.rate = 0.9; // سرعة هادية عشان الزبون يفهم
+    } else {
+        m.lang = 'en-US';
+        m.rate = 1.0;
     }
+
+    window.speechSynthesis.speak(m);
+}
     // --- دالة التحكم في إظهار مربع الطاولة ---
 function toggleTableEntry() {
     const entry = document.getElementById('table-entry');
@@ -685,4 +758,5 @@ window.addEventListener('beforeinstallprompt', (e) => {
 </script>
 </body>
 </html>
+    
     
