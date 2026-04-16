@@ -504,7 +504,7 @@ function addNewSubCategory() {
 
 // 1. إضافة قسم فرعي جديد بصورة
 function addNewSubCategory() {
-    const mainDept = document.getElementById('mainDeptSelect').value;
+    let mainDept = document.getElementById('mainDeptSelect').value;
     const subName = document.getElementById('newSubName').value;
     const subImg = document.getElementById('newSubImg').value;
 
@@ -513,16 +513,22 @@ function addNewSubCategory() {
         return;
     }
 
+    // القفلة هنا: لازم نضمن إن "الحلا" يروح باسم dessert عشان المنيو يشوفه
+    if (mainDept === "sweets") {
+        mainDept = "dessert";
+    }
+
     const newKey = database.ref('sub_categories').push().key;
     database.ref('sub_categories/' + newKey).set({
         name: subName,
-        parent: mainDept, // الكلمة الصح عشان المنيو يشوفه
+        parent: mainDept, // الكلمة دي هي اللي بتخلي القسم يظهر حقيقي مش وهمي
         img: subImg || "https://via.placeholder.com/150", 
         timestamp: Date.now()
     }).then(() => {
-        alert("تم إضافة القسم الفرعي بنجاح! ✅");
+        alert("تم إضافة القسم بنجاح بوقار السيادة! ✅");
         document.getElementById('newSubName').value = "";
         document.getElementById('newSubImg').value = ""; 
+        loadCategories(); 
     });
 }
 
