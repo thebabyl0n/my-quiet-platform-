@@ -1,569 +1,207 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة الرقابة والتحكم 👑</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة التحكم 👑</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
 <style>
-    :root { 
-        --gold: #c8a27c; 
-        --dark: #090c12; 
-        --card-bg: linear-gradient(145deg, #1a1f2b, #11151f);
-        --green: #10b981; 
-        --blue: #3b82f6; 
-        --red: #ef4444; 
-        --text-muted: #94a3b8;
-    }
-    body { 
-        font-family: 'Cairo', 'Segoe UI', sans-serif; 
-        background: var(--dark); 
-        color: #e2e8f0; 
-        margin: 0; 
-        padding: 20px;
-        line-height: 1.6;
-    }
-    .grid { 
-        display: grid; 
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-        gap: 25px; 
-        margin-bottom: 40px; 
-    }
-    .card { 
-        background: var(--card-bg); 
-        border-radius: 20px; 
-        padding: 25px; 
-        text-align: center;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        border: 1px solid rgba(200,162,124,0.15);
-        transition: transform 0.3s ease;
-    }
-    .card:hover { transform: translateY(-5px); }
-    .card h3 { color: var(--gold); font-size: 16px; margin-bottom: 10px; letter-spacing: 1px; }
-    .card span { font-size: 32px; font-weight: 800; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-    
-    .section-title { 
-        font-size: 20px; 
-        color: var(--gold); 
-        margin: 40px 0 20px; 
-        display: flex; 
-        align-items: center;
-        gap: 10px;
-    }
-    .section-title::after { content: ""; flex: 1; height: 1px; background: rgba(200,162,124,0.2); }
-
-    .table-container { 
-        background: var(--card-bg); 
-        border-radius: 24px; 
-        padding: 10px;
-        border: 1px solid rgba(255,255,255,0.05);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    }
-    table { width: 100%; border-collapse: collapse; min-width: 900px; }
-    th { 
-        background: transparent; 
-        color: var(--gold); 
-        font-weight: 600; 
-        text-transform: uppercase; 
-        font-size: 13px; 
-        padding: 20px;
-        border-bottom: 2px solid rgba(200,162,124,0.1);
-    }
-    td { padding: 18px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 14px; }
-    tr:hover { background: rgba(255,255,255,0.02); }
-
-    .timer-badge { 
-        padding: 6px 14px; 
-        border-radius: 12px; 
-        font-weight: 700; 
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
-    }
-    .btn-archive { 
-        background: linear-gradient(135deg, #6366f1, #4f46e5); 
-        color: white; 
-        border-radius: 12px;
-        padding: 10px 20px;
-        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
-    }
-    .btn-clear { 
-        background: linear-gradient(135deg, #ef4444, #b91c1c); 
-        border-radius: 12px;
-        padding: 12px;
-        margin-top: 15px;
-    }
-    @keyframes blinkRed {
-    0% { background: rgba(239, 68, 68, 0.1); }
-    50% { background: rgba(239, 68, 68, 0.3); }
-    100% { background: rgba(239, 68, 68, 0.1); }
-}
-.cancel-request-row {
-    animation: blinkRed 1.5s infinite;
-    border: 2px solid var(--red) !important;
-}
-.btn-approve-cancel { 
-    background: var(--red); 
-    color: white; 
-    padding: 8px 15px; 
-    border-radius: 8px; 
-    border: none; 
-    cursor: pointer; 
-    margin-left: 5px; 
-    font-weight: bold; 
-}
-
-.btn-reject-cancel { 
-    background: var(--text-muted); 
-    color: white; 
-    padding: 8px 15px; 
-    border-radius: 8px; 
-    border: none; 
-    cursor: pointer; 
-    font-weight: bold; 
-}
-
+body {font-family: Cairo; background:#090c12; color:white; padding:20px;}
+.card {background:#1a1f2b; padding:20px; border-radius:15px; margin-bottom:15px;}
+button {padding:10px; border:none; border-radius:10px; cursor:pointer;}
+input, select {width:100%; padding:10px; margin:5px 0; border-radius:10px; background:#111; color:white;}
 </style>
 </head>
+
 <body>
-<div id="loginOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#090c12; z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column;">
-    <div class="card" style="width:320px; border:1px solid #c8a27c; background: linear-gradient(145deg, #1a1f2b, #11151f); padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-        <h2 style="color:#c8a27c; margin-bottom: 20px;">دخول قلعة الإدارة 🏰</h2>
-        
-        <input type="email" id="adminEmail" placeholder="الإيميل الملكي" style="width:90%; padding:12px; margin-bottom:15px; border-radius:10px; border:1px solid #333; background:#1a1f2b; color:white; outline: none;">
-        
-        <input type="password" id="adminPass" placeholder="كلمة السر" style="width:90%; padding:12px; margin-bottom:15px; border-radius:10px; border:1px solid #333; background:#1a1f2b; color:white; outline: none;">
-        
-        <button class="btn-archive" onclick="login()" style="width:100%; padding: 12px; background: linear-gradient(135deg, #c8a27c, #a6855f); border: none; color: white; border-radius: 12px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(200, 162, 124, 0.3);">دخول 🔑</button>
-        
-        <p id="loginError" style="color:#ef4444; font-size:13px; margin-top:15px; display:none; font-weight: bold;">بيانات الدخول غلط يا وحش! ⚠️</p>
-    </div>
-</div>
 
-    <h1 style="text-align:center; color:var(--gold);">👑 لوحة تحكم الإمبراطورية | الرقابة الإدارية</h1>
-    
-    <div class="grid">
-        <div class="card">
-            <h3>💰 مبيعات اليوم</h3>
-            <span id="dailySales">0.00</span>
-            <button class="btn btn-clear" onclick="clearArchive()">🗑️ تصفير وإغلاق الوردية</button>
-        </div>
-        <div class="card"><h3>⏳ طلبات نشطة</h3><span id="activeCount">0</span></div>
-        <div class="card"><h3>📦 طلبات مؤرشفة</h3><span id="doneCount">0</span></div>
-    </div>
+<h2>👑 لوحة التحكم</h2>
 
-    <h3 class="section-title">🟢 شاشة المتابعة (الطلبات النشطة)</h3>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>التاريخ | الوقت</th>
-                    <th>المكان</th>
-                    <th>الأصناف</th>
-                    <th>المجموع</th>
-                    <th>الانتظار</th>
-                    <th>حالة الطلب</th>
-                    <th>الإجراء</th>
-                </tr>
-            </thead>
-            <tbody id="liveTable"></tbody>
-        </table>
-    </div>
-    
-<div class="section-title">📊 تقارير الأداء والسيادة</div>
-<div class="grid">
-    <div class="card">
-        <h3>الأكثر مبيعاً 🔥</h3>
-        <span id="topProduct" style="font-size: 18px; color: var(--gold);">---</span>
-    </div>
-    <div class="card">
-        <h3>الأقل مبيعاً ❄️</h3>
-        <span id="bottomProduct" style="font-size: 18px; color: #3b82f6;">---</span>
-    </div>
-</div>
+<!-- إضافة قسم فرعي -->
+<div class="card">
+<h3>📂 إضافة قسم فرعي</h3>
 
-<div class="grid" style="margin-top: 20px;">
-    <div class="card">
-        <h3>مبيعات اليوم 📅</h3>
-        <span id="reportDaily" style="font-size: 24px;">0.00 ريال</span>
-    </div>
-    <div class="card">
-        <h3>مبيعات الأسبوع 📈</h3>
-        <span id="reportWeekly" style="font-size: 24px;">0.00 ريال</span>
-    </div>
-    <div class="card">
-        <h3>مبيعات الشهر 🏆</h3>
-        <span id="reportMonthly" style="font-size: 24px;">0.00 ريال</span>
-    </div>
-</div>
-
-<section style="margin-top: 30px;">
-    <h3 class="section-title">🛠️ غرفة التحكم (إدارة المنيو المطورة)</h3>
-    <div class="grid">
-        
-        <div class="card" style="border: 1px dashed #c8a27c;">
-            <h3>📂 إضافة قسم فرعي جديد</h3>
-<select id="mainDeptSelect" style="width:95%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;">
-    <option value="barista">قسم الباريستا (مشروبات)</option>
-    <option value="sweets">قسم الحلا</option>
-    <option value="kitchen">قسم المطبخ (أكلات)</option> 
+<select id="mainDeptSelect">
+<option value="barista">باريستا</option>
+<option value="kitchen">مطبخ</option>
+<option value="sweets">حلا</option>
 </select>
 
-            <input type="text" id="newSubName" placeholder="اسم القسم الفرعي (مثل: v60)" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;">
-            <button class="btn-archive" onclick="addNewSubCategory()" style="width:95%;">حفظ القسم الجديد +</button>
-        </div>
+<input id="newSubName" placeholder="اسم القسم">
+<input id="subImg" placeholder="رابط الصورة">
 
-        <div class="card" style="border: 1px dashed #c8a27c;">
-            <h3>☕ إضافة صنف جديد</h3>
-            <select id="selectSub" style="width:95%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;"></select>
-            <input type="text" id="newItemAr" placeholder="الاسم بالعربي" style="width:43%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;">
-            <input type="text" id="newItemEn" placeholder="الاسم بالإنجليزي" style="width:43%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;">
-            <input type="text" id="newItemImg" placeholder="رابط صورة الصنف" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;">
-            <input type="number" id="newItemPrice" placeholder="السعر" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; background: #1a1f2b; color: white;">
-            <button class="btn-archive" onclick="addNewItem()" style="width:95%; background: #28a745;">إضافة للمنيو 🚀</button>
-        </div>
-        
-    </div>
-        <h3 class="section-title">🗑️ تنظيف الإمبراطورية (حذف الأقسام والأصناف)</h3>
-    <div class="grid">
-        <div class="card" style="border: 1px solid #ef4444;">
-            <h3>📂 الأقسام الحالية</h3>
-            <div id="deleteSubList" style="max-height: 200px; overflow-y: auto; text-align: right;"></div>
-        </div>
-        <div class="card" style="border: 1px solid #ef4444;">
-            <h3>☕ الأصناف الحالية</h3>
-            <div id="deleteItemList" style="max-height: 200px; overflow-y: auto; text-align: right;"></div>
-        </div>
-    </div>
-</section>
+<button onclick="addNewSubCategory()">إضافة قسم +</button>
+</div>
 
+<!-- إضافة صنف -->
+<div class="card">
+<h3>☕ إضافة صنف</h3>
 
-    <h3 class="section-title">🔵 الأرشيف النهائي (المُرحّل فقط)</h3>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>التاريخ | الوقت</th>
-                    <th>المكان</th>
-                    <th>الأصناف</th>
-                    <th>المجموع</th>
-                    <th>مدة الخدمة</th>
-                    <th>الحالة</th>
-                </tr>
-            </thead>
-            <tbody id="historyTable"></tbody>
-        </table>
-    </div>
+<select id="selectSub"></select>
+
+<input id="newItemAr" placeholder="الاسم عربي">
+<input id="newItemEn" placeholder="الاسم إنجليزي">
+<input id="newItemPrice" placeholder="السعر">
+<input id="newItemImg" placeholder="الصورة">
+
+<button onclick="addNewItem()">إضافة صنف 🚀</button>
+</div>
+
+<!-- عرض الأقسام -->
+<div class="card">
+<h3>🗑️ حذف الأقسام</h3>
+<div id="deleteSubList"></div>
+</div>
+
+<!-- عرض الأصناف -->
+<div class="card">
+<h3>🗑️ حذف الأصناف</h3>
+<div id="deleteItemList"></div>
+</div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
-        databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+const firebaseConfig = {
+apiKey: "YOUR_KEY",
+databaseURL: "YOUR_DB"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-    function getWaitTime(o) {
-        if (o.finalWait !== undefined && o.finalWait !== null) return o.finalWait;
-        if (!o.time) return 0;
-        const start = new Date(o.time);
-        const now = new Date();
-        const diff = Math.floor((now - start) / 60000);
-        return diff > 0 ? diff : 0;
-    }
-
-// --- دالة التقارير الذكية بعد التعديل الجوهري ---
-function generateReports(allOrders) {
-    if (!allOrders) return;
-    let counts = {}; 
-    let daily = 0; let weekly = 0; let monthly = 0;
-    
-    const now = new Date();
-    
-    // 💡 التعديل هنا: بنجيب بداية اليوم الحالي (الساعة 00:00:00)
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    // بداية الأسبوع (7 أيام كاملة من بداية اليوم)
-    const startOfWeek = new Date(startOfToday.getTime() - 7*24*60*60*1000);
-    
-    // بداية الشهر (30 يوم كاملة من بداية اليوم)
-    const startOfMonth = new Date(startOfToday.getTime() - 30*24*60*60*1000);
-
-    Object.values(allOrders).forEach(o => {
-        const oDate = o.time ? new Date(o.time) : null;
-        const price = parseFloat(o.totalPrice) || 0;
-
-        if (oDate) {
-            // لو الأوردر حصل النهاردة بعد الساعة 12 بالليل
-            if (oDate >= startOfToday) daily += price;
-            // لو الأوردر في آخر 7 أيام
-            if (oDate >= startOfWeek) weekly += price;
-            // لو الأوردر في آخر 30 يوم
-            if (oDate >= startOfMonth) monthly += price;
-        }
-
-        if (o.items) {
-            o.items.forEach(i => {
-                let n = i.ar || i.name;
-                counts[n] = (counts[n] || 0) + 1;
-            });
-        }
-    });
-
-    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-    
-    // تحديث أسماء المنتجات (بشرط وجود أكثر من صنف)
-    if (sorted.length > 0) {
-        document.getElementById('topProduct').innerText = sorted[0][0];
-        document.getElementById('bottomProduct').innerText = (sorted.length > 1) ? sorted[sorted.length-1][0] : "في انتظار أصناف أخرى";
-    }
-
-    // تحديث المبالغ
-    document.getElementById('reportDaily').innerText = daily.toFixed(2) + " ريال";
-    document.getElementById('reportWeekly').innerText = weekly.toFixed(2) + " ريال";
-    document.getElementById('reportMonthly').innerText = monthly.toFixed(2) + " ريال";
-}
-
-    // --- مراقبة البيانات وتحديث الشاشة ---
-    database.ref('live_orders').on('value', snapshot => {
-        let liveRows = "";
-        let historyRows = "";
-        let activeCount = 0;
-        let doneCount = 0;
-        let totalSales = 0;
-        const allData = snapshot.val();
-
-        snapshot.forEach((child) => {
-            const o = child.val();
-            const id = child.key;
-            const waitTime = getWaitTime(o);
-            const price = parseFloat(o.totalPrice) || 0;
-            
-            let dateStr = '---';
-            if (o.date) {
-                dateStr = o.date.slice(5); 
-            } else if (o.time) {
-                const tempDate = new Date(o.time);
-                dateStr = (tempDate.getMonth() + 1).toString().padStart(2, '0') + '-' + 
-                          tempDate.getDate().toString().padStart(2, '0');
-            }
-
-            // لو الطلب لسه ما اترحمش للأرشيف
-            if (o.status !== "تم الترحيل للأرشيف 📦") {
-                activeCount++;
-                const isPaid = (o.status === "تمت المحاسبة ✅");
-                const isCancelRequest = (o.status === "طلب إلغاء ⚠️"); // كشف طلب الإلغاء
-                const isReady = (o.finalWait !== undefined);
-                
-                const timerClass = isReady ? 'timer-fixed' : (waitTime > 10 ? 'timer-late' : 'timer-running');
-                const rowClass = isCancelRequest ? 'cancel-request-row' : ''; // تفعيل الوميض الأحمر
-                const statusColor = isCancelRequest ? 'var(--red)' : (isPaid ? 'var(--green)' : (isReady ? 'var(--blue)' : 'white'));
-
-                // أزرار التحكم: لو طلب إلغاء يظهر موافقة/رفض، لو عادي يظهر ترحيل
-                let actionButtons = `<button class="btn btn-archive" onclick="archiveOrder('${id}')">مراجعة وترحيل 📦</button>`;
-                
-                if (isCancelRequest) {
-                    actionButtons = `
-                        <button class="btn-approve-cancel" onclick="confirmCancel('${id}')">✅ موافقة</button>
-                        <button class="btn-reject-cancel" onclick="rejectCancel('${id}')">❌ رفض</button>
-                    `;
-                }
-
-                liveRows = `<tr class="${rowClass}">
-                    <td>${dateStr} | ${o.displayTime || '---'}</td>
-                    <td>${o.type}</td>
-                    <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
-                    <td style="color:var(--gold); font-weight:bold;">${price.toFixed(2)}</td>
-                    <td><span class="timer-badge ${timerClass}">${waitTime} دقيقة</span></td>
-                    <td style="color:${statusColor}; font-weight:bold;">${o.status || "قيد التحضير ⏳"}</td>
-                    <td>${actionButtons}</td>
-                </tr>` + liveRows;
-            } else {
-                // لو الطلب خلاص في الأرشيف
-                doneCount++;
-                totalSales += price;
-                historyRows = `<tr>
-                    <td>${dateStr} | ${o.displayTime || '---'}</td>
-                    <td>${o.type}</td>
-                    <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
-                    <td>${price.toFixed(2)}</td>
-                    <td><span class="timer-badge timer-fixed">${waitTime} دقيقة</span></td>
-                    <td>مؤرشف ✅</td>
-                </tr>` + historyRows;
-            }
-        });
-
-        document.getElementById('liveTable').innerHTML = liveRows || '<tr><td colspan="7">لا يوجد طلبات</td></tr>';
-        document.getElementById('historyTable').innerHTML = historyRows || '<tr><td colspan="6">الأرشيف فارغ</td></tr>';
-        document.getElementById('activeCount').innerText = activeCount;
-        document.getElementById('doneCount').innerText = doneCount;
-        document.getElementById('dailySales').innerText = totalSales.toFixed(2);
-        
-        generateReports(allData);
-    });
-
-    function archiveOrder(id) {
-        if(!confirm("ترحيل الطلب للأرشيف النهائي؟")) return;
-        database.ref('live_orders/' + id).update({ status: "تم الترحيل للأرشيف 📦" });
-    }
-
-    function clearArchive() {
-        if(!confirm("⚠️ تصفير الوردية سيمسح كل الأرشيف والبيانات القديمة، هل أنت متأكد؟")) return;
-        database.ref('live_orders').once('value', (snapshot) => {
-            snapshot.forEach((child) => {
-                if (child.val().status === "تم الترحيل للأرشيف 📦") {
-                    child.ref.remove();
-                }
-            });
-            alert("✅ تم تصفير الوردية بنجاح.");
-        });
-    }
-function confirmCancel(id) {
-    if(confirm("⚠️ موافقة نهائية على إلغاء الطلب؟")) {
-        database.ref('live_orders/' + id).remove().then(() => {
-            alert("تم الحذف بنجاح.");
-        });
-    }
-}
-
-function rejectCancel(id) {
-    if(confirm("رفض الإلغاء؟")) {
-        database.ref('live_orders/' + id).update({
-            status: "قيد التحضير ⏳",
-            cancelRequested: false
-        });
-    }
-}
-
-// 1. نظام تسجيل الدخول (الأمان)
-function login() {
-    const email = document.getElementById('adminEmail').value;
-    const pass = document.getElementById('adminPass').value;
-    const errorMsg = document.getElementById('loginError');
-
-    firebase.auth().signInWithEmailAndPassword(email, pass)
-    .then(() => {
-        document.getElementById('loginOverlay').style.display = 'none';
-        console.log("تم دخول الإمبراطور ✅");
-    })
-    .catch(() => {
-        errorMsg.style.display = 'block';
-    });
-}
-
+//////////////////////////
+// ✅ تحميل الأقسام حسب القسم الرئيسي
+//////////////////////////
 function loadCategories() {
-    // نظام سحب الأقسام (القديم والجديد) وتحديث القائمة فوراً
-    database.ref('sub_categories').on('value', (snap) => {
-        let options = '<option value="">اختر القسم الفرعي</option>';
-        
-        if (snap.exists()) {
-            snap.forEach((child) => {
-                const data = child.val();
-                // ربط الاسم بالـ ID عشان الأصناف تظهر صح
-                options += `<option value="${child.key}">${data.name}</option>`;
-            });
-        }
+const main = document.getElementById("mainDeptSelect").value;
 
-        // تحديث الخانة اللي في صورة 1776354099260
-        const selectElement = document.getElementById('selectSub');
-        if (selectElement) {
-            selectElement.innerHTML = options;
-        }
-    });
+db.ref("sub_categories").on("value", snap => {
+let html = '<option value="">اختر قسم</option>';
+
+snap.forEach(child => {
+let data = child.val();
+
+if (data.mainDept === main) {
+html += `<option value="${child.key}">${data.name}</option>`;
+}
+});
+
+document.getElementById("selectSub").innerHTML = html;
+});
 }
 
-// 3. نظام الإدارة (إضافة الأقسام والأصناف)
+document.getElementById("mainDeptSelect").addEventListener("change", loadCategories);
+
+//////////////////////////
+// ✅ إضافة قسم فرعي
+//////////////////////////
 function addNewSubCategory() {
-    const mainDept = document.getElementById('mainDeptSelect').value;
-    const subName = document.getElementById('newSubName').value;
+const name = document.getElementById("newSubName").value;
+const main = document.getElementById("mainDeptSelect").value;
+const img = document.getElementById("subImg").value;
 
-    if (!mainDept || !subName) {
-        alert("يا إمبراطور كمل البيانات الأول! ⚠️");
-        return;
-    }
+if (!name) return alert("اكتب اسم القسم");
 
-    const newKey = database.ref('sub_categories').push().key;
-    database.ref('sub_categories/' + newKey).set({
-        name: subName,
-        mainDept: mainDept // هنا بنربطه بالقسم الرئيسي (باريستا/مطبخ..)
-    }).then(() => {
-        alert("تم إضافة القسم بنجاح! ✅");
-        document.getElementById('newSubName').value = "";
-    });
+const key = db.ref("sub_categories").push().key;
+
+db.ref("sub_categories/" + key).set({
+name,
+mainDept: main,
+img: img || ""
+});
+
+alert("تم الإضافة ✅");
+document.getElementById("newSubName").value="";
 }
 
+//////////////////////////
+// ✅ إضافة صنف (تم إصلاحها)
+//////////////////////////
 function addNewItem() {
-    const subId = document.getElementById('selectSub').value;
-    const nameAr = document.getElementById('itemNameAr').value;
-    const en = document.getElementById('newItemEn').value; // الاسم الإنجليزي
-    const price = document.getElementById('itemPrice').value;
-    const img = document.getElementById('itemImg').value;
+const subId = document.getElementById('selectSub').value;
+const ar = document.getElementById('newItemAr').value;
+const en = document.getElementById('newItemEn').value;
+const price = document.getElementById('newItemPrice').value;
+const img = document.getElementById('newItemImg').value;
 
-    if (!subId || !nameAr || !price) {
-        alert("فيه بيانات ناقصة يا وحش! ⚠️");
-        return;
-    }
-
-    const newItemKey = database.ref('menu_items').push().key;
-    database.ref('menu_items/' + newItemKey).set({
-        subCategoryId: subId, // الربط بالقسم الفرعي
-        ar: nameAr,
-        price: parseFloat(price),
-        img: img || "https://via.placeholder.com/150",
-        status: "available"
-    }).then(() => {
-        alert("الصنف نزل المنيو بنجاح! ☕🔥");
-        // مسح الخانات بعد الإضافة
-        document.getElementById('itemNameAr').value = "";
-        document.getElementById('newItemEn').value = "";
-        document.getElementById('itemPrice').value = "";
-        document.getElementById('itemImg').value = "";
-    });
+if (!subId || !ar || !price) {
+alert("فيه بيانات ناقصة");
+return;
 }
-// 1. نظام عرض الأقسام الحالية مع زرار الحذف
-database.ref('sub_categories').on('value', snap => {
-    let html = "";
-    snap.forEach(child => {
-        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                    <span style="color:#e2e8f0; font-size:14px;">📂 ${child.val().name}</span>
-                    <button onclick="deleteSub('${child.key}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold; font-size:12px;">❌ حذف</button>
-                 </div>`;
-    });
-    document.getElementById('deleteSubList').innerHTML = html || '<p style="font-size:12px; color:#666;">لا توجد أقسام</p>';
+
+const key = db.ref('menu_items').push().key;
+
+db.ref('menu_items/' + key).set({
+subCategoryId: subId,
+ar,
+en,
+price: parseFloat(price),
+img: img || "",
+status: "available"
 });
 
-// 2. نظام عرض الأصناف الحالية مع زرار الحذف
-database.ref('menu_items').on('value', snap => {
-    let html = "";
-    snap.forEach(child => {
-        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                    <span style="color:#e2e8f0; font-size:14px;">☕ ${child.val().ar}</span>
-                    <button onclick="deleteItem('${child.key}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold; font-size:12px;">❌ حذف</button>
-                 </div>`;
-    });
-    document.getElementById('deleteItemList').innerHTML = html || '<p style="font-size:12px; color:#666;">لا توجد أصناف</p>';
+alert("تم إضافة الصنف 🔥");
+
+document.getElementById('newItemAr').value="";
+document.getElementById('newItemEn').value="";
+document.getElementById('newItemPrice').value="";
+document.getElementById('newItemImg').value="";
+}
+
+//////////////////////////
+// ✅ عرض الأقسام + حذف
+//////////////////////////
+db.ref("sub_categories").on("value", snap => {
+let html="";
+
+snap.forEach(child=>{
+html += `
+<div>
+${child.val().name}
+<button onclick="deleteSub('${child.key}')">❌</button>
+</div>`;
 });
 
-// 3. دالة حذف القسم الفرعي
-function deleteSub(id) {
-    if(confirm("⚠️ يا إمبراطور، حذف القسم هيمسح اسمه من المنيو عند الزبائن، متأكد؟")) {
-        database.ref('sub_categories/' + id).remove().then(() => {
-            alert("تم نسف القسم بنجاح! 🗑️");
-        });
-    }
+document.getElementById("deleteSubList").innerHTML = html;
+});
+
+function deleteSub(id){
+if(confirm("حذف القسم؟")){
+db.ref("sub_categories/"+id).remove();
+}
 }
 
-// 4. دالة حذف الصنف
-function deleteItem(id) {
-    if(confirm("⚠️ هل أنت متأكد من حذف هذا الصنف نهائياً؟")) {
-        database.ref('menu_items/' + id).remove().then(() => {
-            alert("تم حذف الصنف من الوجود! 🗑️");
-        });
-    }
+//////////////////////////
+// ✅ عرض الأصناف + حذف
+//////////////////////////
+db.ref("menu_items").on("value", snap => {
+let html="";
+
+snap.forEach(child=>{
+html += `
+<div>
+${child.val().ar}
+<button onclick="deleteItem('${child.key}')">❌</button>
+</div>`;
+});
+
+document.getElementById("deleteItemList").innerHTML = html;
+});
+
+function deleteItem(id){
+if(confirm("حذف الصنف؟")){
+db.ref("menu_items/"+id).remove();
 }
+}
+
+//////////////////////////
+// تشغيل أول مرة
+//////////////////////////
+loadCategories();
 
 </script>
+
 </body>
 </html>
-
-
