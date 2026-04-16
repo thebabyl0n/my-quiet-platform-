@@ -383,52 +383,67 @@ database.ref('extras_options').on('value', snap => {
     loadMenu(); 
 });
 
+// 1. الدالة اللي بتعرض البوابات الـ 3 (باريستا - حلا - مطبخ)
 function loadMenu() {
-    // هنسأل فايربيز عن الأقسام الفرعية
-    database.ref('sub_categories').on('value', snap => {
-        let h = "";
+    let mainSelectionHtml = `
+        <div style="grid-column: 1/-1; text-align: center; margin-bottom: 20px;">
+            <h2 style="color:var(--gold);">قائمة السيادة 👑</h2>
+            <p style="color:var(--text-muted);">اختر القسم المفضل</p>
+        </div>
         
+        <div class="item-card" onclick="filterSubByMain('barista', 'قسم الباريستا')" style="cursor:pointer; border: 2px solid var(--gold);">
+            <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=500">
+            <h3 style="color:var(--gold);">☕ المشروبات</h3>
+        </div>
+
+        <div class="item-card" onclick="filterSubByMain('dessert', 'قسم الحلا')" style="cursor:pointer; border: 2px solid var(--gold);">
+            <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?q=80&w=500">
+            <h3 style="color:var(--gold);">🍰 الحلا</h3>
+        </div>
+
+        <div class="item-card" onclick="filterSubByMain('kitchen', 'قسم المطبخ')" style="cursor:pointer; border: 2px solid var(--gold);">
+            <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=500">
+            <h3 style="color:var(--gold);">🍔 المطبخ</h3>
+        </div>
+    `;
+    document.getElementById('menu').innerHTML = mainSelectionHtml;
+}
+
+// 2. الدالة اللي بتجيب الأقسام الفرعية (فلتر بالقسم الرئيسي)
+function filterSubByMain(mainDeptName, title) {
+    // التعديل هنا: بنستخدم 'parent' عشان ده اللي في لوحة التحكم بتاعتك
+    database.ref('sub_categories').orderByChild('parent').equalTo(mainDeptName).on('value', snap => {
+        let h = `
+            <div style="grid-column: 1/-1; text-align: right; margin-bottom: 15px;">
+                <button onclick="loadMenu()" style="background:transparent; color:var(--gold); border:1px solid var(--gold); padding:5px 15px; border-radius:10px; cursor:pointer;">⬅️ العودة للرئيسية</button>
+                <h3 style="display:inline-block; margin-right:15px; color:white;">${title}</h3>
+            </div>
+        `;
         if (snap.exists()) {
-            // لو فيه أقسام، اعرضها هي الأول بشياكة
             snap.forEach(child => {
                 const sub = child.val();
-                const subImg = sub.img || document.getElementById('logoW').src; 
                 h += `
-                    <div class="item-card" onclick="loadSubItems('${child.key}', '${sub.name}')" style="cursor:pointer; border: 1px solid var(--gold);">
-                        <img src="${subImg}">
+                    <div class="item-card" onclick="loadSubItems('${child.key}', '${sub.name}')" style="cursor:pointer; border: 1px solid rgba(200, 162, 124, 0.3);">
+                        <img src="${sub.img || 'https://via.placeholder.com/150'}">
                         <h4>${sub.name}</h4>
-                        <span style="color:var(--gold); font-size:12px;">استعرض القائمة 📂</span>
+                        <span style="color:var(--gold); font-size:12px;">تصفح الأصناف 📂</span>
                     </div>`;
             });
-            document.getElementById('menu').innerHTML = h;
         } else {
-            // لو مفيش أقسام فرعية (الخطة البديلة)، اعرض المنيو القديم زي ما هو
-            database.ref('menu_items').on('value', snapItems => {
-                let itemsHtml = "";
-                snapItems.forEach(child => {
-                    const item = child.val();
-                    const itemDept = item.dept ? item.dept.toLowerCase().trim() : 'barista'; 
-                    itemsHtml += `<div class="item-card">
-                        <img src="${item.img}">
-                        <h4>${item.ar}</h4>
-                        <span style="color:var(--gold);font-weight:700;display:block;margin-bottom:10px;">${item.price} ريال</span>
-                        <select class="extra-sel" id="ex-${child.key}">${extrasStr}</select>
-                        <button class="add-btn" onclick="addToCart('${child.key}','${item.ar}','${item.en}',${item.price},'${itemDept}')">إضافة +</button>
-                    </div>`;
-                });
-                document.getElementById('menu').innerHTML = itemsHtml;
-            });
+            h += `<p style="grid-column: 1/-1; text-align:center; color:var(--gold);">قريباً.. أصناف جديدة ☕</p>`;
         }
+        document.getElementById('menu').innerHTML = h;
     });
 }
+
+// 3. الدالة اللي بتعرض الأصناف اللي جوه القسم الفرعي
 function loadSubItems(subId, subName) {
-    // التعديل هنا: غيرنا sub_id لـ subCategoryId عشان نربطها بالداش بورد صح
-    database.ref('menu_items').orderByChild('subCategoryId').equalTo(subId).on('value', snap => {
+    // التعديل هنا: بنستخدم 'sub_id' عشان ده اللي في لوحة التحكم بتاعتك
+    database.ref('menu_items').orderByChild('sub_id').equalTo(subId).on('value', snap => {
         let h = `<div style="grid-column: 1/-1; text-align: right; margin-bottom: 10px;">
-                    <button onclick="loadMenu()" style="background:transparent; color:var(--gold); border:1px solid var(--gold); padding:5px 15px; border-radius:10px; cursor:pointer;">⬅️ العودة للأقسام</button>
-                    <h3 style="display:inline-block; margin-right:15px; color:white;">قائمة: ${subName}</h3>
+                    <button onclick="loadMenu()" style="background:transparent; color:var(--gold); border:1px solid var(--gold); padding:5px 15px; border-radius:10px; cursor:pointer;">⬅️ العودة</button>
+                    <h3 style="display:inline-block; margin-right:15px; color:white;">${subName}</h3>
                  </div>`;
-        
         if(snap.exists()){
             snap.forEach(child => {
                 const item = child.val();
@@ -441,10 +456,8 @@ function loadSubItems(subId, subName) {
                 </div>`;
             });
         } else {
-            // رسالة شيك لو القسم لسه فاضي مفيش فيه أصناف
-            h += `<p style="grid-column: 1/-1; text-align:center; color:var(--gold); margin-top:20px;">عذراً.. لا توجد أصناف في هذا القسم حالياً ☕</p>`;
+            h += `<p style="grid-column: 1/-1; text-align:center; color:var(--gold);">لا توجد أصناف حالياً ☕</p>`;
         }
-        
         document.getElementById('menu').innerHTML = h;
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
     });
