@@ -502,7 +502,31 @@ function addNewSubCategory() {
     });
 }
 
-// 2. إضافة صنف للمنيو (بناءً على IDs الجدة المظبوطة)
+// 1. إضافة قسم فرعي جديد بصورة
+function addNewSubCategory() {
+    const mainDept = document.getElementById('mainDeptSelect').value;
+    const subName = document.getElementById('newSubName').value;
+    const subImg = document.getElementById('newSubImg').value;
+
+    if (!mainDept || !subName) {
+        alert("يا إمبراطور كمل البيانات الأول! ⚠️");
+        return;
+    }
+
+    const newKey = database.ref('sub_categories').push().key;
+    database.ref('sub_categories/' + newKey).set({
+        name: subName,
+        parent: mainDept, // الكلمة الصح عشان المنيو يشوفه
+        img: subImg || "https://via.placeholder.com/150", 
+        timestamp: Date.now()
+    }).then(() => {
+        alert("تم إضافة القسم الفرعي بنجاح! ✅");
+        document.getElementById('newSubName').value = "";
+        document.getElementById('newSubImg').value = ""; 
+    });
+}
+
+// 2. إضافة صنف جديد (عربي/إنجليزي/سعر/صورة)
 function addNewItem() {
     const subId = document.getElementById('selectSub').value;
     const nameAr = document.getElementById('newItemAr').value;
@@ -517,7 +541,7 @@ function addNewItem() {
 
     const newItemKey = database.ref('menu_items').push().key;
     database.ref('menu_items/' + newItemKey).set({
-        subCategoryId: subId,
+        sub_id: subId, // الكلمة الصح عشان يظهر جوه القسم
         ar: nameAr,
         en: nameEn || "",
         price: parseFloat(price),
@@ -533,22 +557,6 @@ function addNewItem() {
     });
 }
 
-// 3. التحميل التلقائي (أمر القائد محمود)
-window.onload = () => {
-    loadCategories();
-};
-
-function loadCategories() {
-    database.ref('sub_categories').on('value', (snap) => {
-        let options = '<option value="">اختر القسم الفرعي...</option>';
-        if (snap.exists()) {
-            snap.forEach((child) => {
-                options += `<option value="${child.key}">${child.val().name}</option>`;
-            });
-        }
-        document.getElementById('selectSub').innerHTML = options;
-    });
-}
 // 1. نظام عرض الأقسام الحالية مع زرار الحذف
 database.ref('sub_categories').on('value', snap => {
     let html = "";
