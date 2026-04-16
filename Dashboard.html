@@ -472,7 +472,7 @@ function loadCategories() {
     });
 }
 
-// 3. نظام الإدارة (إضافة الأقسام والأصناف)
+// 1. إضافة قسم فرعي (Sub-Category)
 function addNewSubCategory() {
     const mainDept = document.getElementById('mainDeptSelect').value;
     const subName = document.getElementById('newSubName').value;
@@ -485,19 +485,22 @@ function addNewSubCategory() {
     const newKey = database.ref('sub_categories').push().key;
     database.ref('sub_categories/' + newKey).set({
         name: subName,
-        mainDept: mainDept
+        mainDept: mainDept,
+        timestamp: Date.now()
     }).then(() => {
-        alert("تم إضافة القسم بنجاح! ✅");
+        alert("تم إضافة القسم الفرعي بنجاح! ✅");
         document.getElementById('newSubName').value = "";
+        loadCategories(); // تحديث فوري
     });
 }
 
+// 2. إضافة صنف للمنيو (بناءً على IDs الجدة المظبوطة)
 function addNewItem() {
     const subId = document.getElementById('selectSub').value;
-    const nameAr = document.getElementById('newItemAr').value; // الـ ID الصح
-    const nameEn = document.getElementById('newItemEn').value; // لمستك الخاصة
-    const price = document.getElementById('newItemPrice').value; // الـ ID الصح
-    const img = document.getElementById('newItemImg').value; // الـ ID الصح
+    const nameAr = document.getElementById('newItemAr').value;
+    const nameEn = document.getElementById('newItemEn').value;
+    const price = document.getElementById('newItemPrice').value;
+    const img = document.getElementById('newItemImg').value;
 
     if (!subId || !nameAr || !price) {
         alert("فيه بيانات ناقصة يا وحش! ⚠️");
@@ -508,17 +511,34 @@ function addNewItem() {
     database.ref('menu_items/' + newItemKey).set({
         subCategoryId: subId,
         ar: nameAr,
-        en: nameEn || "", // عشان يحفظ الإنجليزي في الفايربيز
+        en: nameEn || "",
         price: parseFloat(price),
         img: img || "https://via.placeholder.com/150",
-        status: "available"
+        status: "available",
+        createdAt: Date.now()
     }).then(() => {
-        alert("الصنف نزل المنيو بنجاح! ☕🔥");
-        // مسح الخانات بعد الإضافة
+        alert("الصنف نزل المنيو بنجاح بوقار السيادة! ☕🔥");
         document.getElementById('newItemAr').value = "";
         document.getElementById('newItemEn').value = "";
         document.getElementById('newItemPrice').value = "";
         document.getElementById('newItemImg').value = "";
+    });
+}
+
+// 3. التحميل التلقائي (أمر القائد محمود)
+window.onload = () => {
+    loadCategories();
+};
+
+function loadCategories() {
+    database.ref('sub_categories').on('value', (snap) => {
+        let options = '<option value="">اختر القسم الفرعي...</option>';
+        if (snap.exists()) {
+            snap.forEach((child) => {
+                options += `<option value="${child.key}">${child.val().name}</option>`;
+            });
+        }
+        document.getElementById('selectSub').innerHTML = options;
     });
 }
 // 1. نظام عرض الأقسام الحالية مع زرار الحذف
