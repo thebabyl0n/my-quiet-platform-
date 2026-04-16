@@ -246,13 +246,24 @@
         });
     }
 
-    function addExtra() {
-        const ar = document.getElementById('extAr').value.trim();
-        if(ar) {
-            database.ref('extras_options').push({ ar, price: parseFloat(document.getElementById('extPrice').value) || 0, en: Date.now() })
-            .then(() => { alert("تم!"); document.getElementById('extAr').value = ''; });
-        }
+function addExtra() {
+    const ar = document.getElementById('extAr').value.trim();
+    const price = parseFloat(document.getElementById('extPrice').value) || 0;
+    
+    if(ar) {
+        database.ref('extras_options').push({ 
+            ar: ar, // الاسم بالعربي
+            en: ar, // هنخلي الـ EN ياخد نفس الاسم عشان ينطقه صح وما يقولش أرقام
+            price: price 
+        }).then(() => { 
+            alert("تم إضافة الإضافة بنجاح! ✅"); 
+            document.getElementById('extAr').value = ''; 
+            document.getElementById('extPrice').value = '0';
+        });
+    } else {
+        alert("اكتب اسم الإضافة الأول يا بطل! ⚠️");
     }
+}
     
     function addOffer() { /* دالة العروض المختصرة */
         const img = document.getElementById('offerImg').value;
