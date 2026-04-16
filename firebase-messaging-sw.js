@@ -1,23 +1,24 @@
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
 
-// دي البيانات الملكية الخاصة بمشروعك يا بطل
+// البيانات دي هي اللي هتربط "الحارس" بمشروعك الحالي
 firebase.initializeApp({
   apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac", 
-  authDomain: "alpha-shadow-7.firebaseapp.com",
-  projectId: "alpha-shadow-7",
-  messagingSenderId: "367347348332",
+  authDomain: "alphashadow-23689.firebaseapp.com", // اتأكدت لك إن ده الـ ID الصح
+  projectId: "alphashadow-23689",
+  messagingSenderId: "367347348332", // رقم المرسل
   appId: "1:367347348332:web:61908298713a073f4e198b"
 });
 
 const messaging = firebase.messaging();
 
-// وظيفة الإشعار لما يوصل والشاشة مقفولة
 messaging.setBackgroundMessageHandler(function(payload) {
-  const title = payload.notification.title || "تنبيه من Alpha Shadow";
+  const title = payload.notification.title || "Alpha Shadow 👑";
   const options = {
-    body: payload.notification.body || "طلبك جاهز يا فنان! 🔥",
-    icon: "https://i.ibb.co/3yk8S7K/logo.png"
+    body: payload.notification.body || "طلب جديد في الانتظار! 🔥",
+    icon: "https://i.ibb.co/3yk8S7K/logo.png",
+    vibrate: [200, 100, 200], // هزة تنبيه للكاشير
+    badge: "https://i.ibb.co/3yk8S7K/logo.png"
   };
   return self.registration.showNotification(title, options);
 });
