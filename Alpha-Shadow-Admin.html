@@ -98,20 +98,41 @@
         <div id="couponsList"></div>
     </div>
 
-    <div class="section">
-        <h3>☕ إضافة صنف جديد</h3>
-        <label>الاسم (عربي)</label><input type="text" id="itemAr">
-        <label>الاسم (EN)</label><input type="text" id="itemEn">
-        <label>السعر</label><input type="number" id="itemPrice">
-        <label>رابط الصورة</label><input type="text" id="itemImg">
-        <label>توجيه الطلب</label>
-        <select id="itemDept">
-            <option value="barista">☕ شاشة الباريستا</option>
-            <option value="kitchen">🍔 شاشة المطبخ</option>
-            <option value="dessert">🍰 شاشة الحلا</option>
+<div class="section" style="border: 2px solid var(--gold);">
+    <h3>📁 إدارة الأقسام الفرعية</h3>
+    <label>اسم القسم الفرعي (مثلاً: مشروبات باردة)</label>
+    <input type="text" id="subName" placeholder="اكتب اسم القسم هنا">
+    
+    <label>رابط صورة القسم</label>
+    <input type="text" id="subImg" placeholder="رابط الصورة">
+
+    <label>تابع لقسم رئيسي</label>
+    <select id="parentDept">
+        <option value="barista">☕ باريستا</option>
+        <option value="kitchen">🍔 مطبخ</option>
+        <option value="dessert">🍰 حلا</option>
+    <button class="btn-save btn-gold" onclick="addSubCategory()">إضافة القسم الفرعي ➕</button>
+    <div id="subCategoriesList" style="margin-top: 10px;"></div>
+</div> <div class="section">
+    <h3>☕ إضافة صنف جديد</h3>
+    <label>الاسم (عربي)</label><input type="text" id="itemAr">
+    <label>الاسم (EN)</label><input type="text" id="itemEn">
+    <label>السعر</label><input type="number" id="itemPrice">
+    <label>رابط الصورة</label><input type="text" id="itemImg">
+    
+    <label>توجيه الطلب (القسم الرئيسي)</label>
+    <select id="itemDept">
+        <option value="barista">☕ شاشة الباريستا</option>
+        <option value="kitchen">🍔 شاشة المطبخ</option>
+        <option value="dessert">🍰 شاشة الحلا</option>
+    </select>
+
+    <label>اختر القسم الفرعي</label>
+    <select id="itemSubDept">
         </select>
-        <button class="btn-save" onclick="addItem()">إضافة للمنيو ✅</button>
-    </div>
+    
+    <button class="btn-save" onclick="addItem()">إضافة للمنيو ✅</button>
+</div>
 
     <div class="section">
         <h3>📋 المنيو الحالي</h3>
@@ -265,8 +286,60 @@
             alert("اكتب اسم الإضافة الأول يا بطل! ⚠️");
         }
     }
+// 1. إضافة قسم فرعي
+function addSubCategory() {
+    const name = document.getElementById('subName').value.trim();
+    const img = document.getElementById('subImg').value.trim();
+    const parent = document.getElementById('parentDept').value;
+
+    if (name) {
+        database.ref('sub_categories').push({
+            name: name,
+            img: img || "",
+            parent: parent
+        }).then(() => {
+            alert("تم إضافة القسم الفرعي بنجاح! 🎯");
+            document.getElementById('subName').value = '';
+            document.getElementById('subImg').value = '';
+        });
+    } else {
+        alert("اكتب اسم القسم يا بطل! ⚠️");
+    }
+}
+
+// 2. تحديث قائمة الأقسام في المنيو + عرضها في لوحة التحكم للحذف
+function updateItemSubDept() {
+    database.ref('sub_categories').on('value', snap => {
+        let options = '<option value="none">بدون قسم فرعي</option>';
+        let listHtml = ""; // لعرض الأقسام عشان تمسحها
+
+        snap.forEach(child => {
+            const sub = child.val();
+            options += `<option value="${child.key}">${sub.name} (تابع لـ ${sub.parent})</option>`;
+            
+            // شكل القسم في القائمة عشان لو عايز تحذفه
+            listHtml += `
+                <div class="item-row" style="background:#fff3e0">
+                    <span><b>${sub.name}</b> (${sub.parent})</span>
+                    <button class="btn-del" onclick="deleteSubCategory('${child.key}')">حذف القسم</button>
+                </div>`;
+        });
+        document.getElementById('itemSubDept').innerHTML = options;
+        document.getElementById('subCategoriesList').innerHTML = listHtml;
+    });
+}
+
+// 3. دالة حذف القسم الفرعي
+function deleteSubCategory(id) {
+    if(confirm("هل تريد حذف هذا القسم الفرعي؟ لن يتم حذف المشروبات التابعة له.")) {
+        database.ref('sub_categories/' + id).remove();
+    }
+}
+
+// استمر في استخدام addItem اللي عندك فهي صحيحة 100%
 
 </script>
 </body>
 </html>
+
 
