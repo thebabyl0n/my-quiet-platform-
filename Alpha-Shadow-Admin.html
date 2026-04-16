@@ -111,9 +111,11 @@
         <option value="barista">☕ باريستا</option>
         <option value="kitchen">🍔 مطبخ</option>
         <option value="dessert">🍰 حلا</option>
-    <button class="btn-save btn-gold" onclick="addSubCategory()">إضافة القسم الفرعي ➕</button>
-    <div id="subCategoriesList" style="margin-top: 10px;"></div>
-</div> <div class="section">
+    </select> <button class="btn-save btn-gold" onclick="addSubCategory()">إضافة القسم الفرعي ➕</button>
+    <div id="subCategoriesList" style="margin-top: 15px;"></div>
+</div>
+
+<div class="section">
     <h3>☕ إضافة صنف جديد</h3>
     <label>الاسم (عربي)</label><input type="text" id="itemAr">
     <label>الاسم (EN)</label><input type="text" id="itemEn">
@@ -129,7 +131,8 @@
 
     <label>اختر القسم الفرعي</label>
     <select id="itemSubDept">
-        </select>
+        <option value="none">بدون قسم فرعي</option>
+    </select>
     
     <button class="btn-save" onclick="addItem()">إضافة للمنيو ✅</button>
 </div>
