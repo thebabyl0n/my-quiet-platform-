@@ -475,35 +475,6 @@ function loadCategories() {
 
 // 1. إضافة قسم فرعي (Sub-Category)
 function addNewSubCategory() {
-    const mainDept = document.getElementById('mainDeptSelect').value;
-    const subName = document.getElementById('newSubName').value;
-    // سطر الصورة الجديد
-    const subImg = document.getElementById('newSubImg').value;
-
-
-    if (!mainDept || !subName) {
-        alert("يا إمبراطور كمل البيانات الأول! ⚠️");
-        return;
-    }
-
-    const newKey = database.ref('sub_categories').push().key;
-    database.ref('sub_categories/' + newKey).set({
-        name: subName,
-        mainDept: mainDept,
-        // إضافة الصورة هنا ليرتبط القسم بصورته
-        img: subImg || "https://via.placeholder.com/150", 
-        timestamp: Date.now()
-    }).then(() => {
-        alert("تم إضافة القسم الفرعي بنجاح! ✅");
-        document.getElementById('newSubName').value = "";
-        // تصفير خانة الصورة
-        document.getElementById('newSubImg').value = ""; 
-        loadCategories(); 
-    });
-}
-
-// 1. إضافة قسم فرعي جديد بصورة
-function addNewSubCategory() {
     let mainDept = document.getElementById('mainDeptSelect').value;
     const subName = document.getElementById('newSubName').value;
     const subImg = document.getElementById('newSubImg').value;
@@ -513,15 +484,11 @@ function addNewSubCategory() {
         return;
     }
 
-    // القفلة هنا: لازم نضمن إن "الحلا" يروح باسم dessert عشان المنيو يشوفه
-    if (mainDept === "sweets") {
-        mainDept = "dessert";
-    }
-
     const newKey = database.ref('sub_categories').push().key;
     database.ref('sub_categories/' + newKey).set({
         name: subName,
-        parent: mainDept, // الكلمة دي هي اللي بتخلي القسم يظهر حقيقي مش وهمي
+        parent: mainDept, // 👈 دي اللي المنيو بيشوفها
+        mainDept: mainDept, // 👈 ودي اللي شاشات الأقسام بتشوفها
         img: subImg || "https://via.placeholder.com/150", 
         timestamp: Date.now()
     }).then(() => {
@@ -539,34 +506,34 @@ function addNewItem() {
     const nameEn = document.getElementById('newItemEn').value;
     const price = document.getElementById('newItemPrice').value;
     const img = document.getElementById('newItemImg').value;
-    
-    // 👈 دي "التكة" اللي كانت ناقصة: نسحب القسم الرئيسي (باريستا، حلا، مطبخ)
-    let mainDept = document.getElementById('mainDeptSelect').value;
-    
-    // تأكيد إن "الحلا" يروح باسم dessert عشان الشاشات تفهمه
-    if (mainDept === "sweets") { mainDept = "dessert"; }
 
     if (!subId || !nameAr || !price) {
         alert("فيه بيانات ناقصة يا وحش! ⚠️");
         return;
     }
 
-    const newItemKey = database.ref('menu_items').push().key;
-    database.ref('menu_items/' + newItemKey).set({
-        sub_id: subId, 
-        dept: mainDept, // 👈 السطر ده هو "كلمة السر" اللي شاشات الأقسام مستنياها
-        ar: nameAr,
-        en: nameEn || "",
-        price: parseFloat(price),
-        img: img || "https://via.placeholder.com/150",
-        status: "available",
-        createdAt: Date.now()
-    }).then(() => {
-        alert("الصنف نزل المنيو بنجاح بوقار السيادة! ☕🔥");
-        document.getElementById('newItemAr').value = "";
-        document.getElementById('newItemEn').value = "";
-        document.getElementById('newItemPrice').value = "";
-        document.getElementById('newItemImg').value = "";
+    // 💡 التكة الذكية: بنجيب بيانات القسم الفرعي عشان نعرف هو تبع مين (باريستا ولا حلا)
+    database.ref('sub_categories/' + subId).once('value', (snap) => {
+        const subData = snap.val();
+        const mainDept = subData ? subData.mainDept : "kitchen"; // لو مش لاقي قسم يوديه المطبخ
+
+        const newItemKey = database.ref('menu_items').push().key;
+        database.ref('menu_items/' + newItemKey).set({
+            sub_id: subId,
+            dept: mainDept, // 👈 هنا الصنف هياخد قسمه المظبوط أوتوماتيك
+            ar: nameAr,
+            en: nameEn || "",
+            price: parseFloat(price),
+            img: img || "https://via.placeholder.com/150",
+            status: "available",
+            createdAt: Date.now()
+        }).then(() => {
+            alert("الصنف نزل المنيو بنجاح بوقار السيادة! ☕🔥");
+            document.getElementById('newItemAr').value = "";
+            document.getElementById('newItemEn').value = "";
+            document.getElementById('newItemPrice').value = "";
+            document.getElementById('newItemImg').value = "";
+        });
     });
 }
 
