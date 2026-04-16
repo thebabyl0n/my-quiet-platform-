@@ -532,13 +532,19 @@ function addNewSubCategory() {
     });
 }
 
-// 2. إضافة صنف جديد (عربي/إنجليزي/سعر/صورة)
+// 2. إضافة صنف جديد (عربي/إنجليزي/سعر/صورة) المطور للربط مع الشاشات
 function addNewItem() {
     const subId = document.getElementById('selectSub').value;
     const nameAr = document.getElementById('newItemAr').value;
     const nameEn = document.getElementById('newItemEn').value;
     const price = document.getElementById('newItemPrice').value;
     const img = document.getElementById('newItemImg').value;
+    
+    // 👈 دي "التكة" اللي كانت ناقصة: نسحب القسم الرئيسي (باريستا، حلا، مطبخ)
+    let mainDept = document.getElementById('mainDeptSelect').value;
+    
+    // تأكيد إن "الحلا" يروح باسم dessert عشان الشاشات تفهمه
+    if (mainDept === "sweets") { mainDept = "dessert"; }
 
     if (!subId || !nameAr || !price) {
         alert("فيه بيانات ناقصة يا وحش! ⚠️");
@@ -547,7 +553,8 @@ function addNewItem() {
 
     const newItemKey = database.ref('menu_items').push().key;
     database.ref('menu_items/' + newItemKey).set({
-        sub_id: subId, // الكلمة الصح عشان يظهر جوه القسم
+        sub_id: subId, 
+        dept: mainDept, // 👈 السطر ده هو "كلمة السر" اللي شاشات الأقسام مستنياها
         ar: nameAr,
         en: nameEn || "",
         price: parseFloat(price),
