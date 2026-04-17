@@ -855,31 +855,48 @@ if (offlineOrders.length > 0) {
 });
 
 function trackMyOrderLive(orderId) {
-if (!orderId) return;
+    if (!orderId) return;
 
-database.ref('live_orders/' + orderId).on('value', (snapshot) => {
-    const order = snapshot.val();
-    if (!order) return;
+    database.ref('live_orders/' + orderId).on('value', async (snapshot) => {
+        const order = snapshot.val();
+        if (!order) return;
 
-    let statusText = "⏳ طلبك قيد التحضير...";
+        let statusText = "⏳ طلبك قيد التحضير...";
 
-    if (order.baristaReady && order.kitchenReady && order.dessertReady) {
-        statusText = "✅ طلبك جاهز بالكامل!";
-    } 
-    else if (order.baristaReady) {
-        statusText = "☕ القهوة جاهزة";
-    } 
-    else if (order.kitchenReady) {
-        statusText = "🍔 الأكل جاهز";
-    }
-    else if (order.dessertReady) {
-        statusText = "🍰 حلا جاهزة";
-    }
+        // 🧠 تحديد الأقسام المطلوبة فقط
+        const needed = order.deptsNeeded || [];
 
-    if (typeof showToast === "function") {
+        const baristaDone = !needed.includes('barista') || order.baristaReady;
+        const kitchenDone = !needed.includes('kitchen') || order.kitchenReady;
+        const dessertDone = !needed.includes('dessert') || order.dessertReady;
+
+        // ✅ لو كل المطلوب جاهز
+        if (baristaDone && kitchenDone && dessertDone) {
+            statusText = "✅ تم تجهيز الطلب بالكامل!";
+
+            // 🔥 تحديث الحالة في الداتابيس
+            await database.ref('live_orders/' + orderId).update({
+                status: "تم التجهيز ✅"
+            });
+        } 
+        else if (order.baristaReady) {
+            statusText = "☕ القهوة جاهزة";
+        } 
+        else if (order.kitchenReady) {
+            statusText = "🍔 الأكل جاهز";
+        }
+        else if (order.dessertReady) {
+            statusText = "🍰 الحلا جاهزة";
+        }
+
         showToast(statusText);
-    }
-});
+
+        // ✨ تحديث شريط الحالة في الواجهة
+        const bar = document.getElementById('order-status-bar');
+        if (bar) {
+            bar.innerText = statusText;
+        }
+    });
 }
 
 </script>
