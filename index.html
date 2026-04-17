@@ -872,8 +872,7 @@ function trackMyOrderLive(orderId) {
 
         // ✅ لو كل المطلوب جاهز
 if (baristaDone && kitchenDone && dessertDone && order.status !== "تم التجهيز ✅") {
-    await database.ref('live_orders/' + orderId).update({
-        status: "تم التجهيز ✅"
+
     });
 }
 
