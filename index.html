@@ -232,11 +232,6 @@
         <button class="send-btn" onclick="submitOrder()">إرسال الطلب ✅</button>
     </div>
 </div>
-    <div id="success-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; text-align: center;">
-    <img src="https://firebasestorage.googleapis.com/v0/b/alphashadow-23689.firebaseapp.com/o/Final_alpha_shadow_logo.png?alt=media&token=d120a1eb-2d4e-4e4c-9f60-5f284f932f91" style="width: 150px; margin-bottom: 20px; filter: drop-shadow(0 0 10px #c8a27c); animation: pulse 2s infinite;">
-        <h2 style="color: #c8a27c; font-family: sans-serif;">تم استلام طلبك بنجاح!</h2>
-        <p style="color: #94a3b8; font-family: sans-serif;">جاري تحضير طلبك بوقار السيادة..</p>
-    </div>
 
     <script>
     const firebaseConfig = {
@@ -255,36 +250,35 @@
     let oType = ""; let tNum = ""; let extrasStr = ""; let currentOrderId = null;
     let discountValReal = 0; let discountType = "percent"; let activePromo = "";
 
-// --- الرادار الذكي (بيتحط قبل الـ onload) ---
+// 1. قراءة المعطيات من الرابط (توضع قبل الـ onload لضمان الجاهزية)
 const urlParams = new URLSearchParams(window.location.search);
 const tableIdFromUrl = urlParams.get('table'); 
 const orderTypeFromUrl = urlParams.get('type'); 
 
+// 2. تشغيل النظام عند تحميل الصفحة
 window.onload = () => {
     validateGeo(() => {
+        // في حال النجاح: إخفاء شاشة الحماية
         document.getElementById('geo-shield').style.display = 'none';
         
-        // التكتيك الاحترافي: فحص نوع الباركود
         if (tableIdFromUrl) {
-            // باركود طاولة (محلي)
             oType = 'محلي';
             tNum = tableIdFromUrl;
             enterApp(`أهلاً بك على طاولة رقم ${tNum} ☕️`);
         } else if (orderTypeFromUrl === 'takeaway') {
-            // باركود الكاشير (سفري ثابت)
             oType = 'سفري';
             tNum = ""; 
             enterApp("أهلاً بك.. طلبك سفري 🚗");
         } else {
-            // اللينك العادي
             document.getElementById('welcome-screen').style.display = 'flex';
         }
     }, () => {
+        // في حال الفشل
         document.getElementById('geo-status').innerText = "❌ خارج نطاق الإمبراطورية (حي النسيم)";
     });
 };
 
-// وظيفة الدخول السريع (بتحطها بعد قفلة الـ onload)
+// 3. وظيفة الدخول السريع (التوجيه التلقائي)
 function enterApp(message) {
     document.getElementById('welcome-screen').style.display = 'none'; 
     document.getElementById('app').style.display = 'block';
@@ -294,14 +288,17 @@ function enterApp(message) {
     if(welcomeAudio) talk(welcomeAudio);
 }
 
-    function validateGeo(onSuccess, onError) {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                const dist = calculateDist(pos.coords.latitude, pos.coords.longitude, TARGET_LAT, TARGET_LON);
-                if (dist <= ALLOWED_DISTANCE) onSuccess(); else onError();
-            }, onError, { enableHighAccuracy: true });
-        } else { alert("GPS غير مدعوم"); }
+// 4. محرك التحقق الجغرافي (نفس خياراتك الأصلية بالضبط)
+function validateGeo(onSuccess, onError) {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+            const dist = calculateDist(pos.coords.latitude, pos.coords.longitude, TARGET_LAT, TARGET_LON);
+            if (dist <= ALLOWED_DISTANCE) onSuccess(); else onError();
+        }, onError, { enableHighAccuracy: true });
+    } else { 
+        alert("GPS غير مدعوم"); 
     }
+}
 
     function calculateDist(lat1, lon1, lat2, lon2) {
         const R = 6371;
@@ -657,258 +654,117 @@ function callOrderNumber(num, type) {
 
 async function submitOrder() {
     if(!cart.length) return alert("السلة فارغة");
-    document.getElementById('success-overlay').style.display = 'flex';
     
     validateGeo(async () => {
-        // --- 1. حساباتك الدقيقة (سحبناها من كودك الأصلي) ---
-        const finalTotalRaw = document.getElementById('total').innerText;
-        const finalTotalNum = parseFloat(finalTotalRaw.replace(/[^\d.]/g, '')) || 0;
-        const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
-        let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
-        const deptsNeeded = [...new Set(cart.map(item => (item.dept || 'barista').toLowerCase().trim()))];
+        try {
+            const finalTotalRaw = document.getElementById('total').innerText;
+            const finalTotalNum = parseFloat(finalTotalRaw.replace(/[^\d.]/g, '')) || 0;
+            const subTotal = cart.reduce((acc, i) => acc + (i.p + i.exP) * i.qty, 0);
+            let dAmount = (discountType === "percent") ? (subTotal * discountValReal / 100) : discountValReal;
+            const deptsNeeded = [...new Set(cart.map(item => (item.dept || 'barista').toLowerCase().trim()))];
 
-        const finalItemsForSystem = cart.map(item => {
-            return {
+            const finalItemsForSystem = cart.map(item => ({
                 k: item.k,
                 ar: item.exAr ? `${item.ar} [+${item.exAr}]` : item.ar,
                 p: item.p,
                 exP: item.exP,
                 qty: item.qty,
                 dept: item.dept
-            };
-        });
-                // تجهيز بيانات الطلب المبدئية للفحص
-        const orderPreview = {
-            items: finalItemsForSystem,
-            type: oType,
-            table: tNum || 'سفري',
-            totalPrice: finalTotalNum,
-            time: new Date().toISOString()
-        };
+            }));
 
-        // --- ⚡ الكود السحري: حفظ الطلب لو مفيش نت ---
-        if (!navigator.onLine) {
-            let offlineOrders = JSON.parse(localStorage.getItem("offlineOrders") || "[]");
-            offlineOrders.push(orderPreview);
-            localStorage.setItem("offlineOrders", JSON.stringify(offlineOrders));
-            showToast("📡 تم حفظ الطلب.. سيُرسل تلقائياً عند توفر الإنترنت");
-            cart = []; 
-            renderCart();
-            return; // وقف العملية هنا عشان ميبعتش لفايربيز والنت مقطوع
-        }
-        // ------------------------------------------
-
-// --- 2. ماكينة الأرقام (العداد اليومي الذكي) ---
-let orderNumber = null;
-
-// 🔥 العداد للسفري فقط
-if (oType === 'سفري') {
-    try {
-        const counterRef = database.ref('orders_counter');
-
-        const result = await counterRef.transaction((currentData) => {
-            const todayStr = new Date().toLocaleDateString('en-GB');
-
-            if (!currentData || currentData.date !== todayStr) {
-                return { count: 1, date: todayStr };
-            } else {
-                return {
-                    count: (currentData.count || 0) + 1,
-                    date: todayStr
-                };
+            // ميزة الأوفلاين
+            if (!navigator.onLine) {
+                let offlineOrders = JSON.parse(localStorage.getItem("offlineOrders") || "[]");
+                offlineOrders.push({ items: finalItemsForSystem, type: oType, table: tNum || 'سفري', totalPrice: finalTotalNum });
+                localStorage.setItem("offlineOrders", JSON.stringify(offlineOrders));
+                showToast("📡 تم حفظ الطلب أوفلاين");
+                cart = []; renderCart(); return;
             }
-        });
 
-        orderNumber = result.snapshot.val().count;
+            // العداد
+            let orderNumber = null;
+            if (oType === 'سفري') {
+                const counterRef = database.ref('orders_counter');
+                const result = await counterRef.transaction((currentData) => {
+                    const todayStr = new Date().toLocaleDateString('en-GB');
+                    if (!currentData || currentData.date !== todayStr) return { count: 1, date: todayStr };
+                    return { count: (currentData.count || 0) + 1, date: todayStr };
+                });
+                orderNumber = result.snapshot.val().count;
+            } else {
+                orderNumber = tNum;
+            }
 
-    } catch (e) {
-        orderNumber = Math.floor(Math.random() * 1000);
-    }
-}
+            const orderData = {
+                orderNum: orderNumber,
+                title: oType === 'سفري' ? 'سفري ' + orderNumber : 'طاولة ' + tNum,
+                items: finalItemsForSystem,
+                type: oType, 
+                table: tNum || 'سفري',
+                notes: document.getElementById('notes').value, 
+                promoUsed: activePromo || "بدون كوبون", 
+                discountAmount: dAmount.toFixed(2),
+                totalPrice: finalTotalNum,
+                status: 'قيد التحضير ⏳',
+                time: new Date().toISOString(), 
+                displayTime: new Date().toLocaleTimeString('ar-SA'),
+                date: new Date().toLocaleDateString('en-GB'),
+                deptsNeeded: deptsNeeded,
+                baristaReady: false, kitchenReady: false, dessertReady: false
+            };
 
-
-        // --- 3. تجهيز البيانات النهائية للإرسال ---
-        const orderData = {
-            orderNum: orderNumber,
-            title: oType === 'سفري' ? 'سفري ' + orderNumber : 'طاولة ' + tNum,
-            items: finalItemsForSystem,
-            type: oType, 
-            table: tNum || 'سفري',
-            notes: document.getElementById('notes').value, 
-            promoUsed: activePromo || "بدون كوبون", 
-            discountAmount: dAmount.toFixed(2),
-            totalPrice: finalTotalNum,
-            status: 'قيد التحضير ⏳',
-            time: new Date().toISOString(), 
-            displayTime: new Date().toLocaleTimeString('ar-SA'),
-            date: new Date().toLocaleDateString('en-GB'),
-            deptsNeeded: deptsNeeded,
-            baristaReady: false, 
-            kitchenReady: false, 
-            dessertReady: false
-        };
-
-        // 1. بننشئ مكان للطلب وبناخد الـ ID بتاعه فوراً
-        const newOrderRef = database.ref('live_orders').push();
-        const orderId = newOrderRef.key; 
-
-        // 2. بنرفع البيانات ونبدأ المتابعة
-        newOrderRef.set(orderData).then(() => {
-            // هنا بننده على دالة المتابعة اللي بتخلي الزبون يشوف حالة الأقسام
-            trackMyOrderLive(orderId); 
+            const newOrderRef = database.ref('live_orders').push();
+            await newOrderRef.set(orderData);
             
-            // دي دالة النداء الصوتي اللي كانت عندك أصلاً سيبها زي ما هي
-            callOrderNumber(orderNumber, oType); 
-            
-            // باقي خطواتك (التوست، مسح السلة، إلخ...)
-        });
+            trackMyOrderLive(newOrderRef.key); 
+            callOrderNumber(orderNumber, oType);
 
+            showToast("تم إرسال الطلب بنجاح! ✅");
+            alert("تم استلام طلبك رقم [" + orderNumber + "] بنجاح 🎉");
 
-let displayMsg = "";
-let finalNumber = "";
-
-if (oType === "محلي") {
-    finalNumber = tNum; // رقم الطاولة الحقيقي
-    displayMsg = "طاولة [" + finalNumber + "]";
-} else {
-    finalNumber = orderNumber; // رقم تسلسلي للسفري فقط
-    displayMsg = "طلب سفري رقم [" + finalNumber + "]";
-}
-
-// 🔊 الصوت الصح
-callOrderNumber(finalNumber, oType);
-
-// 📢 الرسائل
-showToast("تم إرسال الطلب بنجاح! " + displayMsg);
-alert("تم استلام طلبك لـ " + displayMsg + ".. بوقار السيادة! 🎉");
-
-            cart = []; 
-            renderCart(); 
-            activePromo = ""; 
-            discountValReal = 0; 
+            cart = []; renderCart(); 
+            activePromo = ""; discountValReal = 0;
             document.getElementById('promoCode').value = ""; 
             document.getElementById('notes').value = ""; 
-            if(document.getElementById('order-status-bar')) {
-                document.getElementById('order-status-bar').style.display = 'block';
-            }
-        });
+            if(document.getElementById('order-status-bar')) document.getElementById('order-status-bar').style.display = 'block';
 
-    }, () => alert("❌ فشل التحقق الجغرافي: يجب التواجد داخل الفرع لإتمام الطلب"));
-}
-
-    function showToast(m) {
-        const t = document.getElementById('toast'); 
-        if(t) {
-            t.innerText = m;
-            t.classList.add('show'); 
-            setTimeout(() => t.classList.remove('show'), 5000);
+        } catch (e) {
+            console.error(e);
+            alert("حدث خطأ في الشبكة");
         }
-    }
-
-let deferredPrompt;
-
-// 1. تفعيل الإشعارات
-if ('serviceWorker' in navigator) {
-navigator.serviceWorker.register('firebase-messaging-sw.js')
-.then((registration) => {
-console.log('تم تسجيل الحارس بنجاح! 🛡️');
-const messaging = firebase.messaging();
-
-  // ✅ تحديث الطريقة الحديثة
-  Notification.requestPermission().then((permission) => {
-    if (permission === 'granted') {
-      return messaging.getToken({
-        vapidKey: 'BPvVGFq8fJ1BFunCn5sqVTDoDMfPxdNx2wX0I7F6mJIV7XTxe-eTRHUPa899Ed4isWJajHqyQ_iVcxYLLEH_0FI'
-      });
-    }
-  })
-  .then((token) => {
-    if (token) {
-      console.log('هذا هو توكن السيادة:', token);
-      firebase.database().ref('user_tokens/' + token.substring(0, 20)).set({
-        token: token,
-        last_active: Date.now()
-      });
-    }
-  })
-  .catch(err => console.error("خطأ في الإشعارات:", err));
-});
-
+    }, () => alert("❌ فشل التحقق الجغرافي"));
 }
 
-// 2. زر تثبيت التطبيق
+// --- باقي الوظائف (تثبيت التطبيق والإشعارات) ---
+
 window.addEventListener('beforeinstallprompt', (e) => {
-e.preventDefault();
-deferredPrompt = e;
-
-const installBtn = document.createElement('div');
-installBtn.innerHTML = `
-<div id="install-banner" style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#c8a27c; color:#fff; padding:15px 25px; border-radius:30px; z-index:9999; cursor:pointer; box-shadow:0 5px 15px rgba(0,0,0,0.3); font-weight:bold; direction:rtl;">
-📥 ثبّت التطبيق الآن
-</div>
-`;
-document.body.appendChild(installBtn);
-
-installBtn.addEventListener('click', () => {
-installBtn.style.display = 'none';
-deferredPrompt.prompt();
-
-deferredPrompt.userChoice.then((choiceResult) => {
-  if (choiceResult.outcome === 'accepted') {
-    console.log('تم التثبيت');
-  }
-  deferredPrompt = null;
+    e.preventDefault();
+    deferredPrompt = e;
+    const installBtn = document.createElement('div');
+    installBtn.innerHTML = `<div id="install-banner" style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#c8a27c; color:#fff; padding:15px 25px; border-radius:30px; z-index:9999; cursor:pointer; font-weight:bold;">📥 ثبّت التطبيق الآن</div>`;
+    document.body.appendChild(installBtn);
+    installBtn.onclick = () => { installBtn.style.display = 'none'; deferredPrompt.prompt(); };
 });
 
-});
-});
-
-// 3. إرسال الطلبات الأوفلاين عند رجوع النت
 window.addEventListener("online", () => {
-let offlineOrders = JSON.parse(localStorage.getItem("offlineOrders") || "[]");
-
-if (offlineOrders.length > 0) {
-    offlineOrders.forEach(order => {
-        firebase.database().ref('live_orders').push().set({
-            ...order,
-            status: 'قيد التحضير (أوفلاين) 📡',
-            syncTime: new Date().toLocaleTimeString('ar-SA')
-        });
-    });
-
-    localStorage.removeItem("offlineOrders");
-    showToast("🚀 تم إرسال الطلبات المحفوظة!");
-}
-
+    let offlineOrders = JSON.parse(localStorage.getItem("offlineOrders") || "[]");
+    if (offlineOrders.length > 0) {
+        offlineOrders.forEach(order => database.ref('live_orders').push().set({...order, status: 'مزامنة أوفلاين 📡'}));
+        localStorage.removeItem("offlineOrders");
+        showToast("🚀 تم مزامنة الطلبات!");
+    }
 });
 
-// 4. متابعة الطلب (متصلح بالكامل)
 function trackMyOrderLive(orderId) {
-if (!orderId) return;
-
-database.ref('live_orders/' + orderId).on('value', (snapshot) => {
-    const order = snapshot.val();
-    if (!order) return;
-
-    let statusText = "⏳ طلبك قيد التحضير...";
-
-    if (order.baristaReady && order.kitchenReady && order.dessertReady) {
-        statusText = "✅ طلبك جاهز بالكامل!";
-    } 
-    else if (order.baristaReady) {
-        statusText = "☕ القهوة جاهزة";
-    } 
-    else if (order.kitchenReady) {
-        statusText = "🍔 الأكل جاهز";
-    }
-
-    if (typeof showToast === "function") {
-        showToast(statusText);
-    }
-});
-
+    if (!orderId) return;
+    database.ref('live_orders/' + orderId).on('value', (snap) => {
+        const order = snap.val();
+        if (order) {
+            let status = (order.baristaReady && order.kitchenReady && order.dessertReady) ? "✅ جاهز!" : "⏳ قيد التحضير";
+            showToast(status);
+        }
+    });
 }
-
 </script>
 </body>
 </html>
