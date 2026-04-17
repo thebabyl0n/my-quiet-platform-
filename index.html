@@ -157,11 +157,32 @@
 
         .discount-row { display: flex; justify-content: space-between; color: #ff4d4d; font-weight: bold; margin-bottom: 10px; font-size: 14px; }
 
-        .send-btn { 
-            background: var(--green); color: white; border: none; 
-            width: 100%; padding: 18px; border-radius: 20px; 
-            font-size: 18px; font-weight: bold; box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
-        }
+.send-btn { 
+    background: var(--green); 
+    color: white; 
+    border: none; 
+    width: 100%; 
+    padding: 18px; 
+    border-radius: 20px; 
+    font-size: 18px; 
+    font-weight: bold; 
+    box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
+    
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.send-btn:active {
+    transform: scale(0.92); /* يصغر لما يتداس */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4); /* يقل العمق */
+}
+
+.send-btn:hover {
+    transform: scale(1.03); /* يكبر بسيط */
+}
+.send-btn:active {
+    transform: scale(0.9);
+    filter: brightness(0.85);
+}
         
     </style>
 </head>
