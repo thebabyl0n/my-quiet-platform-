@@ -653,7 +653,7 @@ async function submitOrder() {
         // --- 2. ماكينة الأرقام (العداد اليومي الذكي) ---
         let orderNumber = 1;
         try {
-            const snapshot = await counterRef.transaction(currentData => {
+                const counterRef = database.ref('orders_counter');
                 const todayStr = new Date().toLocaleDateString('en-GB');
                 if (!currentData || currentData.date !== todayStr) {
                     return { count: 1, date: todayStr };
