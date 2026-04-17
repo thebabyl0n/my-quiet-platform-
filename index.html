@@ -854,36 +854,74 @@ if (offlineOrders.length > 0) {
 }
 });
 
+// ⚡️ أمر القائد محمود: نظام التتبع الملياري (صوت وصورة ونخاع)
 function trackMyOrderLive(orderId) {
-if (!orderId) return;
+    if (!orderId) return;
 
-database.ref('live_orders/' + orderId).on('value', (snapshot) => {
-    const order = snapshot.val();
-    if (!order) return;
+    // 🚩 منع تكرار الصوت لضمان وقار السيادة
+    window.alreadyAnnounced = false;
 
-    let statusText = "⏳ طلبك قيد التحضير...";
+    database.ref('live_orders/' + orderId).on('value', (snapshot) => {
+        const order = snapshot.val();
+        if (!order) return;
 
-    if (order.baristaReady && order.kitchenReady && order.dessertReady) {
-        statusText = "✅ طلبك جاهز بالكامل!";
-    } 
-    else if (order.baristaReady) {
-        statusText = "☕ القهوة جاهزة";
-    } 
-    else if (order.kitchenReady) {
-        statusText = "🍔 الأكل جاهز";
-    }
-    else if (order.dessertReady) {
-        statusText = "🍰 حلا جاهزة";
-    }
+        // 🏗️ تعريف مكان عرض النص (التأكد من وجود العنصر)
+        const statusElement = document.getElementById('order-status-text');
+        let statusText = "⏳ طلبك قيد التحضير...";
+        
+        // 1. تحديث صور الأقسام (الرنين البصري)
+        if (order.baristaReady && document.getElementById('step-barista')) {
+            document.getElementById('step-barista').style.opacity = "1";
+        }
+        if (order.kitchenReady && document.getElementById('step-kitchen')) {
+            document.getElementById('step-kitchen').style.opacity = "1";
+        }
+        if (order.dessertReady && document.getElementById('step-dessert')) {
+            document.getElementById('step-dessert').style.opacity = "1";
+        }
 
-    if (typeof showToast === "function") {
-        showToast(statusText);
-    }
-});
+        // 2. فحص الحالة الشاملة للرزق (نظام المسح والتحديث)
+        if (order.status === "جاهز للاستلام ✅") {
+            statusText = "✅ طلبك جاهز بالكامل.. تفضل بالاستلام!";
+            
+            // 🗣️ نداء "دريم" بالصيغة اللي طلبها محمود (يا هلا بيك..)
+            if (!window.alreadyAnnounced) {
+                announceReady(order.orderNum || "");
+                window.alreadyAnnounced = true;
+            }
+        } 
+        else if (order.baristaReady) statusText = "☕ القهوة جاهزة وننتظر الباقي..";
+        else if (order.kitchenReady) statusText = "🍔 الأكل جاهز وننتظر الباقي..";
+        else if (order.dessertReady) statusText = "🍰 الحلا جاهزة وننتظر الباقي..";
+
+        // 3. عرض التحديث النهائي للزبون
+        if (statusElement) {
+            statusElement.innerHTML = statusText;
+        }
+
+        if (typeof showToast === "function") {
+            showToast(statusText);
+        }
+    });
 }
 
+// 🎤 حنجرة "دريم" الذهبية (الصيغة المعدلة بوقار السيادة)
+function announceReady(num) {
+    window.speechSynthesis.cancel();
+    const msg = new SpeechSynthesisUtterance();
+    
+    // 🇸🇦 نطق دريم الحجازي الفاخر
+    msg.text = `يا هلا بيك.. طلبك جاهز.. رقم الطلب ${num}`;
+    
+    msg.lang = 'ar-SA';
+    msg.pitch = 1.3; // رقة
+    msg.rate = 0.85; // وقار
+    msg.volume = 1;
+    
+    window.speechSynthesis.speak(msg);
+}
+
+// 🔒 قفلة "نخاع السيادة" النهائية
 </script>
 </body>
 </html>
-    
-    
