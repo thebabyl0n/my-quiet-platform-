@@ -651,24 +651,21 @@ async function submitOrder() {
         });
 
         // --- 2. ماكينة الأرقام (العداد اليومي الذكي) ---
-        let orderNumber = 0;
-        if (oType === 'سفري') {
-            try {
-                const snapshot = await counterRef.transaction(currentData => {
-                    const todayStr = new Date().toLocaleDateString('en-GB');
-                    if (!currentData || currentData.date !== todayStr) {
-                        return { count: 1, date: todayStr };
-                    } else {
-                        return { count: (currentData.count || 0) + 1, date: todayStr };
-                    }
-                });
-                orderNumber = snapshot.snapshot.val().count;
-            } catch (e) {
-                orderNumber = Math.floor(Math.random() * 100);
-            }
-        } else {
-            orderNumber = tNum; // المحلي بياخد رقم الطاولة
+        let orderNumber = 1;
+        try {
+            const snapshot = await counterRef.transaction(currentData => {
+                const todayStr = new Date().toLocaleDateString('en-GB');
+                if (!currentData || currentData.date !== todayStr) {
+                    return { count: 1, date: todayStr };
+                } else {
+                    return { count: (currentData.count || 0) + 1, date: todayStr };
+                }
+            });
+            orderNumber = snapshot.snapshot.val().count;
+        } catch (e) {
+           orderNumber = "Err";
         }
+
 
         // --- 3. تجهيز البيانات النهائية للإرسال ---
         const orderData = {
@@ -694,7 +691,7 @@ async function submitOrder() {
         database.ref('live_orders').push().set(orderData).then(() => {
             callOrderNumber(orderNumber, oType); 
 
-            let displayMsg = (oType === "محلي") ? "طاولة [" + tNum + "]" : "رقم [" + orderNumber + "]";
+          let displayMsg = (oType === "محلي") ? "طاولة [" + tNum + "]" : "رقم [" + orderNumber + "]";
             showToast("تم إرسال الطلب بنجاح! " + displayMsg);
             alert("تم استلام طلبك لـ " + displayMsg + ".. بوقار السيادة! 🎉");
 
