@@ -537,7 +537,7 @@ function addNewItem() {
     });
 }
 
-// 1. نظام عرض الأقسام الحالية مع زرار الحذف
+// 1. نظام عرض الأقسام الحالية مع زرار الحذف (زي ما هو)
 database.ref('sub_categories').on('value', snap => {
     let html = "";
     snap.forEach(child => {
@@ -549,7 +549,7 @@ database.ref('sub_categories').on('value', snap => {
     document.getElementById('deleteSubList').innerHTML = html || '<p style="font-size:12px; color:#666;">لا توجد أقسام</p>';
 });
 
-// 2. نظام عرض الأصناف الحالية مع زرار الحذف
+// 2. نظام عرض الأصناف الحالية مع زرار الحذف (زي ما هو)
 database.ref('menu_items').on('value', snap => {
     let html = "";
     snap.forEach(child => {
@@ -561,16 +561,25 @@ database.ref('menu_items').on('value', snap => {
     document.getElementById('deleteItemList').innerHTML = html || '<p style="font-size:12px; color:#666;">لا توجد أصناف</p>';
 });
 
-// 3. دالة حذف القسم الفرعي
+// 3. التعديل اللي طلبته: حذف القسم "وكل اللي جواه"
 function deleteSub(id) {
-    if(confirm("⚠️ يا إمبراطور، حذف القسم هيمسح اسمه من المنيو عند الزبائن، متأكد؟")) {
+    if(confirm("⚠️ يا إمبراطور، حذف القسم هيمسح كل الأصناف اللي جواه نهائياً، متأكد؟")) {
+        // بيمسح الأصناف اللي تابعة للقسم ده الأول
+        database.ref('menu_items').orderByChild('sub_id').equalTo(id).once('value', snap => {
+            if (snap.exists()) {
+                snap.forEach(child => {
+                    child.ref.remove();
+                });
+            }
+        });
+        // بعدين يمسح القسم نفسه
         database.ref('sub_categories/' + id).remove().then(() => {
-            alert("تم نسف القسم بنجاح! 🗑️");
+            alert("تم نسف القسم وأصنافه بالكامل! 🗑️");
         });
     }
 }
 
-// 4. دالة حذف الصنف
+// 4. دالة حذف الصنف (شغالة لوحدها زي ما هي)
 function deleteItem(id) {
     if(confirm("⚠️ هل أنت متأكد من حذف هذا الصنف نهائياً؟")) {
         database.ref('menu_items/' + id).remove().then(() => {
@@ -581,6 +590,38 @@ function deleteItem(id) {
 
 loadCategories();
 
+
+// دالة تصفير النظام وترحيل الأرشيف يومياً
+function resetSystemDaily() {
+    const today = new Date().toLocaleDateString('en-GB');
+
+    database.ref('system_control/lastResetDate').once('value', snapshot => {
+        const lastReset = snapshot.val();
+
+        if (lastReset !== today) {
+            // 1. ترحيل مبيعات اليوم للأرشيف
+            database.ref('live_orders').once('value', snap => {
+                if (snap.exists()) {
+                    database.ref('archive/daily/' + (lastReset || 'initial')).set(snap.val());
+                }
+            });
+
+            // 2. تصفير العداد اليومي للأرقام
+            database.ref('order_management/daily_counter').set({ count: 0, date: today });
+
+            // 3. مسح الطلبات الحالية (تصفير الطاولات والسفري)
+            database.ref('live_orders').remove();
+
+            // 4. تحديث تاريخ التصفير
+            database.ref('system_control/lastResetDate').set(today);
+            
+            console.log("تم تصفير اليوم بنجاح يا حودة!");
+        }
+    });
+}
+
+// تشغيل الفحص أول ما الصفحة تفتح
+resetSystemDaily();
 
 </script>
 </body>
