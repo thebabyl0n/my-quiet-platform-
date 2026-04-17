@@ -143,11 +143,14 @@
     <h1 style="text-align:center; color:var(--gold);">👑 لوحة تحكم الإمبراطورية | الرقابة الإدارية</h1>
     
     <div class="grid">
-        <div class="card">
-            <h3>💰 مبيعات اليوم</h3>
-            <span id="dailySales">0.00</span>
-            <button class="btn btn-clear" onclick="clearArchive()">🗑️ تصفير وإغلاق الوردية</button>
-        </div>
+   <div class="card">
+    <h3>💰 مبيعات اليوم</h3>
+    <span id="dailySales">0.00</span>
+    <div style="display:flex; gap:10px; flex-direction:column;">
+        <button class="btn-archive" onclick="showDailyInvoice()" style="background: linear-gradient(135deg, #3b82f6, #2563eb); margin-top:10px;">📋 فاتورة تقفيل الوردية</button>
+        <button class="btn btn-clear" onclick="clearArchive()">🗑️ تصفير وإغلاق الوردية</button>
+    </div>
+</div>
         <div class="card"><h3>⏳ طلبات نشطة</h3><span id="activeCount">0</span></div>
         <div class="card"><h3>📦 طلبات مؤرشفة</h3><span id="doneCount">0</span></div>
     </div>
@@ -617,6 +620,60 @@ function resetSystemDaily() {
             
             console.log("تم تصفير اليوم بنجاح يا حودة!");
         }
+    });
+}
+
+function showDailyInvoice() {
+    database.ref('live_orders').once('value', snapshot => {
+        let total = 0;
+        let itemsSummary = {};
+        let ordersCount = 0;
+
+        snapshot.forEach(child => {
+            const o = child.val();
+            // بنحسب بس الطلبات اللي تم ترحيلها للأرشيف (يعني اللي خلصت واتحاسبت)
+            if (o.status === "تم الترحيل للأرشيف 📦") {
+                ordersCount++;
+                total += parseFloat(o.totalPrice) || 0;
+                if (o.items) {
+                    o.items.forEach(i => {
+                        let name = i.ar || i.name;
+                        itemsSummary[name] = (itemsSummary[name] || 0) + 1;
+                    });
+                }
+            }
+        });
+
+        if (ordersCount === 0) {
+            alert("مفيش طلبات مؤرشفة لسه عشان نعمل فاتورة! ⚠️");
+            return;
+        }
+
+        // بناء شكل الفاتورة المجمعة
+        let itemsHtml = Object.entries(itemsSummary).map(([name, qty]) => 
+            `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #ccc; padding:5px 0;">
+                <span>${name}</span>
+                <span>${qty} حبة</span>
+            </div>`
+        ).join('');
+
+        const invoiceWindow = window.open('', '_blank', 'width=400,height=600');
+        invoiceWindow.document.write(`
+            <div dir="rtl" style="font-family:Arial; padding:20px; color:#333;">
+                <h2 style="text-align:center;">فاتورة تقفيل الوردية 📝</h2>
+                <p style="text-align:center;">التاريخ: ${new Date().toLocaleDateString()}</p>
+                <hr>
+                <div style="margin:20px 0;">
+                    <strong>عدد الطلبات:</strong> ${ordersCount} طلبات
+                </div>
+                <h3>تفاصيل الأصناف:</h3>
+                ${itemsHtml}
+                <hr>
+                <h2 style="text-align:center; background:#f0f0f0; padding:10px;">الإجمالي: ${total.toFixed(2)} ريال</h2>
+                <p style="text-align:center; font-size:12px; margin-top:30px;">طُبعت بواسطة نظام الإمبراطور 👑</p>
+                <button onclick="window.print()" style="width:100%; padding:10px; background:#000; color:#fff; border:none; border-radius:5px; cursor:pointer;">طباعة الفاتورة 🖨️</button>
+            </div>
+        `);
     });
 }
 
