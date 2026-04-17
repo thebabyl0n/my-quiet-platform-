@@ -232,6 +232,11 @@
         <button class="send-btn" onclick="submitOrder()">إرسال الطلب ✅</button>
     </div>
 </div>
+    <div id="success-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; text-align: center;">
+    <img src="https://firebasestorage.googleapis.com/v0/b/alphashadow-23689.firebaseapp.com/o/Final_alpha_shadow_logo.png?alt=media&token=d120a1eb-2d4e-4e4c-9f60-5f284f932f91" style="width: 150px; margin-bottom: 20px; filter: drop-shadow(0 0 10px #c8a27c); animation: pulse 2s infinite;">
+        <h2 style="color: #c8a27c; font-family: sans-serif;">تم استلام طلبك بنجاح!</h2>
+        <p style="color: #94a3b8; font-family: sans-serif;">جاري تحضير طلبك بوقار السيادة..</p>
+    </div>
 
     <script>
     const firebaseConfig = {
@@ -652,6 +657,7 @@ function callOrderNumber(num, type) {
 
 async function submitOrder() {
     if(!cart.length) return alert("السلة فارغة");
+    document.getElementById('success-overlay').style.display = 'flex';
     
     validateGeo(async () => {
         // --- 1. حساباتك الدقيقة (سحبناها من كودك الأصلي) ---
@@ -798,8 +804,6 @@ alert("تم استلام طلبك لـ " + displayMsg + ".. بوقار السي�
             setTimeout(() => t.classList.remove('show'), 5000);
         }
     }
-    </script>
-<script>
 
 let deferredPrompt;
 
