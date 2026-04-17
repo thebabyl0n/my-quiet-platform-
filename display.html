@@ -119,7 +119,7 @@ const btn = isCashier
                 grid.innerHTML += `
                     <div class="order-card">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span class="table-no">طاولة ${order.table}</span>
+                            <span class="table-no">${order.type === 'سفري' ? '🚗 ' + (order.orderNum || '---') : '☕ ' + order.table}</span>
                             <span style="color:var(--gold); font-size:12px;">#${orderId.slice(-4)}</span>
                         </div>
                         ${statusBar}
@@ -216,4 +216,3 @@ function requestCancel(id) {
 </script>
 </body>
 </html>
-
