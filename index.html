@@ -871,8 +871,11 @@ function trackMyOrderLive(orderId) {
         const dessertDone = !needed.includes('dessert') || order.dessertReady;
 
         // ✅ لو كل المطلوب جاهز
-        if (baristaDone && kitchenDone && dessertDone) {
-            statusText = "✅ تم تجهيز الطلب بالكامل!";
+if (baristaDone && kitchenDone && dessertDone && order.status !== "تم التجهيز ✅") {
+    await database.ref('live_orders/' + orderId).update({
+        status: "تم التجهيز ✅"
+    });
+}
 
             // 🔥 تحديث الحالة في الداتابيس
             await database.ref('live_orders/' + orderId).update({
