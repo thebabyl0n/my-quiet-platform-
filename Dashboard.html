@@ -419,7 +419,10 @@ Promise.all([
     generateReports(allOrders);
 });
 
-    function archiveOrder(id) {
+}); // ✅ اقفل هنا listener بتاع live_orders
+
+// 👇 الدوال تبدأ هنا برا
+function archiveOrder(id) {
         if(!confirm("ترحيل الطلب للأرشيف النهائي؟")) return;
         database.ref('live_orders/' + id).update({ status: "تم الترحيل للأرشيف 📦" });
     }
