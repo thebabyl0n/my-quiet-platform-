@@ -877,11 +877,6 @@ if (baristaDone && kitchenDone && dessertDone && order.status !== "تم التج
     });
 }
 
-            // 🔥 تحديث الحالة في الداتابيس
-            await database.ref('live_orders/' + orderId).update({
-                status: "تم التجهيز ✅"
-            });
-        } 
         else if (order.baristaReady) {
             statusText = "☕ القهوة جاهزة";
         } 
