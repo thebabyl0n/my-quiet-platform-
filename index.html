@@ -651,29 +651,31 @@ async function submitOrder() {
         });
 
 // --- 2. ماكينة الأرقام (العداد اليومي الذكي) ---
-let orderNumber = 1;
+let orderNumber = null;
 
-try {
-    const counterRef = database.ref('orders_counter');
+// 🔥 العداد للسفري فقط
+if (oType === 'سفري') {
+    try {
+        const counterRef = database.ref('orders_counter');
 
-    const result = await counterRef.transaction((currentData) => {
-        const todayStr = new Date().toLocaleDateString('en-GB');
+        const result = await counterRef.transaction((currentData) => {
+            const todayStr = new Date().toLocaleDateString('en-GB');
 
-        if (!currentData || currentData.date !== todayStr) {
-            return { count: 1, date: todayStr };
-        } else {
-            return {
-                count: (currentData.count || 0) + 1,
-                date: todayStr
-            };
-        }
-    });
+            if (!currentData || currentData.date !== todayStr) {
+                return { count: 1, date: todayStr };
+            } else {
+                return {
+                    count: (currentData.count || 0) + 1,
+                    date: todayStr
+                };
+            }
+        });
 
-    orderNumber = result.snapshot.val().count;
+        orderNumber = result.snapshot.val().count;
 
-} catch (e) {
-    console.error("Counter Error:", e);
-    orderNumber = Math.floor(Math.random() * 1000); // fallback احتياطي
+    } catch (e) {
+        orderNumber = Math.floor(Math.random() * 1000);
+    }
 }
 
 
@@ -702,13 +704,20 @@ try {
             callOrderNumber(orderNumber, oType); 
 
 let displayMsg = "";
+let finalNumber = "";
 
 if (oType === "محلي") {
-    displayMsg = "طاولة [" + tNum + "]";
+    finalNumber = tNum; // رقم الطاولة الحقيقي
+    displayMsg = "طاولة [" + finalNumber + "]";
 } else {
-    displayMsg = "طلب سفري رقم [" + orderNumber + "]";
+    finalNumber = orderNumber; // رقم تسلسلي للسفري فقط
+    displayMsg = "طلب سفري رقم [" + finalNumber + "]";
 }
 
+// 🔊 الصوت الصح
+callOrderNumber(finalNumber, oType);
+
+// 📢 الرسائل
 showToast("تم إرسال الطلب بنجاح! " + displayMsg);
 alert("تم استلام طلبك لـ " + displayMsg + ".. بوقار السيادة! 🎉");
 
