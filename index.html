@@ -755,8 +755,6 @@ async function submitOrder() {
             displayMsg = "طلب سفري رقم [" + finalNumber + "]";
         }
 
-        // ✅ صوت مرة واحدة فقط
-        callOrderNumber(finalNumber, oType);
 
         showToast("تم إرسال الطلب بنجاح! " + displayMsg);
         alert("تم استلام طلبك لـ " + displayMsg + ".. بوقار السيادة! 🎉");
@@ -873,6 +871,16 @@ function trackMyOrderLive(orderId) {
         // ✅ لو كل المطلوب جاهز
 if (baristaDone && kitchenDone && dessertDone) {
     statusText = "✅ تم تجهيز الطلب بالكامل!";
+
+    // 🔥 تشغيل الصوت هنا فقط
+    if (!order.playedReadySound) {
+        callOrderNumber(order.orderNum || order.table, order.type);
+
+        // علشان الصوت مايتكررش
+        database.ref('live_orders/' + orderId).update({
+            playedReadySound: true
+        });
+    }
 }
 
         else if (order.baristaReady) {
