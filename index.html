@@ -818,6 +818,49 @@ window.addEventListener('beforeinstallprompt', (e) => {
     });
   });
 });
+
+<script>
+// الجاسوس الملكي: بيبعت الطلبات أول ما النت يرجع
+window.addEventListener("online", () => {
+    let offlineOrders = JSON.parse(localStorage.getItem("offlineOrders") || "[]");
+
+    if (offlineOrders.length > 0) {
+        offlineOrders.forEach(order => {
+            // بنبعت كل طلب متخزن لقاعدة البيانات
+            firebase.database().ref('live_orders').push().set({
+                ...order,
+                status: 'قيد التحضير (أوفلاين) 📡',
+                syncTime: new Date().toLocaleTimeString('ar-SA')
+            });
+        });
+
+        // نمسح المخزن بعد ما بعتنا كله عشان ميتكررش
+        localStorage.removeItem("offlineOrders");
+        showToast("🚀 أبشر يا حودة.. الطلبات المحفوظة وصلت للمطعم!");
+    }
+});
+// شرح وظيفة المتابعة الحية (الجاسوس الملكي)
+function trackMyOrderLive(orderId) {
+    if (!orderId) return;
+    database.ref('live_orders/' + orderId).on('value', (snapshot) => {
+        const order = snapshot.val();
+        if (!order) return;
+
+        let statusText = "⏳ طلبك قيد التحضير...";
+        if (order.baristaReady && order.kitchenReady && order.dessertReady) {
+            statusText = "✅ طلبك جاهز بالكامل! شرفنا بالاستلام";
+        } else if (order.baristaReady) {
+            statusText = "☕ القهوة جاهزة.. وفي انتظار الباقي";
+        } else if (order.kitchenReady) {
+            statusText = "🍔 الوجبة جاهزة.. وفي انتظار المشروبات";
+        }
+
+        if (typeof showToast === "function") {
+            showToast(statusText);
+        }
+    });
+}
+
 </script>
 </body>
 </html>
