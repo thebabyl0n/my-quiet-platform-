@@ -7,6 +7,7 @@
     <title>Alpha Shadow | النظام الملكي</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
     <style>
         /* الديزاين الفخم اللي طلبته مع الحفاظ على هوية الماستر */
         :root { 
@@ -231,8 +232,13 @@
         <button class="send-btn" onclick="submitOrder()">إرسال الطلب ✅</button>
     </div>
 </div>
+    </div> <div id="success-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; text-align: center;">
+    <img src="https://firebasestorage.googleapis.com/v0/b/alphashadow-23689.firebaseapp.com/o/Final_alpha_shadow_logo.png?alt=media&token=d120a1eb-2d4e-4e4c-9f60-5f284f932f91" style="width: 150px; margin-bottom: 20px; filter: drop-shadow(0 0 10px #c8a27c); animation: pulse 2s infinite;">
+        <h2 style="color: #c8a27c; font-family: sans-serif;">تم استلام طلبك بنجاح!</h2>
+        <p style="color: #94a3b8; font-family: sans-serif;">جاري تحضير طلبك بوقار السيادة..</p>
+    </div>
 
-<script>
+    <script>
     const firebaseConfig = {
         apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
         authDomain: "alphashadow-23689.firebaseapp.com",
@@ -651,6 +657,7 @@ function callOrderNumber(num, type) {
 
 async function submitOrder() {
     if(!cart.length) return alert("السلة فارغة");
+    document.getElementById('success-overlay').style.display = 'flex';
     
     validateGeo(async () => {
         // --- 1. حساباتك الدقيقة (سحبناها من كودك الأصلي) ---
@@ -670,6 +677,26 @@ async function submitOrder() {
                 dept: item.dept
             };
         });
+                // تجهيز بيانات الطلب المبدئية للفحص
+        const orderPreview = {
+            items: finalItemsForSystem,
+            type: oType,
+            table: tNum || 'سفري',
+            totalPrice: finalTotalNum,
+            time: new Date().toISOString()
+        };
+
+        // --- ⚡ الكود السحري: حفظ الطلب لو مفيش نت ---
+        if (!navigator.onLine) {
+            let offlineOrders = JSON.parse(localStorage.getItem("offlineOrders") || "[]");
+            offlineOrders.push(orderPreview);
+            localStorage.setItem("offlineOrders", JSON.stringify(offlineOrders));
+            showToast("📡 تم حفظ الطلب.. سيُرسل تلقائياً عند توفر الإنترنت");
+            cart = []; 
+            renderCart();
+            return; // وقف العملية هنا عشان ميبعتش لفايربيز والنت مقطوع
+        }
+        // ------------------------------------------
 
 // --- 2. ماكينة الأرقام (العداد اليومي الذكي) ---
 let orderNumber = null;
@@ -721,8 +748,21 @@ if (oType === 'سفري') {
             dessertReady: false
         };
 
-        database.ref('live_orders').push().set(orderData).then(() => {
+        // 1. بننشئ مكان للطلب وبناخد الـ ID بتاعه فوراً
+        const newOrderRef = database.ref('live_orders').push();
+        const orderId = newOrderRef.key; 
+
+        // 2. بنرفع البيانات ونبدأ المتابعة
+        newOrderRef.set(orderData).then(() => {
+            // هنا بننده على دالة المتابعة اللي بتخلي الزبون يشوف حالة الأقسام
+            trackMyOrderLive(orderId); 
+            
+            // دي دالة النداء الصوتي اللي كانت عندك أصلاً سيبها زي ما هي
             callOrderNumber(orderNumber, oType); 
+            
+            // باقي خطواتك (التوست، مسح السلة، إلخ...)
+        });
+
 
 let displayMsg = "";
 let finalNumber = "";
@@ -857,14 +897,9 @@ function trackMyOrderLive(orderId) {
 
         if (typeof showToast === "function") {
             showToast(statusText);
-        }
+        });
     });
 }
-
 </script>
 </body>
 </html>
-    
-    
-    
-
