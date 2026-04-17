@@ -695,9 +695,12 @@ async function submitOrder() {
             // النداء الصوتي الفوري (الوقور)
             callOrderNumber(orderNumber, oType); 
 
-            // التنبيهات المرئية
-            showToast("تم إرسال الطلب بنجاح! رقمك: " + orderNumber);
-            alert("طلبك رقم [" + orderNumber + "].. استلم بوقار السيادة! 🎉");
+            // تحديد الرسالة بناءً على نوع الطلب
+            let finalMsg = (orderType === "محلي") ? "طاولة [" + tableNumber + "]" : "رقم [" + orderNumber + "]";
+
+            // التنبيهات المرئية المعدلة
+            showToast("تم إرسال الطلب بنجاح! " + finalMsg);
+            alert("تم استلام طلبك لـ " + finalMsg + ".. بوقار السيادة! 🎉");
 
             // تنظيف السلة (الفنش الملكي)
             cart = []; 
@@ -779,4 +782,3 @@ window.addEventListener('beforeinstallprompt', (e) => {
 </script>
 </body>
 </html>
-    
