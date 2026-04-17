@@ -698,9 +698,11 @@ async function submitOrder() {
             // تحديد الرسالة بناءً على نوع الطلب
             let finalMsg = (orderType === "محلي") ? "طاولة [" + tableNumber + "]" : "رقم [" + orderNumber + "]";
 
-            // التنبيهات المرئية المعدلة
-            showToast("تم إرسال الطلب بنجاح! " + finalMsg);
-            alert("تم استلام طلبك لـ " + finalMsg + ".. بوقار السيادة! 🎉");
+            // فصل المحلي عن السفري في الرسالة
+            let resultNum = (tableNumber && tableNumber !== "") ? "طاولة [" + tableNumber + "]" : "رقم [" + orderNumber + "]";
+
+            showToast("تم إرسال الطلب بنجاح! " + resultNum);
+            alert("تم استلام طلبك لـ " + resultNum + ".. بوقار السيادة! 🎉");
 
             // تنظيف السلة (الفنش الملكي)
             cart = []; 
@@ -782,3 +784,4 @@ window.addEventListener('beforeinstallprompt', (e) => {
 </script>
 </body>
 </html>
+    
