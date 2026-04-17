@@ -854,31 +854,36 @@ if (offlineOrders.length > 0) {
 }
 });
 
-function markReady(id, orderData) { 
-    if (!orderData.time) return;
+function trackMyOrderLive(orderId) {
+if (!orderId) return;
 
-    const start = new Date(orderData.time);
-    const now = new Date();
-    const diff = Math.floor((now - start) / 60000);
-    const finalWait = diff > 0 ? diff : 0;
+database.ref('live_orders/' + orderId).on('value', (snapshot) => {
+    const order = snapshot.val();
+    if (!order) return;
 
-    const updates = {
-        [screenType + 'Ready']: true,
-        finalWait: finalWait
-    };
+    let statusText = "⏳ طلبك قيد التحضير...";
 
-    // 👇 تحقق لو كل الأقسام خلصت
-    const barista = screenType === 'barista' ? true : orderData.baristaReady;
-    const kitchen = screenType === 'kitchen' ? true : orderData.kitchenReady;
-    const dessert = screenType === 'dessert' ? true : orderData.dessertReady;
-
-    if (barista && kitchen && dessert) {
-        updates.status = "جاهز للاستلام ✅";
+    if (order.baristaReady && order.kitchenReady && order.dessertReady) {
+        statusText = "✅ طلبك جاهز بالكامل!";
+    } 
+    else if (order.baristaReady) {
+        statusText = "☕ القهوة جاهزة";
+    } 
+    else if (order.kitchenReady) {
+        statusText = "🍔 الأكل جاهز";
+    }
+    else if (order.dessertReady) {
+        statusText = "🍰 حلا جاهزة";
     }
 
-    database.ref('live_orders/' + id).update(updates);
+    if (typeof showToast === "function") {
+        showToast(statusText);
+    }
+});
 }
 
 </script>
 </body>
 </html>
+    
+    
