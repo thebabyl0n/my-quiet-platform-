@@ -701,9 +701,16 @@ try {
         database.ref('live_orders').push().set(orderData).then(() => {
             callOrderNumber(orderNumber, oType); 
 
-          let displayMsg = (oType === "محلي") ? "طاولة [" + tNum + "]" : "رقم [" + orderNumber + "]";
-            showToast("تم إرسال الطلب بنجاح! " + displayMsg);
-            alert("تم استلام طلبك لـ " + displayMsg + ".. بوقار السيادة! 🎉");
+let displayMsg = "";
+
+if (oType === "محلي") {
+    displayMsg = "طاولة [" + tNum + "]";
+} else {
+    displayMsg = "طلب سفري رقم [" + orderNumber + "]";
+}
+
+showToast("تم إرسال الطلب بنجاح! " + displayMsg);
+alert("تم استلام طلبك لـ " + displayMsg + ".. بوقار السيادة! 🎉");
 
             cart = []; 
             renderCart(); 
