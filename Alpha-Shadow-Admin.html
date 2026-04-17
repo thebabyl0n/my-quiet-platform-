@@ -76,12 +76,6 @@
         <label>الاسم (EN)</label><input type="text" id="itemEn">
         <label>السعر</label><input type="number" id="itemPrice">
         <label>رابط الصورة</label><input type="text" id="itemImg">
-        <label>القسم الرئيسي</label>
-        <select id="itemDept">
-            <option value="barista">☕ باريستا</option>
-            <option value="kitchen">🍔 مطبخ</option>
-            <option value="dessert">🍰 حلا</option>
-        </select>
         <label>القسم الفرعي</label>
         <select id="itemSubDept">
             <option value="none">بدون قسم فرعي</option>
@@ -178,20 +172,29 @@
         }
     }
 
-    function addItem() {
-        const ar = document.getElementById('itemAr').value.trim();
-        const price = document.getElementById('itemPrice').value;
-        const subId = document.getElementById('itemSubDept').value;
-        if(ar && price) {
+function addItem() {
+    const ar = document.getElementById('itemAr').value.trim();
+    const price = document.getElementById('itemPrice').value;
+    const subId = document.getElementById('itemSubDept').value;
+
+    if(ar && price && subId !== "none") {
+        database.ref('sub_categories/' + subId).once('value', (snap) => {
+            const subData = snap.val();
+            const autoDept = subData ? subData.parent : "kitchen"; 
+
             database.ref('menu_items').push({
-                ar, price: parseFloat(price), 
-                en: document.getElementById('itemEn').value || ar,
+                ar: ar,
+                price: parseFloat(price),
+                dept: autoDept, // الهوية اللي الشاشات بتدور عليها
+                sub_id: subId,
                 img: document.getElementById('itemImg').value,
-                dept: document.getElementById('itemDept').value,
-                sub_id: subId
-            }).then(() => alert("تمت الإضافة! ✅"));
-        }
+                en: document.getElementById('itemEn').value || ar
+            }).then(() => alert("تمت الإضافة والربط بالشاشات! ✅"));
+        });
+    } else {
+        alert("اختار القسم الفرعي وكمل البيانات يا بطل!");
     }
+}
 
     function loadData() {
         // تحميل الأقسام الفرعية في القائمة وفي اللوحة
@@ -244,7 +247,9 @@
             let h = ""; snap.forEach(c => { h += `<div class="item-row">${c.val().ar} <button class="btn-del" onclick="database.ref('extras_options/${c.key}').remove()">حذف</button></div>`; });
             document.getElementById('extrasList').innerHTML = h;
         });
-    }
+        
+     }
+
 
 function addExtra() {
     const ar = document.getElementById('extAr').value.trim();
@@ -286,4 +291,3 @@ function addExtra() {
 </script>
 </body>
 </html>
-
