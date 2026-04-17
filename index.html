@@ -650,21 +650,31 @@ async function submitOrder() {
             };
         });
 
-        // --- 2. ماكينة الأرقام (العداد اليومي الذكي) ---
-        let orderNumber = 1;
-        try {
-                const counterRef = database.ref('orders_counter');
-                const todayStr = new Date().toLocaleDateString('en-GB');
-                if (!currentData || currentData.date !== todayStr) {
-                    return { count: 1, date: todayStr };
-                } else {
-                    return { count: (currentData.count || 0) + 1, date: todayStr };
-                }
-            });
-            orderNumber = snapshot.snapshot.val().count;
-        } catch (e) {
-            orderNumber = orderNumber;
+// --- 2. ماكينة الأرقام (العداد اليومي الذكي) ---
+let orderNumber = 1;
+
+try {
+    const counterRef = database.ref('orders_counter');
+
+    const result = await counterRef.transaction((currentData) => {
+        const todayStr = new Date().toLocaleDateString('en-GB');
+
+        if (!currentData || currentData.date !== todayStr) {
+            return { count: 1, date: todayStr };
+        } else {
+            return {
+                count: (currentData.count || 0) + 1,
+                date: todayStr
+            };
         }
+    });
+
+    orderNumber = result.snapshot.val().count;
+
+} catch (e) {
+    console.error("Counter Error:", e);
+    orderNumber = Math.floor(Math.random() * 1000); // fallback احتياطي
+}
 
 
         // --- 3. تجهيز البيانات النهائية للإرسال ---
