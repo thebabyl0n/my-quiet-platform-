@@ -672,6 +672,7 @@ async function submitOrder() {
         // --- 3. تجهيز البيانات النهائية للإرسال ---
         const orderData = {
             orderNum: orderNumber, // الرقم اللي هيظهر للعميل والكاشير
+            title: oType === 'سفري' ? 'سفري ' + orderNumber : 'طاولة ' + tNum,
             items: finalItemsForSystem,
             type: oType, 
             table: tNum || 'سفري',
