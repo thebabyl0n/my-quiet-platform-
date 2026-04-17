@@ -602,23 +602,40 @@ function resetSystemDaily() {
         const lastReset = snapshot.val();
 
         if (lastReset !== today) {
-            // 1. ترحيل مبيعات اليوم للأرشيف
+
+            // ✅ 1. نقل الطلبات المؤرشفة فقط إلى أرشيف دائم
             database.ref('live_orders').once('value', snap => {
                 if (snap.exists()) {
-                    database.ref('archive/daily/' + (lastReset || 'initial')).set(snap.val());
+                    snap.forEach(child => {
+                        const order = child.val();
+
+                        if (order.status === "تم الترحيل للأرشيف 📦") {
+                            const archiveKey = database.ref('archive/all').push().key;
+
+                            database.ref('archive/all/' + archiveKey).set(order);
+
+                            // نحذفه من اللايف بعد النقل
+                            child.ref.remove();
+                        }
+                    });
                 }
             });
 
-            // 2. تصفير العداد اليومي للأرقام
-            database.ref('order_management/daily_counter').set({ count: 0, date: today });
+            // ✅ 2. تصفير الطلبات النشطة فقط (اختياري)
+            database.ref('live_orders').once('value', snap => {
+                snap.forEach(child => {
+                    const order = child.val();
+                    if (order.status !== "تم الترحيل للأرشيف 📦") {
+                        child.ref.remove();
+                    }
+                });
+            });
 
-            // 3. مسح الطلبات الحالية (تصفير الطاولات والسفري)
-            database.ref('live_orders').remove();
 
-            // 4. تحديث تاريخ التصفير
+            // ✅ 3. تحديث تاريخ التصفير
             database.ref('system_control/lastResetDate').set(today);
-            
-            console.log("تم تصفير اليوم بنجاح يا حودة!");
+
+            console.log("تم تصفير اليوم فقط بدون خسارة البيانات 🔥");
         }
     });
 }
