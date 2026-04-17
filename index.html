@@ -872,6 +872,9 @@ database.ref('live_orders/' + orderId).on('value', (snapshot) => {
     else if (order.kitchenReady) {
         statusText = "🍔 الأكل جاهز";
     }
+    else if (order.dessertReady) {
+        statusText = "🍰 حلا جاهزة";";
+    }
 
     if (typeof showToast === "function") {
         showToast(statusText);
