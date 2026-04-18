@@ -195,7 +195,10 @@ function add(name){
     let cart = orders[currentOrderIndex] || [];
     orders[currentOrderIndex] = cart;
 
+    let found = cart.find(i=>i.ar===name); // 👈 السطر المهم
+
     if(found) found.qty++;
+    else cart.push({...item, qty:1}); // 👈 كان ناقصك برضه
 
     renderCart();
 }
@@ -231,6 +234,7 @@ function getTakeaway(){
 
 // إرسال الطلب
 async function sendOrder(){
+    if(!cart || cart.length===0) return alert("السلة فاضية!");
     let cart = orders[currentOrderIndex];
 
     let type = document.getElementById('orderType').value;
@@ -286,7 +290,6 @@ function completeOrder(){
     accountingTime:new Date().toISOString()
 });
 
-    orders[currentOrderIndex]
     renderCart();
     activeOrders.shift(); // يشيل أول فاتورة
 
@@ -357,4 +360,3 @@ function change(i,d){
 
 </body>
 </html>
-
