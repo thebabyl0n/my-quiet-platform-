@@ -2,199 +2,99 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>POS - Alpha Shadow</title>
+<title>POS</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
-body {font-family: sans-serif; background:#0f172a; color:white; margin:0; display:flex; height:100vh;}
-.left {width:65%; padding:15px;}
-.right {width:35%; background:#1e293b; padding:15px; display:flex; flex-direction:column;}
-
-input {width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;}
-
-.categories button {
-    margin:3px;
-    padding:8px 12px;
-    border:none;
-    border-radius:8px;
-    background:#334155;
-    color:white;
-    cursor:pointer;
-}
-
-.items {
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-    gap:10px;
-}
-
-.item {
-    background:#1e293b;
-    padding:10px;
-    border-radius:10px;
-    cursor:pointer;
-    text-align:center;
-}
-
-.cart {flex:1; overflow:auto;}
-.cart-item {display:flex; justify-content:space-between; margin-bottom:8px;}
-
-button {cursor:pointer;}
-
-.total {font-size:20px; margin-top:10px;}
-.send {background:#22c55e; padding:12px; border:none; border-radius:10px; color:white;}
-.print {background:#3b82f6; padding:10px; border:none; border-radius:10px; margin-top:5px;}
+body{background:#0f172a;color:white;font-family:sans-serif;display:flex}
+.left{width:60%;padding:10px}
+.right{width:40%;background:#1e293b;padding:10px}
+.item{background:#334155;padding:10px;margin:5px;border-radius:8px;cursor:pointer}
+.cart-item{display:flex;justify-content:space-between;margin:5px}
+button{margin:3px;padding:5px 10px}
 </style>
 </head>
 
 <body>
 
 <div class="left">
-    <input id="search" placeholder="🔍 ابحث عن صنف...">
-
-    <div class="categories" id="categories"></div>
-    <div class="items" id="items"></div>
+<input id="search" placeholder="🔍 بحث">
+<div id="items"></div>
 </div>
 
 <div class="right">
-    <h3>🧾 الطلب</h3>
+<h3>🧾 الفاتورة</h3>
 
-    <!-- نوع الطلب -->
-    <select id="orderType">
-        <option value="محلي">محلي ☕</option>
-        <option value="سفري">سفري 🚗</option>
-    </select>
+<select id="orderType">
+<option value="محلي">محلي</option>
+<option value="سفري">سفري</option>
+</select>
 
-    <!-- رقم الطاولة -->
-    <input id="tableNumber" placeholder="رقم الطاولة">
+<input id="tableNumber" placeholder="رقم الترابيزة">
 
-    <!-- ملاحظة -->
-    <textarea id="note" placeholder="ملاحظة..."></textarea>
+<div id="cart"></div>
+<div id="total">0 ريال</div>
 
-    <div class="cart" id="cart"></div>
-    <div class="total" id="total">0 ريال</div>
-
-    <button class="send" onclick="sendOrder()">✅ إرسال الطلب</button>
-    <button class="send" style="background:#16a34a" onclick="completeOrder()">💰 تحصيل الحساب</button>
-    <button class="print" onclick="printBill()">🧾 طباعة</button>
+<button onclick="sendOrder()">➕ إضافة</button>
+<button onclick="completeOrder()">💰 تحصيل</button>
+<button onclick="closeShift()">📊 تقفيل وردية</button>
 </div>
 
 <script>
 const firebaseConfig = {
- apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
- databaseURL: "alphashadow-23689-default-rtdb.firebaseio.com"
+ apiKey: "AIzaSy...",
+ databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// --- المتغيرات الأساسية ---
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let cart = [];
 let allItems = {};
-let currentOrderId = localStorage.getItem("orderId") || null;
-let cashierName = localStorage.getItem("cashier") || prompt("اسم الكاشير؟");
+let activeOrderId = null;
 
-
-// 👇 حطي الكود هنا بالظبط 👇
-if(currentOrderId){
-    db.ref('live_orders/' + currentOrderId).once('value', snap=>{
-        let data = snap.val();
-        if(data && data.items){
-            cart = data.items.map(i=>({
-                ar: i.ar,
-                qty: i.qty,
-                price: i.p
-            }));
-            renderCart();
-        }
-    });
-}
-
-
-// 🔥 تحميل الأقسام
-db.ref('sub_categories').on('value', snap=>{
-    let html="";
-    snap.forEach(c=>{
-        html += `<button onclick="loadCategory('${c.key}')">${c.val().name}</button>`;
-    });
-    document.getElementById('categories').innerHTML = html;
-});
-
-
-// 🔥 تحميل الأصناف
+// تحميل الأصناف
 db.ref('menu_items').on('value', snap=>{
     allItems = snap.val() || {};
     renderItems(Object.values(allItems));
 });
 
-
-// 🔍 البحث
-document.getElementById('search').addEventListener('input', e=>{
-    const val = e.target.value.toLowerCase();
-    const filtered = Object.values(allItems).filter(i=>i.ar.toLowerCase().includes(val));
-    renderItems(filtered);
-});
-
-function loadCategory(catId){
-    const filtered = Object.values(allItems).filter(i=>i.categoryId===catId);
-    renderItems(filtered);
-}
-
+// عرض الأصناف
 function renderItems(items){
     let html="";
     items.forEach(i=>{
-        html += `<div class="item" onclick="addToCart('${i.ar}')">
-            ${i.ar}<br>${i.price} ريال
+        html += `<div class="item" onclick="add('${i.ar}')">
+        ${i.ar} - ${i.price}
         </div>`;
     });
     document.getElementById('items').innerHTML = html;
 }
 
-
-// 🛒 إضافة للكارت
-function addToCart(name){
-    const item = Object.values(allItems).find(i=>i.ar===name);
+// إضافة للكارت
+function add(name){
+    let item = Object.values(allItems).find(i=>i.ar===name);
     let found = cart.find(i=>i.ar===name);
 
-    if(found){
-        found.qty++;
-    } else {
-        cart.push({...item, qty:1});
-    }
+    if(found) found.qty++;
+    else cart.push({...item, qty:1});
 
     renderCart();
 }
 
-
-// ➕➖
-function changeQty(index,delta){
-    cart[index].qty += delta;
-
-    if(cart[index].qty<=0){
-        cart.splice(index,1);
-    }
-
-    renderCart();
-}
-
-
-// 🧾 عرض الكارت
+// عرض الكارت
 function renderCart(){
-    let html="";
-    let total=0;
+    let html="", total=0;
 
     cart.forEach((i,idx)=>{
-        total += i.price * i.qty;
+        total += i.price*i.qty;
 
-        html += `
-        <div class="cart-item">
-            <span>${i.ar} × ${i.qty}</span>
-            <div>
-                <button onclick="changeQty(${idx},1)">+</button>
-                <button onclick="changeQty(${idx},-1)">-</button>
-            </div>
+        html += `<div class="cart-item">
+        ${i.ar} x ${i.qty}
+        <div>
+        <button onclick="change(${idx},1)">+</button>
+        <button onclick="change(${idx},-1)">-</button>
+        </div>
         </div>`;
     });
 
@@ -202,111 +102,79 @@ function renderCart(){
     document.getElementById('total').innerText = total + " ريال";
 }
 
+// تغيير الكمية
+function change(i,d){
+    cart[i].qty += d;
+    if(cart[i].qty<=0) cart.splice(i,1);
+    renderCart();
+}
 
-// 🚀 إرسال الطلب
+// رقم سفري
+function getTakeaway(){
+    return db.ref('counter').transaction(c=>{
+        return (c||0)+1;
+    }).then(r=>r.snapshot.val());
+}
+
+// إرسال الطلب
 function sendOrder(){
-    if(cart.length===0) return alert("فاضي!");
+    if(cart.length===0) return alert("فاضي");
 
-    const type = document.getElementById('orderType').value;
+    let type = document.getElementById('orderType').value;
+    let table = document.getElementById('tableNumber').value;
 
     let order = {
-        items: cart.map(i=>({
-            ar: i.ar,
-            qty: i.qty,
-            p: i.price,
-            dept: i.dept
-        })),
+        items: cart.map(i=>({ar:i.ar,qty:i.qty,p:i.price,dept:i.dept})),
         totalPrice: cart.reduce((t,i)=>t+(i.price*i.qty),0),
-        cashier: cashierName,
-        status: "pending",
-        note: document.getElementById('note').value,
-        type: type,
-        table: type === 'محلي' ? document.getElementById('tableNumber').value : null,
-        time: new Date().toISOString()
+        status:"open",
+        type:type
     };
 
-    // 🚗 سفري = رقم متسلسل
-    if(type === 'سفري'){
-        getNextTakeawayNumber().then(num=>{
+    if(type==="محلي"){
+        if(!table) return alert("اكتب ترابيزة");
+        activeOrderId = "T_"+table;
+        db.ref('live_orders/'+activeOrderId).set(order);
+    }
+
+    if(type==="سفري"){
+        getTakeaway().then(num=>{
+            activeOrderId = "TA_"+num;
             order.orderNum = num;
-            saveOrder(order);
+            db.ref('live_orders/'+activeOrderId).set(order);
         });
-    } else {
-        saveOrder(order);
-    }
-}
-
-function saveOrder(order){
-
-    if(currentOrderId){
-        db.ref('live_orders/' + currentOrderId).update({
-            items: cart.map(i=>({
-                ar: i.ar,
-                qty: i.qty,
-                p: i.price,
-                dept: i.dept
-            })),
-            totalPrice: cart.reduce((t,i)=>t+(i.price*i.qty),0),
-            note: document.getElementById('note').value
-        });
-    } else {
-        const ref = db.ref('live_orders').push(order);
-        currentOrderId = ref.key;
-        localStorage.setItem("orderId", ref.key);
     }
 
-    alert("✅ تم إضافة الطلب لنفس الفاتورة");
+    alert("تم الحفظ");
 }
 
-function getNextTakeawayNumber() {
-    const ref = db.ref('counters/takeaway');
+// تحصيل
+function completeOrder(){
+    if(!activeOrderId) return alert("مفيش طلب");
 
-    return ref.transaction(current => {
-        const today = new Date().toISOString().split('T')[0];
-
-        if (!current || current.date !== today) {
-            return { number: 1, date: today };
-        }
-
-        return { number: current.number + 1, date: today };
-    }).then(result => result.snapshot.val().number);
-}
-
-// 🧾 طباعة
-function printBill(){
-    let win = window.open('', '', 'width=300');
-    let content = `<h3>فاتورة</h3>`;
-
-    cart.forEach(i=>{
-        content += `<p>${i.ar} × ${i.qty}</p>`;
+    db.ref('live_orders/'+activeOrderId).update({
+        status:"paid",
+        time:new Date().toISOString()
     });
 
-    content += `<hr><b>${document.getElementById('total').innerText}</b>`;
+    cart=[];
+    renderCart();
+    activeOrderId=null;
 
-    win.document.write(content);
-    win.print();
+    alert("تم التحصيل");
 }
 
-function completeOrder(){
-    if(!currentOrderId) return alert("مفيش طلب مفتوح");
-
-    if(confirm("هل تم الدفع؟")){
-        db.ref('live_orders/' + currentOrderId).update({
-            status: "paid",
-            accountingTime: new Date().toISOString()
+// تقفيل وردية
+function closeShift(){
+    db.ref('live_orders').once('value', snap=>{
+        let total=0;
+        snap.forEach(o=>{
+            if(o.val().status==="paid"){
+                total += o.val().totalPrice;
+            }
         });
-
-        localStorage.removeItem("orderId");
-        localStorage.removeItem("cart");
-
-        currentOrderId = null;
-        cart = [];
-        renderCart();
-
-        alert("✅ تم إنهاء الفاتورة");
-    }
+        alert("الإجمالي: "+total+" ريال");
+    });
 }
-
 </script>
 
 </body>
