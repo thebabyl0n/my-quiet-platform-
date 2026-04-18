@@ -191,6 +191,10 @@ function renderItems(items){
 // إضافة للكارت
 function add(name){
     let item = Object.values(allItems).find(i=>i.ar===name);
+
+    let cart = orders[currentOrderIndex] || [];
+    orders[currentOrderIndex] = cart;
+
     let found = cart.find(i=>i.ar===name);
 
     if(found) found.qty++;
@@ -201,6 +205,8 @@ function add(name){
 
 // عرض الكارت
 function renderCart(){
+    let cart = orders[currentOrderIndex] || [];
+
     let html="", total=0;
 
     cart.forEach((i,idx)=>{
@@ -219,13 +225,6 @@ function renderCart(){
     document.getElementById('total').innerText = total + " ريال";
 }
 
-// تغيير الكمية
-function change(i,d){
-    cart[i].qty += d;
-    if(cart[i].qty<=0) cart.splice(i,1);
-    renderCart();
-}
-
 // رقم سفري
 function getTakeaway(){
     return db.ref('counter').transaction(c=>{
@@ -235,7 +234,7 @@ function getTakeaway(){
 
 // إرسال الطلب
 async function sendOrder(){
-    if(cart.length===0) return alert("السلة فاضية!");
+    let cart = orders[currentOrderIndex];
 
     let type = document.getElementById('orderType').value;
     let table = document.getElementById('tableNumber').value;
@@ -290,7 +289,7 @@ function completeOrder(){
     accountingTime:new Date().toISOString()
 });
 
-    cart = [];
+    orders[currentOrderIndex]
     renderCart();
     activeOrders.shift(); // يشيل أول فاتورة
 
@@ -339,14 +338,24 @@ function closeShift(){
 }
 
 function newOrder(){
-    cart = [];
-    renderCart();
+    orders.push([]); // فاتورة جديدة
+    currentOrderIndex = orders.length - 1;
 
     document.getElementById('tableNumber').value = "";
 
-    alert("فاتورة جديدة 🆕");
+    renderCart();
+
+    alert("تم فتح فاتورة جديدة 🆕");
 }
 
+function change(i,d){
+    let cart = orders[currentOrderIndex];
+
+    cart[i].qty += d;
+    if(cart[i].qty<=0) cart.splice(i,1);
+
+    renderCart();
+}
 </script>
 
 </body>
