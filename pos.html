@@ -223,33 +223,33 @@ function getTakeaway(){
 
 // إرسال الطلب
 function sendOrder(){
-    if(cart.length===0) return alert("فاضي");
+    if(cart.length===0) return alert("السلة فاضية!");
 
     let type = document.getElementById('orderType').value;
     let table = document.getElementById('tableNumber').value;
 
     let order = {
-        items: cart.map(i=>({ar:i.ar,qty:i.qty,p:i.price,dept:i.dept})),
-        totalPrice: cart.reduce((t,i)=>t+(i.price*i.qty),0),
-        status:"open",
-        type:type
+        // الربط هنا: بناخد الـ dept اللي جاي من الداشبورد لكل صنف
+        items: cart.map(i => ({
+            ar: i.ar,
+            qty: i.qty,
+            p: i.price,
+            dept: i.dept || "kitchen" // لو ملوش قسم يروح المطبخ
+        })),
+        totalPrice: cart.reduce((t, i) => t + (i.price * i.qty), 0),
+        status: "open",
+        type: type,
+        table: table, // إضافة رقم الترابيزة
+        time: new Date().toISOString()
     };
 
-    if(type==="محلي"){
-        if(!table) return alert("اكتب ترابيزة");
-        activeOrderId = "T_"+table;
-        db.ref('live_orders/'+activeOrderId).set(order);
-    }
+    // إرسال للـ Firebase
+    let orderPath = type === "محلي" ? 'T_' + table : 'TA_' + Date.now();
+    db.ref('live_orders/' + orderPath).set(order);
 
-    if(type==="سفري"){
-        getTakeaway().then(num=>{
-            activeOrderId = "TA_"+num;
-            order.orderNum = num;
-            db.ref('live_orders/'+activeOrderId).set(order);
-        });
-    }
-
-    alert("تم الحفظ");
+    alert("تم توجيه الطلبات للأقسام 🚀");
+    cart = [];
+    renderCart();
 }
 
 // تحصيل
