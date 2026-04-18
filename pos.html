@@ -222,63 +222,58 @@ function getTakeaway(){
 }
 
 // إرسال الطلب
+let activeOrderId = null; // مخزن عشان نعرف الطلب اللي شغالين عليه
+
 function sendOrder(){
     if(cart.length===0) return alert("السلة فاضية!");
 
     let type = document.getElementById('orderType').value;
     let table = document.getElementById('tableNumber').value;
+    if(type === "محلي" && !table) return alert("اكتب رقم الترابيزة يا بطل");
+
+    // توليد ID الطلب عشان نقدر نوصل له وقت التحصيل
+    activeOrderId = type === "محلي" ? 'T_' + table : 'TA_' + Date.now();
 
     let order = {
-        // الربط هنا: بناخد الـ dept اللي جاي من الداشبورد لكل صنف
         items: cart.map(i => ({
             ar: i.ar,
             qty: i.qty,
             p: i.price,
-            dept: i.dept || "kitchen" // لو ملوش قسم يروح المطبخ
+            dept: i.dept || "barista" 
         })),
         totalPrice: cart.reduce((t, i) => t + (i.price * i.qty), 0),
-        status: "open",
+        status: "open", // عشان يظهر في الأقسام
         type: type,
-        table: table, // إضافة رقم الترابيزة
-        time: new Date().toISOString()
+        table: table || "سفري",
+        time: new Date().toISOString(),
+        // ضفنا دي عشان الترتيب في شاشة العرض
+        displayTime: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'})
     };
 
     // إرسال للـ Firebase
-    let orderPath = type === "محلي" ? 'T_' + table : 'TA_' + Date.now();
-    db.ref('live_orders/' + orderPath).set(order);
-
-    alert("تم توجيه الطلبات للأقسام 🚀");
-    cart = [];
-    renderCart();
+    db.ref('live_orders/' + activeOrderId).set(order).then(() => {
+        alert("تم توجيه الطلبات للأقسام 🚀 .. في انتظار التحصيل");
+        // هنا مش هنصفر السلة عشان تفضل قدامك لحد ما تدوس تحصيل
+    });
 }
 
-// تحصيل
+// دالة التحصيل (الإتمام)
 function completeOrder(){
-    if(!activeOrderId) return alert("مفيش طلب");
+    if(!activeOrderId) return alert("مفيش طلب نشط لتحصيله!");
 
-    db.ref('live_orders/'+activeOrderId).update({
-        status:"paid",
-        time:new Date().toISOString()
-    });
-
-    cart=[];
-    renderCart();
-    activeOrderId=null;
-
-    alert("تم التحصيل");
-}
-
-// تقفيل وردية
-function closeShift(){
-    db.ref('live_orders').once('value', snap=>{
-        let total=0;
-        snap.forEach(o=>{
-            if(o.val().status==="paid"){
-                total += o.val().totalPrice;
-            }
+    if(confirm('هل تم استلام المبلغ وإتمام الطلب؟')) {
+        // أهم سطر: تغيير الحالة لنفس الكلمة اللي الأقسام مستنياها عشان تختفي
+        db.ref('live_orders/' + activeOrderId).update({
+            status: "تمت المحاسبة ✅", 
+            accountingTime: new Date().toISOString()
+        }).then(() => {
+            alert("تم التحصيل وتصفية السلة ✅");
+            cart = []; // تصفير السلة بعد المحاسبة
+            activeOrderId = null; // تصفير الـ ID
+            renderCart();
+            if(document.getElementById('tableNumber')) document.getElementById('tableNumber').value = "";
         });
-        alert("الإجمالي: "+total+" ريال");
-    });
+    }
 }
 </script>
 
