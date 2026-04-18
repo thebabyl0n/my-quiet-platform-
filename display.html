@@ -104,8 +104,12 @@
         style="background:#22c55e; border:none; color:white; border-radius:6px; padding:2px 8px;">➕</button>
     </div>
 </span>
-                   onclick="changeQty('${orderId}', ${index}, -item.qty)"
-                   style="background:#ef4444; border:none; color:white; border-radius:6px; padding:2px 8px; cursor:pointer;">❌</button>` : ""}
+${isCashier ? `
+<button onclick="changeQty('${orderId}', ${index}, -999)" 
+style="background:#ef4444; border:none; color:white; border-radius:6px; padding:2px 8px; cursor:pointer;">
+❌
+</button>
+` : ""}
                    ${price}
                    </div>`;
                 }
