@@ -84,13 +84,18 @@
             let forMe = false;
             const finalNote = order.notes || order.note || "";
 
-            order.items.forEach(item => {
+           order.items.forEach((item, index) => {
                 const itemDept = (item.dept || 'barista').toLowerCase().trim();
                 if (isCashier || itemDept === screenType) {
                     forMe = true;
                     const isItemReady = order[itemDept + 'Ready'] === true;
                     const price = isCashier ? `<span class="price-tag">${(item.p * item.qty).toFixed(2)} ريال</span>` : "";
-                    itemsHtml += `<div class="item"><span><b>${item.ar}</b> × ${item.qty} ${isItemReady?'✅':''}</span>${price}</div>`;
+              itemsHtml += `<div class="item">
+                   <span><b>${item.ar}</b> × ${item.qty} ${isItemReady?'✅':''}</span>
+                   ${isCashier ? `<button onclick="removeItem('${orderId}', ${index})" 
+                   style="background:#ef4444; border:none; color:white; border-radius:6px; padding:2px 8px; cursor:pointer;">❌</button>` : ""}
+                   ${price}
+                   </div>`;
                 }
             });
 
@@ -213,6 +218,31 @@ function requestCancel(id) {
             audio.play();
         }
     }
+    function removeItem(orderId, itemIndex) {
+    if(!confirm("حذف الصنف من الطلب؟")) return;
+
+    database.ref('live_orders/' + orderId).once('value').then(snap => {
+        const order = snap.val();
+        if (!order || !order.items) return;
+
+        // حذف الصنف
+        order.items.splice(itemIndex, 1);
+
+        // إعادة حساب السعر
+        let newTotal = 0;
+        order.items.forEach(i => {
+            newTotal += (i.p * i.qty);
+        });
+
+        // تحديث في Firebase
+        database.ref('live_orders/' + orderId).update({
+            items: order.items,
+            totalPrice: newTotal
+        });
+
+    });
+}
 </script>
 </body>
 </html>
+
