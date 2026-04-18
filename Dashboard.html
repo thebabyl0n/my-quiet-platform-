@@ -343,10 +343,8 @@ function generateReports(allOrders) {
             const waitTime = getWaitTime(o);
             const price = parseFloat(o.totalPrice) || 0;
 
-// 💰 الحساب الصح
-           if (o.status === "تمت المحاسبة ✅" || o.status === "تم الترحيل للأرشيف 📦") {
+           if (o.status === "تمت المحاسبة ✅" || o.status === "تم الترحيل للأرشيف 📦")
            totalSales += price;
-       }
             
             let dateStr = '---';
             if (o.date) {
