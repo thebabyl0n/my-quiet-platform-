@@ -234,64 +234,64 @@ function getTakeaway(){
 
 // إرسال الطلب
 async function sendOrder(){
-    if(!cart || cart.length===0) return alert("السلة فاضية!");
+
     let cart = orders[currentOrderIndex];
+
+    if(!cart || cart.length === 0) return alert("السلة فاضية!");
 
     let type = document.getElementById('orderType').value;
     let table = document.getElementById('tableNumber').value;
 
     let order = {
-        // الربط هنا: بناخد الـ dept اللي جاي من الداشبورد لكل صنف
         items: cart.map(i => ({
             ar: i.ar,
             qty: i.qty,
             p: i.price,
-            dept: i.dept || "kitchen" // لو ملوش قسم يروح المطبخ
+            dept: i.dept || "kitchen"
         })),
         totalPrice: cart.reduce((t, i) => t + (i.price * i.qty), 0),
         status: "open",
         type: type,
-        table: table, // إضافة رقم الترابيزة
+        table: table,
         time: new Date().toISOString()
     };
 
-    // إرسال للـ Firebase
-let orderPath;
+    let orderPath;
 
-if(type === "محلي"){
-    orderPath = 'T_' + table;
-}else{
-    let num = await getTakeaway(); // 👈 الرقم
-    order.orderNum = num;          // 👈 يتعرض في الأقسام
-    orderPath = 'TA_' + num;
-}
-    
-let orderId = orderPath;
-db.ref('live_orders/' + orderId).set(order);
+    if(type === "محلي"){
+        orderPath = 'T_' + table;
+    }else{
+        let num = await getTakeaway();
+        order.orderNum = num;
+        orderPath = 'TA_' + num;
+    }
 
-// 👇 أهم سطر (كان ناقصك)
-activeOrders.push(orderId);
+    db.ref('live_orders/' + orderPath).set(order);
 
-// 👇 تابع الحالة
-watchOrderStatus();
+    activeOrders.push(orderPath);
 
-alert("تم إرسال الطلب وفتح الفاتورة ✅");
+    watchOrderStatus();
 
+    alert("تم إرسال الطلب ✅");
 }
 
 // تحصيل
 function completeOrder(){
-     if(activeOrders.length === 0) return alert("مفيش طلب");
 
-     let id = activeOrders[0]; // أول فاتورة
+    if(activeOrders.length === 0) return alert("مفيش طلب");
+
+    let id = activeOrders[0];
 
     db.ref('live_orders/'+id).update({
-    status:"تمت المحاسبة ✅",
-    accountingTime:new Date().toISOString()
-});
+        status:"تمت المحاسبة ✅",
+        accountingTime:new Date().toISOString()
+    });
+
+    orders[currentOrderIndex] = []; // 👈 أهم سطر
 
     renderCart();
-    activeOrders.shift(); // يشيل أول فاتورة
+
+    activeOrders.shift();
 
     alert("تم التحصيل 💰");
 }
