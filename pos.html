@@ -99,14 +99,23 @@ db.ref('sub_categories').on('value', snap => {
 
 // 2. دالة الفلترة عشان الأزرار تشتغل
 let currentCategory = 'all';
+// دالة الفلترة المعدلة للربط مع الداشبورد
 function filterCat(catId, btn) {
     currentCategory = catId;
+    
+    // تلوين الزرار النشط
     if(btn) {
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
     }
+
     let itemsArray = Object.values(allItems);
-    let filtered = catId === 'all' ? itemsArray : itemsArray.filter(i => i.categoryId === catId);
+    
+    // هنا التكة: بنخلي البرنامج يدور في الـ sub_id اللي الداشبورد بيبعتها
+    let filtered = catId === 'all' ? itemsArray : itemsArray.filter(i => {
+        return i.sub_id === catId || i.categoryId === catId;
+    });
+    
     renderItems(filtered);
 }
 
