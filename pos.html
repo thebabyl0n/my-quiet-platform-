@@ -229,12 +229,15 @@ function saveOrder(order){
         db.ref('live_orders/' + currentOrderId).update(order);
     } else {
         // أول مرة
-        const ref = db.ref('live_orders').push(order);
-        currentOrderId = ref.key; // 👈 دي أهم سطر
+const ref = db.ref('live_orders').push(order);
+currentOrderId = ref.key;
+
+// 👇 مهم جدا
+localStorage.setItem("orderId", ref.key);
     }
 
-    cart=[];
-    renderCart();
+// نسيب الكارت زي ما هو عشان نكمل عليه
+    alert("✅ تم إضافة الطلب على نفس الفاتورة");
     document.getElementById('note').value = "";
 
     alert("✅ تم إرسال الطلب");
