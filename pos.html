@@ -14,6 +14,39 @@ body{background:#0f172a;color:white;font-family:sans-serif;display:flex}
 .item{background:#334155;padding:10px;margin:5px;border-radius:8px;cursor:pointer}
 .cart-item{display:flex;justify-content:space-between;margin:5px}
 button{margin:3px;padding:5px 10px}
+/* الأقسام (الفولدرات) */
+.cat-container { 
+    display: flex; 
+    gap: 8px; 
+    margin: 10px 0; 
+    overflow-x: auto; 
+    padding: 5px; 
+}
+.cat-btn { 
+    background: #3b82f6; 
+    border: none; 
+    color: white; 
+    padding: 8px 15px; 
+    border-radius: 15px; 
+    cursor: pointer; 
+    white-space: nowrap; 
+}
+.cat-btn.active { background: #22c55e; }
+
+/* تعديل شبكة الأصناف */
+#items { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
+    gap: 10px; 
+}
+.item { 
+    background: #334155; 
+    padding: 12px; 
+    border-radius: 10px; 
+    text-align: center; 
+    border: 1px solid transparent; 
+}
+.item-p { color: #22c55e; display: block; font-size: 13px; margin-top: 5px; }
 </style>
 </head>
 
@@ -21,6 +54,7 @@ button{margin:3px;padding:5px 10px}
 
 <div class="left">
 <input id="search" placeholder="🔍 بحث">
+<div id="categories" class="cat-container"></div>
 <div id="items"></div>
 </div>
 
@@ -64,8 +98,10 @@ db.ref('menu_items').on('value', snap=>{
 function renderItems(items){
     let html="";
     items.forEach(i=>{
-        html += `<div class="item" onclick="add('${i.ar}')">
-        ${i.ar} - ${i.price}
+        html += `
+        <div class="item" onclick="add('${i.ar}')">
+            <strong>${i.ar}</strong>
+            <span class="item-p">${i.price} ريال</span>
         </div>`;
     });
     document.getElementById('items').innerHTML = html;
