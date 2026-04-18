@@ -2,78 +2,75 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام كاشير الإمبراطورية | Alpha Shadow</title>
+    <title>كاشير الإمبراطورية | Alpha Shadow</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --green: #22c55e; --blue: #3b82f6; --red: #ef4444; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; height: 100vh; }
+        :root { --bg: #0f172a; --card: #1e293b; --green: #22c55e; --blue: #3b82f6; --red: #ef4444; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        /* القسم اليمين: العمليات والتحصيل */
-        .sidebar { width: 30%; background: var(--card); border-left: 2px solid #334155; display: flex; flex-direction: column; }
+        /* العمود الجانبي: الطلبات النشطة والتحصيل */
+        .sidebar { width: 350px; background: var(--card); border-left: 2px solid #334155; display: flex; flex-direction: column; }
         .live-orders { flex: 1; overflow-y: auto; padding: 10px; }
-        .order-box { background: var(--bg); border-radius: 12px; padding: 15px; margin-bottom: 10px; border-right: 5px solid var(--green); }
+        .order-card { background: var(--bg); border-radius: 10px; padding: 12px; margin-bottom: 10px; border-right: 4px solid var(--green); }
         
-        /* القسم الشمال: المنيو والطلب */
-        .main-content { width: 70%; padding: 20px; display: flex; flex-direction: column; }
-        .categories-bar { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; border-bottom: 1px solid #334155; }
-        .cat-btn { background: #334155; border: none; color: white; padding: 12px 25px; border-radius: 30px; cursor: pointer; white-space: nowrap; }
+        /* المنطقة الرئيسية: المنيو والطلب */
+        .main { flex: 1; display: flex; flex-direction: column; padding: 15px; }
+        .categories { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; border-bottom: 1px solid #334155; }
+        .cat-btn { background: #334155; border: none; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; white-space: nowrap; }
         .cat-btn.active { background: var(--blue); }
         
-        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 20px; overflow-y: auto; }
-        .item-card { background: var(--card); border-radius: 15px; padding: 15px; text-align: center; cursor: pointer; border: 1px solid transparent; }
-        .item-card:hover { border-color: var(--blue); transform: translateY(-3px); transition: 0.3s; }
+        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-top: 15px; overflow-y: auto; flex: 1; }
+        .item-box { background: var(--card); border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; border: 1px solid transparent; }
+        .item-box:hover { border-color: var(--blue); }
+
+        /* منطقة الفاتورة المؤقتة (تحت المنيو) */
+        .billing-area { background: #1e293b; border-radius: 15px 15px 0 0; padding: 15px; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); }
+        .bill-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .bill-table th { text-align: right; color: #94a3b8; font-size: 12px; }
+        .qty-btn { background: #334155; color: white; border: none; width: 25px; height: 25px; border-radius: 5px; cursor: pointer; }
         
-        /* شريط التحكم السفلي (السلة) */
-        .cart-bar { background: var(--card); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-radius: 15px 15px 0 0; }
-        
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
-        .btn-success { background: var(--green); }
-        .btn-print { background: var(--blue); }
-        .btn-danger { background: var(--red); }
-        
-        .badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #475569; margin-left: 5px; }
+        .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-pay { background: var(--green); }
+        .btn-send { background: var(--blue); width: 100%; font-size: 18px; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <div style="padding: 15px; background: var(--green); text-align: center;">
-        <h3 style="margin:0;">💰 إجمالي اليومية</h3>
-        <div id="dayTotal" style="font-size: 24px; font-weight: bold;">0.00 ريال</div>
+        <h4 style="margin:0;">💰 مبيعات اليوم المحصلة</h4>
+        <div id="dayTotal" style="font-size: 22px; font-weight: bold;">0 ريال</div>
     </div>
-    <div class="live-orders" id="liveOrdersList">
-        </div>
-    <button class="btn btn-danger" style="margin: 10px;" onclick="closeShift()">🔒 تقفيل الوردية</button>
+    <div class="live-orders" id="liveOrdersContainer"></div>
 </div>
 
-<div class="main-content">
-    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+<div class="main">
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
         <select id="orderType" class="btn" style="background:#334155;">
             <option value="محلي">🪑 محلي</option>
             <option value="سفري">🚗 سفري</option>
         </select>
-        <input type="text" id="tableNum" placeholder="رقم الطاولة / العميل" style="padding:10px; border-radius:8px; border:none; width: 150px;">
+        <input type="text" id="tableName" placeholder="رقم الطاولة / العميل" style="background:#334155; color:white; border:none; padding:10px; border-radius:8px; flex:1;">
     </div>
 
-    <div class="categories-bar" id="catBar">
-        </div>
+    <div class="categories" id="catBar"></div>
+    <div class="items-grid" id="menuGrid"></div>
 
-    <div class="items-grid" id="menuDisplay">
+    <div class="billing-area" id="billArea" style="display:none;">
+        <table class="bill-table">
+            <thead><tr><th>الصنف</th><th>الكمية</th><th>السعر</th></tr></thead>
+            <tbody id="billBody"></tbody>
+        </table>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <span style="font-size: 20px; font-weight: bold;">الإجمالي: <span id="billTotal" style="color:var(--green)">0</span> ريال</span>
+            <button class="btn btn-red" onclick="clearCart()" style="background:var(--red)">مسح 🗑️</button>
         </div>
-
-    <div class="cart-bar" id="cartSection" style="display:none;">
-        <div>
-            <span id="itemsCount">0</span> أصناف | 
-            <span id="tempTotal" style="color:var(--green); font-size: 20px;">0 ريال</span>
-        </div>
-        <button class="btn btn-success" onclick="confirmOrder()">إرسال الطلب للمطبخ 🚀</button>
+        <button class="btn btn-send" onclick="sendOrder()">إرسال الطلب وتنفيذ الفاتورة 🚀</button>
     </div>
 </div>
 
 <script>
-// --- إعدادات الفايربيز ---
 const firebaseConfig = {
     apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
     databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com"
@@ -82,151 +79,119 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 let allItems = [];
-let cart = [];
-let currentCashier = localStorage.getItem("cashier") || prompt("اسم الكاشير؟") || "كاشير 1";
-localStorage.setItem("cashier", currentCashier);
+let cart = {}; // نستخدم object لتسهيل التحكم في الكميات
 
-// 1. تحميل الأقسام من الداشبورد
-db.ref('sub_categories').on('value', snap => {
-    let html = `<button class="cat-btn active" onclick="filterItems('all')">الكل</button>`;
-    snap.forEach(cat => {
-        html += `<button class="cat-btn" onclick="filterItems('${cat.key}')">${cat.val().name}</button>`;
-    });
-    document.getElementById('catBar').innerHTML = html;
+// 1. جلب البيانات من الداشبورد
+db.ref('sub_categories').on('value', s => {
+    let h = `<button class="cat-btn active" onclick="renderMenu('all')">الكل</button>`;
+    s.forEach(c => h += `<button class="cat-btn" onclick="renderMenu('${c.key}')">${c.val().name}</button>`);
+    document.getElementById('catBar').innerHTML = h;
 });
 
-// 2. تحميل الأصناف من الداشبورد
-db.ref('menu_items').on('value', snap => {
+db.ref('menu_items').on('value', s => {
     allItems = [];
-    snap.forEach(i => allItems.push({ id: i.key, ...i.val() }));
-    filterItems('all');
+    s.forEach(i => allItems.push({ id: i.key, ...i.val() }));
+    renderMenu('all');
 });
 
-function filterItems(catId) {
-    let filtered = catId === 'all' ? allItems : allItems.filter(i => i.categoryId === catId);
-    let html = "";
-    filtered.forEach(i => {
-        html += `
-        <div class="item-card" onclick="addToCart('${i.id}')">
-            <div style="font-weight:bold;">${i.ar}</div>
-            <div style="color:var(--green); margin-top:5px;">${i.price} ريال</div>
-        </div>`;
-    });
-    document.getElementById('menuDisplay').innerHTML = html;
+function renderMenu(cid) {
+    let f = cid === 'all' ? allItems : allItems.filter(i => i.categoryId === cid);
+    let h = f.map(i => `
+        <div class="item-box" onclick="addToCart('${i.id}')">
+            <strong>${i.ar}</strong><br>
+            <span style="color:var(--green)">${i.price} ريال</span>
+        </div>`).join('');
+    document.getElementById('menuGrid').innerHTML = h;
 }
 
-// 3. إدارة السلة
+// 2. منطق السلة (+) و (-)
 function addToCart(id) {
     let item = allItems.find(i => i.id === id);
-    cart.push(item);
-    updateCartUI();
+    if (cart[id]) { cart[id].qty++; } 
+    else { cart[id] = { ar: item.ar, price: parseFloat(item.price), qty: 1, dept: item.dept || 'barista' }; }
+    updateBill();
 }
 
-function updateCartUI() {
-    let section = document.getElementById('cartSection');
-    if(cart.length > 0) {
-        section.style.display = 'flex';
-        let total = cart.reduce((s, i) => s + parseFloat(i.price), 0);
-        document.getElementById('itemsCount').innerText = cart.length;
-        document.getElementById('tempTotal').innerText = total + " ريال";
-    } else {
-        section.style.display = 'none';
+function changeQty(id, delta) {
+    if (cart[id]) {
+        cart[id].qty += delta;
+        if (cart[id].qty <= 0) delete cart[id];
+        updateBill();
     }
 }
 
-// 4. إرسال الطلب (حفظ في الداتابيز كطلب نشط)
-async function confirmOrder() {
-    let type = document.getElementById('orderType').value;
-    let table = document.getElementById('tableNum').value;
-    let total = cart.reduce((s, i) => s + parseFloat(i.price), 0);
+function updateBill() {
+    let h = ""; let total = 0;
+    Object.keys(cart).forEach(id => {
+        let i = cart[id];
+        total += i.price * i.qty;
+        h += `<tr>
+            <td>${i.ar}</td>
+            <td>
+                <button class="qty-btn" onclick="changeQty('${id}', -1)">-</button>
+                <span style="margin:0 10px">${i.qty}</span>
+                <button class="qty-btn" onclick="changeQty('${id}', 1)">+</button>
+            </td>
+            <td>${(i.price * i.qty).toFixed(2)}</td>
+        </tr>`;
+    });
+    document.getElementById('billBody').innerHTML = h;
+    document.getElementById('billTotal').innerText = total.toFixed(2);
+    document.getElementById('billArea').style.display = total > 0 ? 'block' : 'none';
+}
 
+// 3. إرسال الطلب (الربط مع عداد التيك أوي اللي عملناه)
+async function sendOrder() {
+    let type = document.getElementById('orderType').value;
+    let table = document.getElementById('tableName').value;
+    let total = parseFloat(document.getElementById('billTotal').innerText);
+    
     let orderNum = 0;
     if(type === "سفري") {
-        // العداد اللي عملناه سوا
-        const ref = db.ref('takeaway/number');
-        const snap = await ref.transaction(n => (n || 0) + 1);
+        const snap = await db.ref('takeaway/number').transaction(n => (n || 0) + 1);
         orderNum = snap.snapshot.val();
     }
 
     let orderData = {
-        items: cart.map(i => ({ ar: i.ar, p: i.price, qty: 1, dept: i.dept || 'barista' })),
+        items: Object.values(cart),
         totalPrice: total,
-        cashier: currentCashier,
-        status: "pending",
         type: type,
         table: table,
         orderNum: orderNum,
+        status: "pending",
         time: new Date().toISOString()
     };
 
     db.ref('live_orders').push(orderData);
-    cart = [];
-    document.getElementById('tableNum').value = "";
-    updateCartUI();
+    clearCart();
+    alert("تم إرسال الطلب بنجاح!");
 }
 
-// 5. عرض الطلبات النشطة للتحصيل
-db.ref('live_orders').on('value', snap => {
-    let html = "";
-    let totalDay = 0;
-    snap.forEach(child => {
-        let o = child.val();
-        if(o.status === "paid") {
-            totalDay += parseFloat(o.totalPrice);
-            return;
-        }
+function clearCart() { cart = {}; updateBill(); }
 
-        html += `
-        <div class="order-box">
-            <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8;">
-                <span># ${o.orderNum || o.table || 'عام'}</span>
+// 4. عرض الطلبات النشطة للتحصيل (المرآة)
+db.ref('live_orders').on('value', s => {
+    let h = ""; let dayT = 0;
+    s.forEach(child => {
+        let o = child.val();
+        if(o.status === "paid") { dayT += o.totalPrice; return; }
+        h += `
+        <div class="order-card">
+            <div style="display:flex; justify-content:space-between; font-size:12px;">
+                <span>#${o.orderNum || o.table} [${o.type}]</span>
                 <span>${new Date(o.time).toLocaleTimeString('ar-SA')}</span>
             </div>
-            <div style="margin:10px 0; font-weight:bold;">
-                ${o.items.map(i => i.ar).join(' - ')}
-            </div>
-            <div style="font-size:18px; color:var(--green); font-weight:bold;">${o.totalPrice} ريال</div>
-            <div style="display:flex; gap:5px; margin-top:10px;">
-                <button class="btn btn-success" style="flex:1" onclick="payOrder('${child.key}')">💰 تحصيل</button>
-                <button class="btn btn-print" onclick="printOrder('${child.key}')">🧾</button>
-            </div>
+            <div style="margin:8px 0;">${o.items.map(i => `${i.ar} (x${i.qty})`).join('<br>')}</div>
+            <div style="font-weight:bold; color:var(--green)">${o.totalPrice} ريال</div>
+            <button class="btn btn-pay" style="width:100%; margin-top:10px;" onclick="payOrder('${child.key}')">تحصيل المبلغ ✅</button>
         </div>`;
     });
-    document.getElementById('liveOrdersList').innerHTML = html;
-    document.getElementById('dayTotal').innerText = totalDay.toFixed(2) + " ريال";
+    document.getElementById('liveOrdersContainer').innerHTML = h;
+    document.getElementById('dayTotal').innerText = dayT.toFixed(2) + " ريال";
 });
 
 function payOrder(id) {
-    if(confirm("تأكيد استلام المبلغ؟")) {
-        db.ref('live_orders/' + id).update({ status: "paid", payTime: new Date().toISOString() });
-    }
-}
-
-function printOrder(id) {
-    // وظيفة الطباعة
-    db.ref('live_orders/' + id).once('value', s => {
-        let o = s.val();
-        let w = window.open('', '', 'width=300');
-        w.document.write(`
-            <div style="direction:rtl; text-align:center; font-family:sans-serif;">
-                <h2>Alpha Shadow</h2>
-                <p>${o.type} - ${o.table || o.orderNum}</p>
-                <hr>
-                ${o.items.map(i => `<p>${i.ar} : ${i.p}</p>`).join('')}
-                <hr>
-                <h3>الإجمالي: ${o.totalPrice} ريال</h3>
-            </div>
-        `);
-        w.print();
-        w.close();
-    });
-}
-
-function closeShift() {
-    if(confirm("هل تريد تقفيل الوردية وتصفير المبيعات؟")) {
-        // هنا ممكن تنقل البيانات لأرشيف المبيعات
-        alert("تم تقفيل الوردية بنجاح");
-    }
+    if(confirm("تأكيد دفع الحساب؟")) db.ref('live_orders/' + id).update({ status: "paid" });
 }
 </script>
 </body>
