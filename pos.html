@@ -223,7 +223,7 @@ function getTakeaway(){
 }
 
 // إرسال الطلب
-function sendOrder(){
+async function sendOrder(){
     if(cart.length===0) return alert("السلة فاضية!");
 
     let type = document.getElementById('orderType').value;
@@ -245,14 +245,27 @@ function sendOrder(){
     };
 
     // إرسال للـ Firebase
-    let orderPath = type === "محلي" ? 'T_' + table : 'TA_' + Date.now();
+let orderPath;
+
+if(type === "محلي"){
+    orderPath = 'T_' + table;
+}else{
+    let num = await getTakeaway(); // 👈 الرقم
+    order.orderNum = num;          // 👈 يتعرض في الأقسام
+    orderPath = 'TA_' + num;
+}
     db.ref('live_orders/' + orderPath).set(order);
 
 let orderId = type === "محلي" ? 'T_' + table : 'TA_' + Date.now();
 
+let orderId = orderPath;
+
 db.ref('live_orders/' + orderId).set(order);
 
-// 👇 أهم سطر
+// 👇 أهم سطر (كان ناقصك)
+activeOrderId = orderId;
+
+// 👇 تابع الحالة
 watchOrderStatus();
 
 alert("تم إرسال الطلب وفتح الفاتورة ✅");
