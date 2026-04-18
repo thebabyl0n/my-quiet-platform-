@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>كاشير الطلبات</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<style>
+body {
+    background:#0f172a;
+    color:white;
+    font-family:sans-serif;
+    margin:0;
+}
+
+.header {
+    padding:15px;
+    background:#1e293b;
+    text-align:center;
+    font-size:20px;
+    font-weight:bold;
+}
+
+.totalBox {
+    background:#16a34a;
+    padding:10px;
+    text-align:center;
+    font-size:18px;
+}
+
+.orders {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:15px;
+    padding:15px;
+}
+
+.card {
+    background:#1e293b;
+    padding:15px;
+    border-radius:12px;
+    box-shadow:0 0 10px rgba(0,0,0,0.3);
+}
+
+.badge {
+    background:#334155;
+    padding:3px 8px;
+    border-radius:6px;
+    font-size:12px;
+    margin:2px;
+    display:inline-block;
+}
+
+.items {
+    margin:10px 0;
+    font-size:14px;
+}
+
+.price {
+    background:#022c22;
+    padding:8px;
+    border-radius:8px;
+    text-align:center;
+    margin-top:5px;
+}
+
+.btn {
+    width:100%;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    margin-top:8px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.pay {
+    background:#22c55e;
+    color:white;
+}
+
+.delete {
+    background:#ef4444;
+    color:white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">💰 كاشير الطلبات</div>
+<div class="totalBox" id="totalAll">جاري الحساب...</div>
+
+<div class="orders" id="orders"></div>
+
+<script>
+const firebaseConfig = {
+ apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
+ databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+db.ref('live_orders').on('value', snap=>{
+    let html="";
+    let totalAll = 0;
+
+    snap.forEach(order=>{
+        let o = order.val();
+
+        if(o.status === "paid") return;
+
+        totalAll += o.totalPrice || 0;
+
+        html += `
+        <div class="card">
+
+            <div>
+                <span class="badge">👤 ${o.cashier || "-"}</span>
+                <span class="badge">${o.type || "-"}</span>
+                <span class="badge">${o.type==="محلي" ? "🪑 "+(o.table||"-") : "🚗 "+(o.orderNum||"-")}</span>
+            </div>
+
+            <div class="items">
+        `;
+
+        o.items.forEach(i=>{
+            html += `${i.ar} × ${i.qty}<br>`;
+        });
+
+        html += `
+            </div>
+
+            <div class="price">💰 ${o.totalPrice} ريال</div>
+
+            <button class="btn pay" onclick="pay('${order.key}')">تحصيل الحساب</button>
+            <button class="btn delete" onclick="del('${order.key}')">إلغاء الطلب</button>
+
+        </div>`;
+    });
+
+    document.getElementById('orders').innerHTML = html;
+    document.getElementById('totalAll').innerText = "💰 إجمالي الكاش: " + totalAll + " ريال";
+});
+
+function pay(id){
+    if(confirm("تم الدفع؟")){
+        db.ref('live_orders/' + id).update({
+            status:"paid",
+            timePay: new Date().toISOString()
+        });
+    }
+}
+
+function del(id){
+    if(confirm("إلغاء الطلب؟")){
+        db.ref('live_orders/' + id).remove();
+    }
+}
+</script>
+
+</body>
+</html>
