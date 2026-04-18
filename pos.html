@@ -91,12 +91,26 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 // --- المتغيرات الأساسية ---
-let cart = [];
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 let allItems = {};
-// بنحاول نجيب الـ ID القديم لو موجود في ذاكرة المتصفح
-let currentOrderId = localStorage.getItem("orderId") || null; 
+let currentOrderId = localStorage.getItem("orderId") || null;
 let cashierName = localStorage.getItem("cashier") || prompt("اسم الكاشير؟");
-localStorage.setItem("cashier", cashierName);
+
+
+// 👇 حطي الكود هنا بالظبط 👇
+if(currentOrderId){
+    db.ref('live_orders/' + currentOrderId).once('value', snap=>{
+        let data = snap.val();
+        if(data && data.items){
+            cart = data.items.map(i=>({
+                ar: i.ar,
+                qty: i.qty,
+                price: i.p
+            }));
+            renderCart();
+        }
+    });
+}
 
 
 // 🔥 تحميل الأقسام
@@ -225,22 +239,23 @@ function sendOrder(){
 function saveOrder(order){
 
     if(currentOrderId){
-        // تحديث نفس الطلب
-        db.ref('live_orders/' + currentOrderId).update(order);
+        db.ref('live_orders/' + currentOrderId).update({
+            items: cart.map(i=>({
+                ar: i.ar,
+                qty: i.qty,
+                p: i.price,
+                dept: i.dept
+            })),
+            totalPrice: cart.reduce((t,i)=>t+(i.price*i.qty),0),
+            note: document.getElementById('note').value
+        });
     } else {
-        // أول مرة
-const ref = db.ref('live_orders').push(order);
-currentOrderId = ref.key;
-
-// 👇 مهم جدا
-localStorage.setItem("orderId", ref.key);
+        const ref = db.ref('live_orders').push(order);
+        currentOrderId = ref.key;
+        localStorage.setItem("orderId", ref.key);
     }
 
-// نسيب الكارت زي ما هو عشان نكمل عليه
-    alert("✅ تم إضافة الطلب على نفس الفاتورة");
-    document.getElementById('note').value = "";
-
-    alert("✅ تم إرسال الطلب");
+    alert("✅ تم إضافة الطلب لنفس الفاتورة");
 }
 
 function getNextTakeawayNumber() {
@@ -277,18 +292,18 @@ function completeOrder(){
 
     if(confirm("هل تم الدفع؟")){
         db.ref('live_orders/' + currentOrderId).update({
-            status: "تمت المحاسبة ✅",
+            status: "paid",
             accountingTime: new Date().toISOString()
         });
-        
-                // 🔥 مسح الـ ID من المتصفح ومن الكود عشان نبدأ "نضيف"
-        localStorage.removeItem("orderId"); 
 
-        currentOrderId = null; // 👈 هنا الصح بس
-        cart=[];
+        localStorage.removeItem("orderId");
+        localStorage.removeItem("cart");
+
+        currentOrderId = null;
+        cart = [];
         renderCart();
 
-        alert("✅ تم إنهاء الطلب");
+        alert("✅ تم إنهاء الفاتورة");
     }
 }
 
