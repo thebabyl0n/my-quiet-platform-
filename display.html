@@ -104,7 +104,7 @@
         style="background:#22c55e; border:none; color:white; border-radius:6px; padding:2px 8px;">➕</button>
     </div>
 </span>
-                   ${isCashier ? `<button onclick="removeItem('${orderId}', ${index})" 
+                   onclick="changeQty('${orderId}', ${index}, -item.qty)"
                    style="background:#ef4444; border:none; color:white; border-radius:6px; padding:2px 8px; cursor:pointer;">❌</button>` : ""}
                    ${price}
                    </div>`;
@@ -230,28 +230,28 @@ function requestCancel(id) {
             audio.play();
         }
     }
-    function removeItem(orderId, itemIndex) {
+function removeItem(orderId, itemIndex) {
     if(!confirm("حذف الصنف من الطلب؟")) return;
 
     database.ref('live_orders/' + orderId).once('value').then(snap => {
         const order = snap.val();
         if (!order || !order.items) return;
 
-        // حذف الصنف
+        // 👇 علم عليه إنه متكنسل
         order.items[itemIndex].cancelled = true;
 
-        // إعادة حساب السعر
+        // 👇 حساب السعر الصح
         let newTotal = 0;
         order.items.forEach(i => {
-            newTotal += (i.p * i.qty);
+            if(!i.cancelled){
+                newTotal += (i.p * i.qty);
+            }
         });
 
-        // تحديث في Firebase
         database.ref('live_orders/' + orderId).update({
             items: order.items,
             totalPrice: newTotal
         });
-
     });
 }
 
@@ -286,5 +286,3 @@ function changeQty(orderId, itemIndex, delta) {
 </script>
 </body>
 </html>
-
-
