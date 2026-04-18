@@ -109,15 +109,25 @@ db.ref('live_orders').on('value', snap=>{
     let totalAll = 0;
 
     snap.forEach(order=>{
-        let o = order.val();
+// ... (بداية الكود زي ما هي)
 
-        if(o.status === "paid") return;
+        // هنقسم الأصناف حسب القسم بتاعها
+        let itemsByDept = {
+            'barista': [],
+            'kitchen': [],
+            'dessert': []
+        };
 
-        totalAll += o.totalPrice || 0;
+        o.items.forEach(i => {
+            // بنشوف الصنف ده تبع أي قسم، لو مش متحدد بنعتبره باريستا افتراضياً
+            let dept = (i.dept || 'barista').toLowerCase().trim();
+            if(itemsByDept[dept]) {
+                itemsByDept[dept].push(`${i.ar} × ${i.qty}`);
+            }
+        });
 
         html += `
         <div class="card">
-
             <div>
                 <span class="badge">👤 ${o.cashier || "-"}</span>
                 <span class="badge">${o.type || "-"}</span>
@@ -125,16 +135,13 @@ db.ref('live_orders').on('value', snap=>{
             </div>
 
             <div class="items">
-        `;
-
-        o.items.forEach(i=>{
-            html += `${i.ar} × ${i.qty}<br>`;
-        });
-
-        html += `
+                ${itemsByDept['barista'].length > 0 ? `<div style="color:#3b82f6">☕ باريستا: <br>${itemsByDept['barista'].join('<br>')}</div>` : ''}
+                ${itemsByDept['kitchen'].length > 0 ? `<div style="color:#ef4444; margin-top:5px;">🍔 مطبخ: <br>${itemsByDept['kitchen'].join('<br>')}</div>` : ''}
+                ${itemsByDept['dessert'].length > 0 ? `<div style="color:#fbbf24; margin-top:5px;">🍰 حلا: <br>${itemsByDept['dessert'].join('<br>')}</div>` : ''}
             </div>
 
             <div class="price">💰 ${o.totalPrice} ريال</div>
+// ... (بقية الكود بتاع الأزرار زي ما هو)
 
             <button class="btn pay" onclick="pay('${order.key}')">تحصيل الحساب</button>
             <button class="btn delete" onclick="del('${order.key}')">إلغاء الطلب</button>
