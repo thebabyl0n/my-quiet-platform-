@@ -84,14 +84,26 @@
             let forMe = false;
             const finalNote = order.notes || order.note || "";
 
-           order.items.forEach((item, index) => {
+               order.items.forEach((item, index) => {
+            if(item.cancelled) return; // يخفيه
                 const itemDept = (item.dept || 'barista').toLowerCase().trim();
                 if (isCashier || itemDept === screenType) {
                     forMe = true;
                     const isItemReady = order[itemDept + 'Ready'] === true;
                     const price = isCashier ? `<span class="price-tag">${(item.p * item.qty).toFixed(2)} ريال</span>` : "";
               itemsHtml += `<div class="item">
-                   <span><b>${item.ar}</b> × ${item.qty} ${isItemReady?'✅':''}</span>
+<span>
+    <b>${item.ar}</b>
+    <div style="display:flex; gap:5px; align-items:center;">
+        <button onclick="changeQty('${orderId}', ${index}, -1)" 
+        style="background:#ef4444; border:none; color:white; border-radius:6px; padding:2px 8px;">➖</button>
+        
+        <span>${item.qty}</span>
+        
+        <button onclick="changeQty('${orderId}', ${index}, 1)" 
+        style="background:#22c55e; border:none; color:white; border-radius:6px; padding:2px 8px;">➕</button>
+    </div>
+</span>
                    ${isCashier ? `<button onclick="removeItem('${orderId}', ${index})" 
                    style="background:#ef4444; border:none; color:white; border-radius:6px; padding:2px 8px; cursor:pointer;">❌</button>` : ""}
                    ${price}
@@ -242,6 +254,37 @@ function requestCancel(id) {
 
     });
 }
+
+function changeQty(orderId, itemIndex, delta) {
+    database.ref('live_orders/' + orderId).once('value').then(snap => {
+        const order = snap.val();
+        if (!order || !order.items) return;
+
+        let item = order.items[itemIndex];
+
+        item.qty += delta;
+
+        // لو بقت صفر → اعتبره إلغاء
+        if (item.qty <= 0) {
+            item.cancelled = true;
+        }
+
+        // إعادة حساب السعر
+        let newTotal = 0;
+        order.items.forEach(i => {
+            if(!i.cancelled){
+                newTotal += (i.p * i.qty);
+            }
+        });
+
+        database.ref('live_orders/' + orderId).update({
+            items: order.items,
+            totalPrice: newTotal
+        });
+    });
+}
 </script>
 </body>
 </html>
+
+
