@@ -61,6 +61,19 @@ button {cursor:pointer;}
 
 <div class="right">
     <h3>🧾 الطلب</h3>
+
+    <!-- نوع الطلب -->
+    <select id="orderType">
+        <option value="محلي">محلي ☕</option>
+        <option value="سفري">سفري 🚗</option>
+    </select>
+
+    <!-- رقم الطاولة -->
+    <input id="tableNumber" placeholder="رقم الطاولة">
+
+    <!-- ملاحظة -->
+    <textarea id="note" placeholder="ملاحظة..."></textarea>
+
     <div class="cart" id="cart"></div>
     <div class="total" id="total">0 ريال</div>
 
@@ -78,6 +91,7 @@ const db = firebase.database();
 
 let cart = [];
 let allItems = {};
+let currentOrderId = null;
 let cashierName = localStorage.getItem("cashier") || prompt("اسم الكاشير؟");
 localStorage.setItem("cashier", cashierName);
 
@@ -176,24 +190,66 @@ function renderCart(){
 function sendOrder(){
     if(cart.length===0) return alert("فاضي!");
 
-    db.ref('live_orders').push({
+    const type = document.getElementById('orderType').value;
+
+    let order = {
         items: cart.map(i=>({
             ar: i.ar,
             qty: i.qty,
             p: i.price,
-            dept: i.dept // 👈 ده اللي بيسحب القسم من "المخزن" اللي في الصورة
+            dept: i.dept
         })),
         totalPrice: cart.reduce((t,i)=>t+(i.price*i.qty),0),
         cashier: cashierName,
         status: "pending",
+        note: document.getElementById('note').value,
+        type: type,
+        table: type === 'محلي' ? document.getElementById('tableNumber').value : null,
         time: new Date().toISOString()
-    });
+    };
+
+    // 🚗 سفري = رقم متسلسل
+    if(type === 'سفري'){
+        getNextTakeawayNumber().then(num=>{
+            order.orderNum = num;
+            saveOrder(order);
+        });
+    } else {
+        saveOrder(order);
+    }
+}
+
+function saveOrder(order){
+
+    if(currentOrderId){
+        // تحديث نفس الطلب
+        db.ref('live_orders/' + currentOrderId).update(order);
+    } else {
+        // أول مرة
+        const ref = db.ref('live_orders').push(order);
+        currentOrderId = null;
+    }
 
     cart=[];
     renderCart();
-    alert("✅ تم إرسال الطلب للأقسام");
+    document.getElementById('note').value = "";
+
+    alert("✅ تم إرسال الطلب");
 }
 
+function getNextTakeawayNumber() {
+    const ref = db.ref('counters/takeaway');
+
+    return ref.transaction(current => {
+        const today = new Date().toISOString().split('T')[0];
+
+        if (!current || current.date !== today) {
+            return { number: 1, date: today };
+        }
+
+        return { number: current.number + 1, date: today };
+    }).then(result => result.snapshot.val().number);
+}
 
 // 🧾 طباعة
 function printBill(){
@@ -209,6 +265,7 @@ function printBill(){
     win.document.write(content);
     win.print();
 }
+
 </script>
 
 </body>
