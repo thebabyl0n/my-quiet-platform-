@@ -87,11 +87,34 @@ const db = firebase.database();
 let cart = [];
 let allItems = {};
 let activeOrderId = null;
+// 1. سحب الأقسام من الداشبورد وعرضها
+db.ref('sub_categories').on('value', snap => {
+    let html = `<button class="cat-btn active" onclick="filterCat('all', this)">الكل</button>`;
+    snap.forEach(child => {
+        let cat = child.val();
+        html += `<button class="cat-btn" onclick="filterCat('${child.key}', this)">${cat.name}</button>`;
+    });
+    document.getElementById('categories').innerHTML = html;
+});
+
+// 2. دالة الفلترة عشان الأزرار تشتغل
+let currentCategory = 'all';
+function filterCat(catId, btn) {
+    currentCategory = catId;
+    if(btn) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+    let itemsArray = Object.values(allItems);
+    let filtered = catId === 'all' ? itemsArray : itemsArray.filter(i => i.categoryId === catId);
+    renderItems(filtered);
+}
+
 
 // تحميل الأصناف
 db.ref('menu_items').on('value', snap=>{
     allItems = snap.val() || {};
-    renderItems(Object.values(allItems));
+    filterCat(currentCategory);
 });
 
 // عرض الأصناف
