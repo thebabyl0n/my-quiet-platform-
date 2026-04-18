@@ -380,7 +380,13 @@ if (o.status === "تمت المحاسبة ✅" || o.status === "تم الترح�
                 liveRows = `<tr class="${rowClass}">
                     <td>${dateStr} | ${o.displayTime || '---'}</td>
                     <td>${o.type}</td>
-                    <td>${o.items ? o.items.map(i => i.ar).join(' + ') : '---'}</td>
+                    o.items ? o.items.map(i => {
+                    if(i.cancelled){
+                    return `<span style="color:red; text-decoration:line-through;">${i.ar}</span>`;
+    } else {
+                    return `<span>${i.ar}</span>`;
+    }
+ }).join(' + ') : '---'
                     <td style="color:var(--gold); font-weight:bold;">${price.toFixed(2)}</td>
                     <td><span class="timer-badge ${timerClass}">${waitTime} دقيقة</span></td>
                     <td style="color:${statusColor}; font-weight:bold;">${o.status || "قيد التحضير ⏳"}</td>
@@ -720,3 +726,5 @@ resetSystemDaily();
 </script>
 </body>
 </html>
+
+
