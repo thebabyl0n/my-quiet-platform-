@@ -195,10 +195,7 @@ function add(name){
     let cart = orders[currentOrderIndex] || [];
     orders[currentOrderIndex] = cart;
 
-    let found = cart.find(i=>i.ar===name);
-
     if(found) found.qty++;
-    else cart.push({...item, qty:1});
 
     renderCart();
 }
@@ -360,3 +357,4 @@ function change(i,d){
 
 </body>
 </html>
+
