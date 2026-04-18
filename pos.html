@@ -78,6 +78,7 @@ button {cursor:pointer;}
     <div class="total" id="total">0 ريال</div>
 
     <button class="send" onclick="sendOrder()">✅ إرسال الطلب</button>
+    <button class="send" style="background:#16a34a" onclick="completeOrder()">💰 تحصيل الحساب</button>
     <button class="print" onclick="printBill()">🧾 طباعة</button>
 </div>
 
@@ -89,9 +90,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// --- المتغيرات الأساسية ---
 let cart = [];
 let allItems = {};
-let currentOrderId = null;
+// بنحاول نجيب الـ ID القديم لو موجود في ذاكرة المتصفح
+let currentOrderId = localStorage.getItem("orderId") || null; 
 let cashierName = localStorage.getItem("cashier") || prompt("اسم الكاشير؟");
 localStorage.setItem("cashier", cashierName);
 
@@ -227,7 +230,7 @@ function saveOrder(order){
     } else {
         // أول مرة
         const ref = db.ref('live_orders').push(order);
-        currentOrderId = null;
+        currentOrderId = ref.key; // 👈 دي أهم سطر
     }
 
     cart=[];
@@ -264,6 +267,26 @@ function printBill(){
 
     win.document.write(content);
     win.print();
+}
+
+function completeOrder(){
+    if(!currentOrderId) return alert("مفيش طلب مفتوح");
+
+    if(confirm("هل تم الدفع؟")){
+        db.ref('live_orders/' + currentOrderId).update({
+            status: "تمت المحاسبة ✅",
+            accountingTime: new Date().toISOString()
+        });
+        
+                // 🔥 مسح الـ ID من المتصفح ومن الكود عشان نبدأ "نضيف"
+        localStorage.removeItem("orderId"); 
+
+        currentOrderId = null; // 👈 هنا الصح بس
+        cart=[];
+        renderCart();
+
+        alert("✅ تم إنهاء الطلب");
+    }
 }
 
 </script>
