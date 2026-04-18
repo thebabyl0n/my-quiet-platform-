@@ -245,11 +245,11 @@ if(type === "محلي"){
     order.orderNum = num;          // 👈 يتعرض في الأقسام
     orderPath = 'TA_' + num;
 }
-    db.ref('live_orders/' + orderPath).set(order);
+    
 
 let orderId = orderPath;
 
-db.ref('live_orders/' + orderId).set(order);
+db.ref('live_orders/' + orderPath).set(order);
 
 // 👇 أهم سطر (كان ناقصك)
 activeOrders.push(orderId);
@@ -267,23 +267,25 @@ function completeOrder(){
 
      let id = activeOrders[0]; // أول فاتورة
 
-    db.ref('live_orders/'+activeOrderId).update({
-        status:"تمت المحاسبة ✅",
-        accountingTime:new Date().toISOString()
-    });
+    db.ref('live_orders/'+id).update({
+    status:"تمت المحاسبة ✅",
+    accountingTime:new Date().toISOString()
+});
 
     cart = [];
     renderCart();
-    activeOrderId = null;
+    activeOrders.shift(); // يشيل أول فاتورة
 
     alert("تم التحصيل 💰");
 }
 
 // متابعة حالة الأقسام
 function watchOrderStatus(){
-    if(!activeOrderId) return;
+if(activeOrders.length === 0) return;
 
-    db.ref('live_orders/' + activeOrderId).on('value', snap => {
+let id = activeOrders[activeOrders.length - 1]; // آخر فاتورة
+
+db.ref('live_orders/' + id)
         let o = snap.val();
         if(!o) return;
 
