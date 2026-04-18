@@ -342,6 +342,11 @@ function generateReports(allOrders) {
             const id = child.key;
             const waitTime = getWaitTime(o);
             const price = parseFloat(o.totalPrice) || 0;
+
+// 💰 الحساب الصح
+           if (o.status === "تمت المحاسبة ✅" || o.status === "تم الترحيل للأرشيف 📦") {
+           totalSales += price;
+       }
             
             let dateStr = '---';
             if (o.date) {
@@ -383,9 +388,10 @@ function generateReports(allOrders) {
                     <td>${actionButtons}</td>
                 </tr>` + liveRows;
             } else {
-                // لو الطلب خلاص في الأرشيف
+
+    // لو الطلب خلاص في الأرشيف
                 doneCount++;
-                totalSales += price;
+                historyRows = `<tr>
                 historyRows = `<tr>
                     <td>${dateStr} | ${o.displayTime || '---'}</td>
                     <td>${o.type}</td>
