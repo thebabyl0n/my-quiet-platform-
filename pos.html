@@ -92,7 +92,7 @@ const db = firebase.database();
 
 let cart = [];
 let allItems = {};
-let activeOrderId = null;
+let activeOrders = [];
 
 // 2. دالة الفلترة عشان الأزرار تشتغل
 let currentCategory = 'all';
@@ -252,7 +252,7 @@ let orderId = orderPath;
 db.ref('live_orders/' + orderId).set(order);
 
 // 👇 أهم سطر (كان ناقصك)
-activeOrderId = orderId;
+activeOrders.push(orderId);
 
 // 👇 تابع الحالة
 watchOrderStatus();
@@ -263,7 +263,9 @@ alert("تم إرسال الطلب وفتح الفاتورة ✅");
 
 // تحصيل
 function completeOrder(){
-    if(!activeOrderId) return alert("مفيش طلب");
+     if(activeOrders.length === 0) return alert("مفيش طلب");
+
+     let id = activeOrders[0]; // أول فاتورة
 
     db.ref('live_orders/'+activeOrderId).update({
         status:"تمت المحاسبة ✅",
@@ -311,4 +313,3 @@ function closeShift(){
 
 </body>
 </html>
-
