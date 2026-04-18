@@ -53,7 +53,7 @@ button{margin:3px;padding:5px 10px}
 <body>
 
 <div class="left">
-<input id="search" placeholder="🔍 بحث">
+<input id="search" placeholder="🔍 بحث" oninput="searchItems(this.value)">
 <div class="main-depts" style="display:flex; gap:10px; margin-bottom:10px;">
     <button class="cat-btn" style="background:#c8a27c; flex:1;" onclick="loadSubDepts('barista')">☕ باريستا</button>
     <button class="cat-btn" style="background:#c8a27c; flex:1;" onclick="loadSubDepts('dessert')">🍰 حلا</button>
@@ -81,6 +81,7 @@ button{margin:3px;padding:5px 10px}
 <button onclick="sendOrder()">➕ إضافة</button>
 <button onclick="completeOrder()">💰 تحصيل</button>
 <button onclick="closeShift()">📊 تقفيل وردية</button>
+<button onclick="newOrder()">🆕 New</button>
 
 <script>
 const firebaseConfig = {
@@ -109,7 +110,7 @@ function loadSubDepts(mainName) {
     // 1. تلوين الزرار الكبير اللي ضغطت عليه (باريستا/حلا/مطبخ)
     // ملاحظة: لو مدي للزراير id أو class تقدر تميزهم بيه
     
-    let html = ""; // مش هنحط كلمة "الكل" هنا عشان إنت عايز تختار قسم فرعي الأول
+   let html = `<button class="cat-btn active" onclick="filterCat('all', this)">الكل</button>`;
     
     let foundAny = false;
     Object.keys(allSubCats).forEach(key => {
@@ -295,6 +296,16 @@ function watchOrderStatus(){
     });
 }
 
+function searchItems(text){
+    let itemsArray = Object.values(allItems);
+
+    let filtered = itemsArray.filter(i =>
+        i.ar.includes(text)
+    );
+
+    renderItems(filtered);
+}
+
 // تقفيل وردية
 function closeShift(){
     db.ref('live_orders').once('value', snap=>{
@@ -308,9 +319,16 @@ function closeShift(){
     });
 }
 
+function newOrder(){
+    cart = [];
+    renderCart();
+
+    document.getElementById('tableNumber').value = "";
+
+    alert("فاتورة جديدة 🆕");
+}
 
 </script>
 
 </body>
 </html>
-
