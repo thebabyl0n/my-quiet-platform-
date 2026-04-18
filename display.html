@@ -226,7 +226,7 @@ function requestCancel(id) {
         if (!order || !order.items) return;
 
         // حذف الصنف
-        order.items.splice(itemIndex, 1);
+        order.items[itemIndex].cancelled = true;
 
         // إعادة حساب السعر
         let newTotal = 0;
@@ -245,4 +245,3 @@ function requestCancel(id) {
 </script>
 </body>
 </html>
-
