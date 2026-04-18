@@ -114,17 +114,27 @@ db.ref('sub_categories').on('value', snap => {
 
 // 2. وظيفة عرض الأقسام الفرعية بناءً على القسم الرئيسي
 function loadSubDepts(mainName) {
-    let html = `<button class="cat-btn active" onclick="filterCat('all', this)">الكل</button>`;
+    // 1. تلوين الزرار الكبير اللي ضغطت عليه (باريستا/حلا/مطبخ)
+    // ملاحظة: لو مدي للزراير id أو class تقدر تميزهم بيه
     
+    let html = ""; // مش هنحط كلمة "الكل" هنا عشان إنت عايز تختار قسم فرعي الأول
+    
+    let foundAny = false;
     Object.keys(allSubCats).forEach(key => {
         let cat = allSubCats[key];
+        // بنفلتر الأقسام الفرعية اللي تابعة للقسم الكبير ده
         if (cat.mainDept === mainName || cat.parent === mainName) {
             html += `<button class="cat-btn" onclick="filterCat('${key}', this)">${cat.name}</button>`;
+            foundAny = true;
         }
     });
-    
-    document.getElementById('categories').innerHTML = html;
-    filterCat('all'); 
+
+    // 2. تحديث قائمة الأقسام الفرعية
+    document.getElementById('categories').innerHTML = html || "<p style='color:#666'>لا توجد أقسام فرعية</p>";
+
+    // 3. التعديل اللي إنت عايزه (إخفاء الأصناف)
+    // أول ما تدوس على باريستا، شاشة الأصناف تفضى وتستنى تختار قسم فرعي
+    document.getElementById('items').innerHTML = `<p style='text-align:center; width:100%; color:var(--gold);'>اختر قسماً فرعياً (مثل: ${mainName}) لعرض المنتجات</p>`;
 }
 
 function filterCat(catId, btn) {
