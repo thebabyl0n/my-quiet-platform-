@@ -93,15 +93,6 @@ const db = firebase.database();
 let cart = [];
 let allItems = {};
 let activeOrderId = null;
-// 1. سحب الأقسام من الداشبورد وعرضها
-db.ref('sub_categories').on('value', snap => {
-    let html = `<button class="cat-btn active" onclick="filterCat('all', this)">الكل</button>`;
-    snap.forEach(child => {
-        let cat = child.val();
-        html += `<button class="cat-btn" onclick="filterCat('${child.key}', this)">${cat.name}</button>`;
-    });
-    document.getElementById('categories').innerHTML = html;
-});
 
 // 2. دالة الفلترة عشان الأزرار تشتغل
 let currentCategory = 'all';
@@ -256,8 +247,6 @@ if(type === "محلي"){
 }
     db.ref('live_orders/' + orderPath).set(order);
 
-let orderId = type === "محلي" ? 'T_' + table : 'TA_' + Date.now();
-
 let orderId = orderPath;
 
 db.ref('live_orders/' + orderId).set(order);
@@ -296,11 +285,11 @@ function watchOrderStatus(){
         let o = snap.val();
         if(!o) return;
 
-        document.getElementById('statusBox').innerHTML = `
-        ☕ باريستا: ${o.baristaReady ? '✅' : '⏳'} |
-        🍳 مطبخ: ${o.kitchenReady ? '✅' : '⏳'} |
-        🍰 حلا: ${o.dessertReady ? '✅' : '⏳'}
-        `;
+document.getElementById('statusBox').innerHTML = `
+<span style="color:${o.baristaReady ? '#22c55e' : '#fbbf24'}">☕ باريستا</span> |
+<span style="color:${o.kitchenReady ? '#22c55e' : '#fbbf24'}">🍳 مطبخ</span> |
+<span style="color:${o.dessertReady ? '#22c55e' : '#fbbf24'}">🍰 حلا</span>
+`;
     });
 }
 
