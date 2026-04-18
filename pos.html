@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS - Alpha Shadow</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<style>
+body {font-family: sans-serif; background:#0f172a; color:white; margin:0; display:flex; height:100vh;}
+.left {width:65%; padding:15px;}
+.right {width:35%; background:#1e293b; padding:15px; display:flex; flex-direction:column;}
+
+input {width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;}
+
+.categories button {
+    margin:3px;
+    padding:8px 12px;
+    border:none;
+    border-radius:8px;
+    background:#334155;
+    color:white;
+    cursor:pointer;
+}
+
+.items {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+    gap:10px;
+}
+
+.item {
+    background:#1e293b;
+    padding:10px;
+    border-radius:10px;
+    cursor:pointer;
+    text-align:center;
+}
+
+.cart {flex:1; overflow:auto;}
+.cart-item {display:flex; justify-content:space-between; margin-bottom:8px;}
+
+button {cursor:pointer;}
+
+.total {font-size:20px; margin-top:10px;}
+.send {background:#22c55e; padding:12px; border:none; border-radius:10px; color:white;}
+.print {background:#3b82f6; padding:10px; border:none; border-radius:10px; margin-top:5px;}
+</style>
+</head>
+
+<body>
+
+<div class="left">
+    <input id="search" placeholder="🔍 ابحث عن صنف...">
+
+    <div class="categories" id="categories"></div>
+    <div class="items" id="items"></div>
+</div>
+
+<div class="right">
+    <h3>🧾 الطلب</h3>
+    <div class="cart" id="cart"></div>
+    <div class="total" id="total">0 ريال</div>
+
+    <button class="send" onclick="sendOrder()">✅ إرسال الطلب</button>
+    <button class="print" onclick="printBill()">🧾 طباعة</button>
+</div>
+
+<script>
+const firebaseConfig = {
+ apiKey: "AIzaSyCs_vLcVUudSP3_4QaSQHQB44WGjQK31Ac",
+ databaseURL: "alphashadow-23689-default-rtdb.firebaseio.com"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let cart = [];
+let allItems = {};
+let cashierName = localStorage.getItem("cashier") || prompt("اسم الكاشير؟");
+localStorage.setItem("cashier", cashierName);
+
+
+// 🔥 تحميل الأقسام
+db.ref('sub_categories').on('value', snap=>{
+    let html="";
+    snap.forEach(c=>{
+        html += `<button onclick="loadCategory('${c.key}')">${c.val().name}</button>`;
+    });
+    document.getElementById('categories').innerHTML = html;
+});
+
+
+// 🔥 تحميل الأصناف
+db.ref('menu_items').on('value', snap=>{
+    allItems = snap.val() || {};
+    renderItems(Object.values(allItems));
+});
+
+
+// 🔍 البحث
+document.getElementById('search').addEventListener('input', e=>{
+    const val = e.target.value.toLowerCase();
+    const filtered = Object.values(allItems).filter(i=>i.ar.toLowerCase().includes(val));
+    renderItems(filtered);
+});
+
+function loadCategory(catId){
+    const filtered = Object.values(allItems).filter(i=>i.categoryId===catId);
+    renderItems(filtered);
+}
+
+function renderItems(items){
+    let html="";
+    items.forEach(i=>{
+        html += `<div class="item" onclick="addToCart('${i.ar}')">
+            ${i.ar}<br>${i.price} ريال
+        </div>`;
+    });
+    document.getElementById('items').innerHTML = html;
+}
+
+
+// 🛒 إضافة للكارت
+function addToCart(name){
+    const item = Object.values(allItems).find(i=>i.ar===name);
+    let found = cart.find(i=>i.ar===name);
+
+    if(found){
+        found.qty++;
+    } else {
+        cart.push({...item, qty:1});
+    }
+
+    renderCart();
+}
+
+
+// ➕➖
+function changeQty(index,delta){
+    cart[index].qty += delta;
+
+    if(cart[index].qty<=0){
+        cart.splice(index,1);
+    }
+
+    renderCart();
+}
+
+
+// 🧾 عرض الكارت
+function renderCart(){
+    let html="";
+    let total=0;
+
+    cart.forEach((i,idx)=>{
+        total += i.price * i.qty;
+
+        html += `
+        <div class="cart-item">
+            <span>${i.ar} × ${i.qty}</span>
+            <div>
+                <button onclick="changeQty(${idx},1)">+</button>
+                <button onclick="changeQty(${idx},-1)">-</button>
+            </div>
+        </div>`;
+    });
+
+    document.getElementById('cart').innerHTML = html;
+    document.getElementById('total').innerText = total + " ريال";
+}
+
+
+// 🚀 إرسال الطلب
+function sendOrder(){
+    if(cart.length===0) return alert("فاضي!");
+
+    db.ref('live_orders').push({
+        items: cart.map(i=>({
+            ar: i.ar,
+            qty: i.qty,
+            p: i.price,
+            dept: i.dept // 👈 ده اللي بيسحب القسم من "المخزن" اللي في الصورة
+        })),
+        totalPrice: cart.reduce((t,i)=>t+(i.price*i.qty),0),
+        cashier: cashierName,
+        status: "pending",
+        time: new Date().toISOString()
+    });
+
+    cart=[];
+    renderCart();
+    alert("✅ تم إرسال الطلب للأقسام");
+}
+
+
+// 🧾 طباعة
+function printBill(){
+    let win = window.open('', '', 'width=300');
+    let content = `<h3>فاتورة</h3>`;
+
+    cart.forEach(i=>{
+        content += `<p>${i.ar} × ${i.qty}</p>`;
+    });
+
+    content += `<hr><b>${document.getElementById('total').innerText}</b>`;
+
+    win.document.write(content);
+    win.print();
+}
+</script>
+
+</body>
+</html>
