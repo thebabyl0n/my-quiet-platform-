@@ -343,8 +343,9 @@ function generateReports(allOrders) {
             const waitTime = getWaitTime(o);
             const price = parseFloat(o.totalPrice) || 0;
 
-           if (o.status === "تمت المحاسبة ✅" || o.status === "تم الترحيل للأرشيف 📦")
-           totalSales += price;
+if (o.status === "تمت المحاسبة ✅" || o.status === "تم الترحيل للأرشيف 📦") {
+    totalSales += price;
+}
             
             let dateStr = '---';
             if (o.date) {
@@ -389,7 +390,6 @@ function generateReports(allOrders) {
 
     // لو الطلب خلاص في الأرشيف
                 doneCount++;
-                historyRows = `<tr>
                 historyRows = `<tr>
                     <td>${dateStr} | ${o.displayTime || '---'}</td>
                     <td>${o.type}</td>
