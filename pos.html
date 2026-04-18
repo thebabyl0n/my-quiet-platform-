@@ -48,6 +48,20 @@ button{margin:3px;padding:5px 10px}
 }
 .item-p { color: #22c55e; display: block; font-size: 13px; margin-top: 5px; }
 
+.item-p { color: #22c55e; display: block; font-size: 13px; }
+
+/* 👇 ضيفي هنا */
+#orderTabs button{
+    font-weight:bold;
+    border-radius:10px;
+    padding:8px 12px;
+    transition:0.3s;
+}
+#orderTabs button:hover{
+    transform:scale(1.05);
+}
+
+/* 👇 وبعدين */
 </style>
 </head>
 
@@ -83,6 +97,9 @@ z-index: 999;
     </button>
 </div>
 <div class="right">
+
+<div id="orderTabs"></div> <!-- 👈 هنا بالظبط -->
+
 <h3>🧾 الفاتورة</h3>
 
 <select id="orderType">
@@ -190,22 +207,27 @@ function renderItems(items){
 
 // إضافة للكارت
 function add(name){
+
+    if(!orders[currentOrderIndex]){
+        orders[currentOrderIndex] = {items: []};
+    }
+
     let item = Object.values(allItems).find(i=>i.ar===name);
 
-    let cart = orders[currentOrderIndex] || [];
-    orders[currentOrderIndex] = cart;
+    let cart = orders[currentOrderIndex].items;
 
-    let found = cart.find(i=>i.ar===name); // 👈 السطر المهم
+    let found = cart.find(i=>i.ar===name);
 
     if(found) found.qty++;
-    else cart.push({...item, qty:1}); // 👈 كان ناقصك برضه
+    else cart.push({...item, qty:1});
 
     renderCart();
 }
 
 // عرض الكارت
 function renderCart(){
-    let cart = orders[currentOrderIndex] || [];
+
+    let cart = orders[currentOrderIndex]?.items || [];
 
     let html="", total=0;
 
@@ -225,19 +247,12 @@ function renderCart(){
     document.getElementById('total').innerText = total + " ريال";
 }
 
-// رقم سفري
-function getTakeaway(){
-    return db.ref('counter').transaction(c=>{
-        return (c||0)+1;
-    }).then(r=>r.snapshot.val());
-}
-
 // إرسال الطلب
 async function sendOrder(){
 
-    let cart = orders[currentOrderIndex];
+    let cart = orders[currentOrderIndex]?.items || [];
 
-    if(!cart || cart.length === 0) return alert("السلة فاضية!");
+    if(cart.length === 0) return alert("السلة فاضية!");
 
     let type = document.getElementById('orderType').value;
     let table = document.getElementById('tableNumber').value;
@@ -266,7 +281,18 @@ async function sendOrder(){
         orderPath = 'TA_' + num;
     }
 
+    // حفظ الطلب الأساسي
     db.ref('live_orders/' + orderPath).set(order);
+
+    // 🔥 حفظ في الوردية (الجديد)
+    let shiftId = localStorage.getItem("shiftId");
+
+    if(!shiftId){
+        shiftId = "shift_" + Date.now();
+        localStorage.setItem("shiftId", shiftId);
+    }
+
+    db.ref('shifts/' + shiftId + '/' + orderPath).set(order);
 
     activeOrders.push(orderPath);
 
@@ -275,7 +301,6 @@ async function sendOrder(){
     alert("تم إرسال الطلب ✅");
 }
 
-// تحصيل
 function completeOrder(){
 
     if(activeOrders.length === 0) return alert("مفيش طلب");
@@ -287,13 +312,32 @@ function completeOrder(){
         accountingTime:new Date().toISOString()
     });
 
-    orders[currentOrderIndex] = []; // 👈 أهم سطر
+    // 👇 امسحي الفاتورة الحالية بس مش كل النظام
+    orders[currentOrderIndex].items = [];
 
     renderCart();
 
     activeOrders.shift();
 
     alert("تم التحصيل 💰");
+}
+
+function newOrder(){
+    let orderNumber = Date.now(); // رقم فريد
+
+    orders.push({
+        items: [],
+        orderNumber: orderNumber
+    });
+
+    currentOrderIndex = orders.length - 1;
+
+    document.getElementById('tableNumber').value = "";
+
+    renderCart();
+    renderOrderTabs();
+
+    alert("تم فتح فاتورة رقم " + orderNumber);
 }
 
 // متابعة حالة الأقسام
@@ -326,36 +370,48 @@ function searchItems(text){
 
 // تقفيل وردية
 function closeShift(){
-    db.ref('live_orders').once('value', snap=>{
+
+    let shiftId = localStorage.getItem("shiftId");
+
+    db.ref('shifts/' + shiftId).once('value', snap=>{
         let total=0;
+
         snap.forEach(o=>{
-            if(o.val().status==="paid"){
-                total += o.val().totalPrice;
-            }
+            total += o.val().totalPrice || 0;
         });
-        alert("الإجمالي: "+total+" ريال");
+
+        alert("إجمالي الوردية: " + total + " ريال");
+
+        localStorage.removeItem("shiftId");
     });
 }
 
-function newOrder(){
-    orders.push([]); // فاتورة جديدة
-    currentOrderIndex = orders.length - 1;
+function renderOrderTabs(){
+    let html = "";
 
-    document.getElementById('tableNumber').value = "";
+    orders.forEach((o, index)=>{
+        html += `
+        <button onclick="switchOrder(${index})" style="
+            background:${index === currentOrderIndex ? '#22c55e' : '#334155'};
+            color:white;
+            margin:3px;
+        ">
+        🧾 ${o.orderNumber || index + 1}
+        </button>`;
+    });
 
-    renderCart();
-
-    alert("تم فتح فاتورة جديدة 🆕");
+    document.getElementById("orderTabs").innerHTML = html;
 }
 
-function change(i,d){
-    let cart = orders[currentOrderIndex];
-
-    cart[i].qty += d;
-    if(cart[i].qty<=0) cart.splice(i,1);
-
+function switchOrder(index){
+    currentOrderIndex = index;
     renderCart();
+    renderOrderTabs();
 }
+
+// أول ما الصفحة تفتح
+newOrder();
+
 </script>
 
 </body>
