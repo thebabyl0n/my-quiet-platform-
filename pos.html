@@ -246,10 +246,8 @@ if(type === "محلي"){
     orderPath = 'TA_' + num;
 }
     
-
 let orderId = orderPath;
-
-db.ref('live_orders/' + orderPath).set(order);
+db.ref('live_orders/' + orderId).set(order);
 
 // 👇 أهم سطر (كان ناقصك)
 activeOrders.push(orderId);
@@ -281,19 +279,19 @@ function completeOrder(){
 
 // متابعة حالة الأقسام
 function watchOrderStatus(){
-if(activeOrders.length === 0) return;
+    if(activeOrders.length === 0) return;
 
-let id = activeOrders[activeOrders.length - 1]; // آخر فاتورة
+    let id = activeOrders[activeOrders.length - 1];
 
-db.ref('live_orders/' + id)
+    db.ref('live_orders/' + id).on('value', snap => {
         let o = snap.val();
         if(!o) return;
 
-document.getElementById('statusBox').innerHTML = `
-<span style="color:${o.baristaReady ? '#22c55e' : '#fbbf24'}">☕ باريستا</span> |
-<span style="color:${o.kitchenReady ? '#22c55e' : '#fbbf24'}">🍳 مطبخ</span> |
-<span style="color:${o.dessertReady ? '#22c55e' : '#fbbf24'}">🍰 حلا</span>
-`;
+        document.getElementById('statusBox').innerHTML = `
+        <span style="color:${o.baristaReady ? '#22c55e' : '#fbbf24'}">☕ باريستا</span> |
+        <span style="color:${o.kitchenReady ? '#22c55e' : '#fbbf24'}">🍳 مطبخ</span> |
+        <span style="color:${o.dessertReady ? '#22c55e' : '#fbbf24'}">🍰 حلا</span>
+        `;
     });
 }
 
@@ -315,3 +313,4 @@ function closeShift(){
 
 </body>
 </html>
+
