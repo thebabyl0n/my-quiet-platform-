@@ -54,6 +54,11 @@ button{margin:3px;padding:5px 10px}
 
 <div class="left">
 <input id="search" placeholder="🔍 بحث">
+<div class="main-depts" style="display:flex; gap:10px; margin-bottom:10px;">
+    <button class="cat-btn" style="background:#c8a27c; flex:1;" onclick="loadSubDepts('barista')">☕ باريستا</button>
+    <button class="cat-btn" style="background:#c8a27c; flex:1;" onclick="loadSubDepts('dessert')">🍰 حلا</button>
+    <button class="cat-btn" style="background:#c8a27c; flex:1;" onclick="loadSubDepts('kitchen')">🍳 مطبخ</button>
+</div>
 <div id="categories" class="cat-container"></div>
 <div id="items"></div>
 </div>
@@ -99,7 +104,29 @@ db.ref('sub_categories').on('value', snap => {
 
 // 2. دالة الفلترة عشان الأزرار تشتغل
 let currentCategory = 'all';
-// دالة الفلترة المعدلة للربط مع الداشبورد
+let allSubCats = {}; 
+
+// 1. سحب كل الأقسام الفرعية وتخزينها
+db.ref('sub_categories').on('value', snap => {
+    allSubCats = snap.val() || {};
+    loadSubDepts('barista'); // يفتح أوتوماتيك على الباريستا
+});
+
+// 2. وظيفة عرض الأقسام الفرعية بناءً على القسم الرئيسي
+function loadSubDepts(mainName) {
+    let html = `<button class="cat-btn active" onclick="filterCat('all', this)">الكل</button>`;
+    
+    Object.keys(allSubCats).forEach(key => {
+        let cat = allSubCats[key];
+        if (cat.mainDept === mainName || cat.parent === mainName) {
+            html += `<button class="cat-btn" onclick="filterCat('${key}', this)">${cat.name}</button>`;
+        }
+    });
+    
+    document.getElementById('categories').innerHTML = html;
+    filterCat('all'); 
+}
+
 function filterCat(catId, btn) {
     currentCategory = catId;
     
