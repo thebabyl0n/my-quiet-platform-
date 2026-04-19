@@ -417,28 +417,27 @@ function login(){
         return;
     }
 
-    localStorage.setItem("cashier", name);
+    db.ref('users/' + name).once('value', snap => {
 
-    document.getElementById("loginBox").style.display = "none";
+        let data = snap.val();
 
-    startShift();
-}
+        if(!data){
+            alert("المستخدم غير موجود ❌");
+            return;
+        }
 
-function startShift(){
+        if(data.pass !== pass){
+            alert("كلمة السر غلط ❌");
+            return;
+        }
 
-    let cashier = localStorage.getItem("cashier");
+        // ✅ تسجيل دخول ناجح
+        localStorage.setItem("cashier", name);
 
-    let shiftId = localStorage.getItem("shiftId");
+        document.getElementById("loginBox").style.display = "none";
 
-    if(!shiftId){
-        shiftId = "shift_" + Date.now();
-        localStorage.setItem("shiftId", shiftId);
-
-        db.ref('shifts/' + shiftId).set({
-            cashier: cashier,
-            startTime: new Date().toISOString()
-        });
-    }
+        startShift();
+    });
 }
 
 // تقفيل وردية
