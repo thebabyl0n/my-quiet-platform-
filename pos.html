@@ -357,13 +357,6 @@ db.ref('sub_categories').on('value', snap => {
     loadSubDepts('barista'); // يفتح أوتوماتيك على الباريستا
 });
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 // 2. وظيفة عرض الأقسام الفرعية بناءً على القسم الرئيسي
 function loadSubDepts(mainName) {
     // 1. تلوين الزرار الكبير اللي ضغطت عليه (باريستا/حلا/مطبخ)
@@ -380,13 +373,6 @@ function loadSubDepts(mainName) {
             foundAny = true;
         }
     });
-    
-    let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
     // 2. تحديث قائمة الأقسام الفرعية
     document.getElementById('categories').innerHTML = html || "<p style='color:#666'>لا توجد أقسام فرعية</p>";
@@ -395,13 +381,6 @@ db.ref('main_categories').on('value', snap => {
     // أول ما تدوس على باريستا، شاشة الأصناف تفضى وتستنى تختار قسم فرعي
     document.getElementById('items').innerHTML = `<p style='text-align:center; width:100%; color:var(--gold);'>اختر قسماً فرعياً (مثل: ${mainName}) لعرض المنتجات</p>`;
 }
-
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 function filterCat(catId, btn) {
     currentCategory = catId;
@@ -429,14 +408,6 @@ db.ref('menu_items').on('value', snap=>{
     filterCat(currentCategory);
 });
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
-
 // عرض الأصناف
 function renderItems(items){
     let html="";
@@ -450,12 +421,6 @@ function renderItems(items){
     document.getElementById('items').innerHTML = html;
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 function renderTables(){
 
@@ -487,13 +452,6 @@ function renderTables(){
 
     });
 }
-
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 function selectTable(num){
 
@@ -539,13 +497,6 @@ function selectTable(num){
     });
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 // إضافة للكارت
 function add(name){
 
@@ -570,13 +521,6 @@ if(!orders[currentOrderIndex]){
     saveOrdersToFirebase();
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 function restoreOrders(){
 
     loadLocalOrders();
@@ -587,13 +531,6 @@ function restoreOrders(){
 
     alert("تم استرجاع الطلبات 🔄");
 }
-
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 // عرض الكارت
 function renderCart(){
@@ -637,13 +574,6 @@ function renderCart(){
     document.getElementById('total').innerText = total + " ريال";
 
 }
-
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 async function getTakeaway(){
     let snap = await db.ref('takeaway_counter').once('value');
@@ -725,13 +655,6 @@ let order = {
     alert("تم إرسال الطلب ✅");
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 function completeOrder(){
 
     let id = orders[currentOrderIndex]?.orderPath;
@@ -758,13 +681,6 @@ function completeOrder(){
 
     newOrder();
 }
-
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 function printBill(){
 
@@ -831,13 +747,6 @@ function printBill(){
     w.close();
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 function newOrder(){
 
     let orderNumber = Date.now();
@@ -861,13 +770,6 @@ function newOrder(){
         alert("تم فتح فاتورة رقم " + orderNumber);
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 // متابعة حالة الأقسام
 function watchOrderStatus(){
 
@@ -887,12 +789,6 @@ function watchOrderStatus(){
     });
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 let currentNoteIndex = null;
 
@@ -906,23 +802,9 @@ function openNotePopup(index){
     document.getElementById("notePopup").style.display = "flex";
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 function closeNotePopup(){
     document.getElementById("notePopup").style.display = "none";
 }
-
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 function saveNote(){
     let value = document.getElementById("popupNote").value;
@@ -936,13 +818,6 @@ function saveNote(){
     closeNotePopup();
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 function searchItems(text){
     let itemsArray = Object.values(allItems);
 
@@ -952,13 +827,6 @@ function searchItems(text){
 
     renderItems(filtered);
 }
-
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 function login(){
 
@@ -1002,13 +870,6 @@ function login(){
     });
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 // تقفيل وردية
 function closeShift(){
 
@@ -1027,13 +888,6 @@ function closeShift(){
     });
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 function logout(){
 
     sessionStorage.removeItem("cashier"); // ✅ الصح
@@ -1048,14 +902,6 @@ function switchOrder(index){
     renderCart();
     renderOrderTabs();
 }
-
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 
 // 👇 حطي هنا بالظبط
 function renderOrderTabs(){
@@ -1103,13 +949,6 @@ function renderOrderTabs(){
     document.getElementById("orderTabs").innerHTML = html;
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 function closeTab(index){
 
     // لو دي الفاتورة الحالية
@@ -1131,14 +970,6 @@ function closeTab(index){
     renderCart();
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
-
 function getTodaySales(){
     db.ref('live_orders').once('value', snap=>{
         let total = 0;
@@ -1153,12 +984,6 @@ function getTodaySales(){
     });
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 window.onload = function(){
 
@@ -1189,15 +1014,7 @@ window.onload = function(){
         document.getElementById("orderCount").innerText = count;
     });
 }
-
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-    
-    
+        
 function toggleSales(){
     let box = document.getElementById("salesBox");
 
@@ -1213,13 +1030,6 @@ function toggleSales(){
     }
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 function changeView(type){
 
     if(type === "day"){
@@ -1229,13 +1039,6 @@ function changeView(type){
     }
 
 }
-
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 function getSalesPerMonth(){
 
@@ -1259,13 +1062,6 @@ function getSalesPerMonth(){
         drawChart(months);
     });
 }
-
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 let chartInstance;
 
@@ -1313,13 +1109,6 @@ function drawChart(data){
     });
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 
     function topItems(){
     let map = {};
@@ -1356,12 +1145,6 @@ db.ref('main_categories').on('value', snap => {
     });
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 function saveOrdersToFirebase(){
     let cashier = sessionStorage.getItem("cashier");
@@ -1370,23 +1153,10 @@ function saveOrdersToFirebase(){
     saveLocalOrders(); // 👈 مهم جدًا
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
-
 function saveLocalOrders(){
     localStorage.setItem("orders_backup", JSON.stringify(orders));
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 function loadLocalOrders(){
     let data = localStorage.getItem("orders_backup");
@@ -1395,13 +1165,6 @@ function loadLocalOrders(){
         orders = JSON.parse(data);
     }
 }
-
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 function getTopItems(){
 
@@ -1431,12 +1194,6 @@ function getTopItems(){
     });
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 let pieInstance;
 
@@ -1477,12 +1234,6 @@ function drawPieChart(data){
     });
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 function getSalesPerDay(){
 
@@ -1509,12 +1260,6 @@ function getSalesPerDay(){
     });
 }
 
-let mainCategories = {};
-
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
 
 // 👇 هنا
 getSalesPerDay();
