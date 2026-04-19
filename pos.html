@@ -689,6 +689,9 @@ function completeOrder(){
     if(!id){
         return alert("الطلب لسه متبعتش ❌");
     }
+    
+        // 👇 اطبع الأول
+    printBill();
 
     // ❌ بدل update
     // ✅ امسح الأوردر
@@ -703,6 +706,7 @@ function completeOrder(){
     renderCart();
     renderOrderTabs();
     renderTables(); // 👈 مهم جدا
+    
 
     alert("تم التحصيل 💰");
 
@@ -958,15 +962,62 @@ function closeShift(){
     let shiftId = localStorage.getItem("shiftId");
 
     db.ref('shifts/' + shiftId).once('value', snap=>{
-        let total=0;
+
+        let total = 0;
+        let count = 0;
+        let ordersHTML = "";
 
         snap.forEach(o=>{
-            total += o.val().totalPrice || 0;
+            let data = o.val();
+
+            total += data.totalPrice || 0;
+            count++;
+
+            ordersHTML += `
+            <tr>
+                <td>${data.orderNum || "-"}</td>
+                <td>${data.totalPrice}</td>
+                <td>${data.type}</td>
+            </tr>`;
         });
 
-        alert("إجمالي الوردية: " + total + " ريال");
+        let html = `
+        <html dir="rtl">
+        <body style="font-family:sans-serif;text-align:center;">
+
+        <h2>📊 تقرير الوردية</h2>
+        <p>${new Date().toLocaleString()}</p>
+
+        <table border="1" style="width:100%;margin-top:10px;">
+            <tr>
+                <th>رقم الطلب</th>
+                <th>الإجمالي</th>
+                <th>النوع</th>
+            </tr>
+
+            ${ordersHTML}
+        </table>
+
+        <h3>عدد الطلبات: ${count}</h3>
+        <h3>الإجمالي: ${total} ريال</h3>
+
+        </body>
+        </html>
+        `;
+
+        let w = window.open("", "_blank");
+
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
+
+        // 👇 طباعة تلقائي
+        setTimeout(() => {
+            w.print();
+        }, 500);
 
         localStorage.removeItem("shiftId");
+
     });
 }
 
