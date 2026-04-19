@@ -687,8 +687,8 @@ function searchItems(text){
 
 function login(){
 
-    let name = document.getElementById("user").value;
-    let pass = document.getElementById("pass").value;
+    let name = document.getElementById("user").value.trim();
+    let pass = document.getElementById("pass").value.trim();
 
     if(!name || !pass){
         alert("اكتب البيانات");
@@ -699,20 +699,22 @@ function login(){
 
         let data = snap.val();
 
+        console.log("DATA:", data); // 👈 مهم عشان نشوف
+
         if(!data){
             alert("المستخدم غير موجود ❌");
             return;
         }
 
-        if(data.pass !== pass){
+        if(data.pass != pass){ // 👈 خليها != مش !==
             alert("كلمة السر غلط ❌");
             return;
         }
 
-        // ✅ تسجيل دخول ناجح
         sessionStorage.setItem("cashier", name);
 
         document.getElementById("loginBox").style.display = "none";
+        document.getElementById("cashierName").innerText = "👤 " + name;
 
         startShift();
     });
