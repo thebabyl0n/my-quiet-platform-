@@ -10,74 +10,90 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+
+:root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --soft: #020617;
+    --green: #22c55e;
+    --blue: #3b82f6;
+    --text: #ffffff;
+    --muted: #94a3b8;
+}
+
 body {
-    background: linear-gradient(135deg, #020617, #0f172a);
-    color: white;
+    background: var(--bg);
+    color: var(--text);
     font-family: 'Cairo', sans-serif;
     display: grid;
     grid-template-columns: 60% 40%;
     height: 100vh;
     margin: 0;
+    gap: 10px;
+    padding: 10px;
+}
+
+/* كروت عامة */
+.card, .left, .right {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
 
 /* الهيدر */
 .header {
-    background: linear-gradient(90deg, #22c55e, #16a34a);
+    background: linear-gradient(90deg, #020617, #1e293b);
     padding: 15px;
     border-radius: 16px;
-    margin-bottom: 15px;
-    font-size: 22px;
-    text-align: center;
-    font-weight: bold;
-    box-shadow: 0 5px 20px rgba(34,197,94,0.4);
+    font-size: 20px;
+    display: flex;
+    justify-content: space-between;
 }
 
-/* البوكسات */
-.left, .right {
-    background: rgba(30,41,59,0.8);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+/* البحث */
+#search {
+    background: var(--soft);
+    border: none;
+    padding: 10px;
+    border-radius: 12px;
+    color: white;
 }
 
 /* الأزرار */
 button {
     border: none;
     border-radius: 12px;
-    padding: 10px 15px;
+    padding: 10px;
     cursor: pointer;
-    transition: 0.3s;
     font-weight: bold;
-    background: linear-gradient(145deg, #334155, #1e293b);
-    color: white;
+    transition: 0.3s;
 }
 
 button:hover {
-    transform: scale(1.08);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    transform: scale(1.05);
 }
 
-/* أزرار ملونة */
-.btn-green { background: linear-gradient(45deg,#22c55e,#16a34a); }
-.btn-red { background: linear-gradient(45deg,#ef4444,#b91c1c); }
-.btn-yellow { background: linear-gradient(45deg,#f59e0b,#d97706); }
-.btn-blue { background: linear-gradient(45deg,#3b82f6,#1d4ed8); }
+/* ألوان */
+.btn-green { background: var(--green); }
+.btn-blue { background: var(--blue); }
+.btn-red { background: #ef4444; }
+.btn-yellow { background: #f59e0b; }
 
 /* الأصناف */
 #items {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
 }
 
 .item {
-    background: linear-gradient(145deg,#020617,#1e293b);
-    border-radius: 18px;
+    background: var(--card);
+    border-radius: 16px;
     padding: 10px;
-    border: 1px solid #334155;
     text-align: center;
     transition: 0.3s;
+    border: 1px solid #334155;
 }
 
 .item:hover {
@@ -87,76 +103,58 @@ button:hover {
 
 .item img {
     width: 100%;
-    height: 80px;
+    height: 100px;
     object-fit: cover;
     border-radius: 12px;
 }
 
-/* السعر */
 .item-p {
-    color: #22c55e;
-    font-size: 14px;
+    color: var(--green);
     margin-top: 5px;
+}
+
+/* زر + */
+.item button {
+    margin-top: 5px;
+    background: var(--green);
+    color: white;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
 }
 
 /* الكارت */
 .cart-item {
-    background: linear-gradient(145deg,#020617,#0f172a);
-    border: 1px solid #334155;
-    border-radius: 14px;
-    padding: 12px;
-    margin-bottom: 10px;
+    background: var(--soft);
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 8px;
 }
 
 /* الإجمالي */
 #total {
-    font-size: 24px;
-    font-weight: bold;
-    margin-top: 10px;
-    color: #22c55e;
+    font-size: 22px;
+    color: var(--green);
     text-align: center;
+    margin-top: 10px;
 }
+
+/* الطاولات */
+.table {
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.free { background: #22c55e; }
+.busy { background: #ef4444; }
+.open { background: #f59e0b; }
 
 /* التابات */
 #orderTabs button {
-    margin: 3px;
-    border-radius: 10px;
-}
-
-/* الترابيزات */
-.table {
-    padding: 15px;
-    border-radius: 12px;
-    text-align: center;
-    cursor: pointer;
-    font-weight: bold;
-    transition: 0.3s;
-}
-
-.table:hover {
-    transform: scale(1.05);
-}
-
-.free { background: linear-gradient(45deg,#22c55e,#16a34a); }
-.busy { background: linear-gradient(45deg,#ef4444,#b91c1c); }
-.open { background: linear-gradient(45deg,#f59e0b,#d97706); }
-
-/* السيرش */
-#search {
-    background: #020617;
-    color: white;
-    border: 1px solid #334155;
-}
-
-/* اللوجين */
-#loginBox {
-    background: radial-gradient(circle, #020617, #0f172a);
-}
-
-#loginBox input {
-    background: #020617;
-    color: white;
-    border: 1px solid #334155;
+    border-radius: 8px;
+    margin: 2px;
 }
 
 </style>
@@ -426,10 +424,17 @@ function renderItems(items){
 
     items.forEach(i=>{
         html += `
-        <div class="item" onclick="add('${i.id}')">
+<div class="item">
 
-            <img src="${i.img || 'https://via.placeholder.com/150'}"
-            onerror="this.src='https://via.placeholder.com/150'"
+    <img src="${i.img || 'https://via.placeholder.com/150'}">
+
+    <strong>${i.ar}</strong>
+    <div class="item-p">${i.price} ريال</div>
+
+    <button onclick="add('${i.id}')">+</button>
+
+</div>
+`;
             style="
                 width:100%;
                 height:80px;
@@ -970,35 +975,54 @@ function closeShift(){
     db.ref('shifts/' + shiftId).once('value', snap=>{
 
         let total = 0;
-        let details = "";
+        let rows = "";
 
         snap.forEach(o=>{
             let order = o.val();
 
             total += order.totalPrice || 0;
 
-            details += `
+            let itemsText = "";
+
+            if(order.items){
+                order.items.forEach(i=>{
+                    itemsText += `${i.ar} x${i.qty} <br>`;
+                });
+            }
+
+            rows += `
             <tr>
                 <td>${order.type}</td>
                 <td>${order.totalPrice}</td>
                 <td>${new Date(order.time).toLocaleTimeString()}</td>
+                <td>${itemsText}</td>
             </tr>`;
         });
 
         let html = `
         <html dir="rtl">
-        <body style="font-family:sans-serif;text-align:center;">
-        
+        <head>
+        <style>
+            body{font-family:sans-serif;text-align:center;}
+            table{width:100%;border-collapse:collapse;margin-top:10px;}
+            td,th{border:1px solid #000;padding:5px;}
+            h2{margin-bottom:10px;}
+        </style>
+        </head>
+
+        <body>
+
         <h2>📊 تقرير الوردية</h2>
 
-        <table style="width:100%;border-collapse:collapse;">
-        <tr>
-            <th>النوع</th>
-            <th>السعر</th>
-            <th>الوقت</th>
-        </tr>
+        <table>
+            <tr>
+                <th>النوع</th>
+                <th>السعر</th>
+                <th>الوقت</th>
+                <th>التفاصيل</th>
+            </tr>
 
-        ${details}
+            ${rows}
         </table>
 
         <h3>💰 الإجمالي: ${total} ريال</h3>
@@ -1013,11 +1037,13 @@ function closeShift(){
         w.document.write(html);
         w.document.close();
 
+        // 👇 يطبع لوحده
         setTimeout(()=>{
             w.print();
         },500);
 
         localStorage.removeItem("shiftId");
+
     });
 }
 
