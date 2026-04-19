@@ -690,23 +690,27 @@ function login(){
     let name = document.getElementById("user").value.trim();
     let pass = document.getElementById("pass").value.trim();
 
+    console.log("entered:", name, pass); // 👈 هنا
+
     if(!name || !pass){
         alert("اكتب البيانات");
         return;
     }
 
+    alert("جاري الفحص...");
+
     db.ref('users/' + name).once('value', snap => {
 
         let data = snap.val();
 
-        console.log("DATA:", data); // 👈 مهم عشان نشوف
+        console.log("firebase:", data); // 👈 وهنا
 
         if(!data){
             alert("المستخدم غير موجود ❌");
             return;
         }
 
-        if(String(data.pass) !== String(pass)){ // 👈 خليها != مش !==
+        if(String(data.pass) !== String(pass)){
             alert("كلمة السر غلط ❌");
             return;
         }
