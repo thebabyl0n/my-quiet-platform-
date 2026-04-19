@@ -232,7 +232,7 @@ function add(name){
 
     if(!orders[currentOrderIndex]){
         orders[currentOrderIndex] = {items: []};
-    }
+    }    
 
     let item = Object.values(allItems).find(i=>i.ar===name);
 
@@ -244,6 +244,8 @@ function add(name){
     else cart.push({...item, qty:1});
 
     renderCart();
+    
+    saveOrdersToFirebase();
 }
 
 // عرض الكارت
@@ -337,7 +339,7 @@ function completeOrder(){
     if(activeOrders.length === 0) return alert("مفيش طلب");
 
     let id = activeOrders[0];
-
+    
     db.ref('live_orders/'+id).update({
         status:"تمت المحاسبة ✅",
         accountingTime:new Date().toISOString()
@@ -346,6 +348,8 @@ function completeOrder(){
     // 👇 نحذف الفاتورة من الأساس
     orders.splice(currentOrderIndex, 1);
     currentOrderIndex = 0;
+    
+    saveOrdersToFirebase();
 
     renderCart();
     renderOrderTabs();
@@ -362,6 +366,8 @@ function newOrder(){
         items: [],
         orderNumber: orderNumber
     });
+    
+    saveOrdersToFirebase();
 
     currentOrderIndex = orders.length - 1;
 
@@ -480,18 +486,36 @@ function renderOrderTabs(){
 }
 window.onload = function(){
 
+        db.ref('open_orders/' + cashier).once('value', snap => {
+
+            let data = snap.val();
+
+            if(data){
+                orders = data;
+            }
+
+            if(orders.length === 0){
+                newOrder();
+            }
+
+            renderOrderTabs();
+            renderCart();
+        });
+
+    }
+}
+
+function saveOrdersToFirebase(){
+
     let cashier = localStorage.getItem("cashier");
 
-    if(cashier){
-        document.getElementById("loginBox").style.display = "none";
-        startShift(); // 👈 ضيفي دي بس
-    }
+    db.ref('open_orders/' + cashier).set(orders);
 }
 
 // 👇 ده يفضل يفضل زي ما هو
 // أول ما الصفحة تفتح
 if(orders.length === 0){
-    newOrder();
+
 }
 
 </script>
