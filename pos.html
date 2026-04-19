@@ -88,17 +88,17 @@ button:hover {
 }
 
 .item {
-    background: var(--card);
+    background: #1e293b;
     border-radius: 16px;
     padding: 10px;
     text-align: center;
     transition: 0.3s;
-    border: 1px solid #334155;
+    position: relative;
 }
 
 .item:hover {
-    transform: translateY(-5px) scale(1.05);
-    background: #334155;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
 }
 
 .item img {
@@ -108,19 +108,33 @@ button:hover {
     border-radius: 12px;
 }
 
+.item strong {
+    display: block;
+    margin-top: 8px;
+}
+
 .item-p {
-    color: var(--green);
-    margin-top: 5px;
+    color: #22c55e;
+    font-weight: bold;
+    margin: 5px 0;
 }
 
 /* زر + */
 .item button {
-    margin-top: 5px;
-    background: var(--green);
+    background: #22c55e;
+    border: none;
     color: white;
-    border-radius: 50%;
     width: 35px;
     height: 35px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.item button:hover {
+    background: #16a34a;
+    transform: scale(1.1);
 }
 
 /* الكارت */
