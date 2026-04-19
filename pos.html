@@ -485,23 +485,32 @@ function renderOrderTabs(){
 }
 window.onload = function(){
 
-        db.ref('open_orders/' + cashier).once('value', snap => {
+    let cashier = localStorage.getItem("cashier");
 
-            let data = snap.val();
-
-            if(data){
-                orders = data;
-            }
-
-            if(orders.length === 0){
-                newOrder();
-            }
-
-            renderOrderTabs();
-            renderCart();
-        });
-
+    if(!cashier){
+        // لو مفيش تسجيل دخول
+        document.getElementById("loginBox").style.display = "flex";
+        return;
     }
+
+    // لو فيه كاشير مخزن
+    document.getElementById("loginBox").style.display = "none";
+
+    db.ref('open_orders/' + cashier).once('value', snap => {
+
+        let data = snap.val();
+
+        if(data){
+            orders = data;
+        }
+
+        if(orders.length === 0){
+            newOrder();
+        }
+
+        renderOrderTabs();
+        renderCart();
+    });
 }
 
 function saveOrdersToFirebase(){
@@ -509,6 +518,10 @@ function saveOrdersToFirebase(){
     let cashier = localStorage.getItem("cashier");
 
     db.ref('open_orders/' + cashier).set(orders);
+}
+
+function startShift(){
+    console.log("shift started");
 }
 
 // 👇 ده يفضل يفضل زي ما هو
