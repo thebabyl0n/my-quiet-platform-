@@ -411,9 +411,11 @@ db.ref('menu_items').on('value', snap=>{
 
     itemsMap = {}; // تصفير
 
-    Object.values(allItems).forEach(i=>{
-        itemsMap[i.id] = i; // 👈 نخزن بسرعة
-    });
+    Object.keys(allItems).forEach(key=>{
+    let i = allItems[key];
+    i.id = key; // 👈 نضيف id من الكي
+    itemsMap[key] = i;
+});
 
     filterCat(currentCategory);
 });
