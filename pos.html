@@ -11,170 +11,153 @@
 
 <style>
 body {
-    background: #0f172a;
+    background: linear-gradient(135deg, #020617, #0f172a);
     color: white;
-    font-family: sans-serif;
+    font-family: 'Cairo', sans-serif;
     display: grid;
     grid-template-columns: 60% 40%;
     height: 100vh;
+    margin: 0;
 }
 
-
-.left, .right {
-    background: #1e293b;
-    border-radius: 16px;
-    padding: 12px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-}
-
-
+/* الهيدر */
 .header {
-    background: #1e293b;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
     padding: 15px;
     border-radius: 16px;
     margin-bottom: 15px;
-    font-size: 20px;
+    font-size: 22px;
     text-align: center;
+    font-weight: bold;
+    box-shadow: 0 5px 20px rgba(34,197,94,0.4);
 }
 
+/* البوكسات */
+.left, .right {
+    background: rgba(30,41,59,0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
 
-
-.cart-item {
-    background: #020617;
-    border: 1px solid #334155;
+/* الأزرار */
+button {
+    border: none;
     border-radius: 12px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: bold;
+    background: linear-gradient(145deg, #334155, #1e293b);
+    color: white;
+}
+
+button:hover {
+    transform: scale(1.08);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+/* أزرار ملونة */
+.btn-green { background: linear-gradient(45deg,#22c55e,#16a34a); }
+.btn-red { background: linear-gradient(45deg,#ef4444,#b91c1c); }
+.btn-yellow { background: linear-gradient(45deg,#f59e0b,#d97706); }
+.btn-blue { background: linear-gradient(45deg,#3b82f6,#1d4ed8); }
+
+/* الأصناف */
+#items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.item {
+    background: linear-gradient(145deg,#020617,#1e293b);
+    border-radius: 18px;
+    padding: 10px;
+    border: 1px solid #334155;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.item:hover {
+    transform: translateY(-5px) scale(1.05);
+    background: #334155;
+}
+
+.item img {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+/* السعر */
+.item-p {
+    color: #22c55e;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+/* الكارت */
+.cart-item {
+    background: linear-gradient(145deg,#020617,#0f172a);
+    border: 1px solid #334155;
+    border-radius: 14px;
     padding: 12px;
     margin-bottom: 10px;
 }
 
-
-.item {
-    background: #020617;
-    border-radius: 14px;
-    padding: 14px;
-    border: 1px solid #334155;
-    transition: 0.2s;
-}
-
-.item:hover {
-    transform: translateY(-3px);
-    background: #334155;
-}
-
-
-#cart {
-    margin-top: 10px;
-}
-
+/* الإجمالي */
 #total {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: bold;
     margin-top: 10px;
     color: #22c55e;
+    text-align: center;
 }
 
-.left > div {
-    margin-bottom: 10px;
-}
-
-
-button {
-    border: none;
+/* التابات */
+#orderTabs button {
+    margin: 3px;
     border-radius: 10px;
-    padding: 8px 14px;
-    cursor: pointer;
-    transition: 0.2s;
-    font-weight: bold;
-    background: #334155;
-    color: white;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
-button:hover {
-    transform: scale(1.05);
-    opacity: 0.95;
-}
-
-button:active {
-    transform: scale(0.95);
-}
-
-
-/* الأقسام (الفولدرات) */
-.cat-container { 
-    display: flex; 
-    gap: 8px; 
-    margin: 10px 0; 
-    overflow-x: auto; 
-    padding: 5px; 
-}
-.cat-btn { 
-    background: #3b82f6; 
-    border: none; 
-    color: white; 
-    padding: 8px 15px; 
-    border-radius: 15px; 
-    cursor: pointer; 
-    white-space: nowrap; 
-}
-.cat-btn.active { background: #22c55e; }
-
-.btn-green { background: #22c55e; }
-.btn-red { background: #ef4444; }
-.btn-yellow { background: #f59e0b; }
-.btn-blue { background: #3b82f6; }
-.btn-full { width: 100%; font-size: 18px; padding: 15px; }
-
-/* تعديل شبكة الأصناف */
-#items { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
-    gap: 10px; 
-}
-.item {
-    background: #020617;
-    border-radius: 14px;
-    padding: 14px;
-    border: 1px solid #334155;
-    transition: 0.2s;
-}
-
-.item:hover {
-    transform: translateY(-3px);
-    background: #334155;
-}
-
-.item:hover {
-    transform: scale(1.05);
-    background: #334155;
-}
-.item-p { color: #22c55e; display: block; font-size: 13px; margin-top: 5px; }
-
-.item-p { color: #22c55e; display: block; font-size: 13px; }
-
-/* 👇 ضيفي هنا */
-#orderTabs button{
-    font-weight:bold;
-    border-radius:10px;
-    padding:8px 12px;
-    transition:0.3s;
-}
-#orderTabs button:hover{
-    transform:scale(1.05);
-}
-
-
+/* الترابيزات */
 .table {
-    padding:15px;
-    border-radius:10px;
-    text-align:center;
-    cursor:pointer;
-    font-weight:bold;
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
 }
 
-.free { background:#22c55e; }   /* أخضر */
-.busy { background:#ef4444; }   /* أحمر */
-.open { background:#f59e0b; }   /* أصفر */
+.table:hover {
+    transform: scale(1.05);
+}
+
+.free { background: linear-gradient(45deg,#22c55e,#16a34a); }
+.busy { background: linear-gradient(45deg,#ef4444,#b91c1c); }
+.open { background: linear-gradient(45deg,#f59e0b,#d97706); }
+
+/* السيرش */
+#search {
+    background: #020617;
+    color: white;
+    border: 1px solid #334155;
+}
+
+/* اللوجين */
+#loginBox {
+    background: radial-gradient(circle, #020617, #0f172a);
+}
+
+#loginBox input {
+    background: #020617;
+    color: white;
+    border: 1px solid #334155;
+}
 
 </style>
 </head>
@@ -519,12 +502,15 @@ function selectTable(num){
                 });
 
                 currentOrderIndex = orders.length - 1;
+                saveOrdersToFirebase(); // 👈 هنا
             }
 
             selectedTable = num;
 
             renderCart();
             renderOrderTabs();
+            
+            saveOrdersToFirebase(); // 👈 هنا برضه
 
             alert("تم فتح الفاتورة 👌");
 
@@ -570,6 +556,7 @@ function restoreOrders(){
     renderTables();
 
     alert("تم استرجاع الطلبات 🔄");
+    
 }
 
 // عرض الكارت
@@ -810,6 +797,8 @@ function newOrder(){
         alert("تم فتح فاتورة رقم " + orderNumber);
 }
 
+autoSave();
+
 // متابعة حالة الأقسام
 function watchOrderStatus(){
 
@@ -877,45 +866,79 @@ function searchItems(text){
 }
 
 function login(){
+    let username = document.getElementById("user").value;
+    let password = document.getElementById("pass").value;
 
-    let name = document.getElementById("user").value.trim();
-    let pass = document.getElementById("pass").value.trim();
+    db.ref('users').once('value', snap => {
+        let users = snap.val();
 
-    console.log("entered:", name, pass); // 👈 هنا
+        let found = null;
 
-    if(!name || !pass){
-        alert("اكتب البيانات");
+        Object.keys(users).forEach(key => {
+            let u = users[key];
+
+            if(u.username === username && u.password === password){
+                found = u;
+            }
+        });
+
+        if(found){
+            // حفظ الجلسة
+            sessionStorage.setItem("cashier", found.username);
+            sessionStorage.setItem("role", found.role);
+
+            document.getElementById("loginBox").style.display = "none";
+
+            alert("تم تسجيل الدخول ✅");
+
+            applyPermissions(); // 👈 مهم
+        }else{
+            alert("بيانات غلط ❌");
+        }
+    });
+}
+
+function addUser(){
+    let u = document.getElementById("newUser").value;
+    let p = document.getElementById("newPass").value;
+    let r = document.getElementById("newRole").value;
+
+    if(!u || !p){
+        alert("❌ اكتب البيانات");
         return;
     }
 
-    db.ref('users/' + name).once('value', snap => {
+    let newRef = db.ref("users").push();
 
-        let data = snap.val();
-
-        console.log("firebase:", data); // 👈 وهنا
-
-        if(!data){
-            alert("المستخدم غير موجود ❌");
-            return;
-        }
-        
-                // 👇 هنا بالظبط
-        if(data.role !== "cashier"){
-            alert("مش مصرح ❌");
-            return;
-        }
-
-        if(String(data.pass) !== String(pass)){
-            alert("كلمة السر غلط ❌");
-            return;
-        }
-
-        alert("تمام دخل 👌"); // 👈 اختبار
-
-        sessionStorage.setItem("cashier", name);
-
-        document.getElementById("loginBox").style.display = "none";
+    newRef.set({
+        username: u,
+        password: p,
+        role: r
     });
+
+    alert("✅ تم إضافة المستخدم");
+
+    document.getElementById("newUser").value = "";
+    document.getElementById("newPass").value = "";
+}
+
+function checkRole(){
+    let role = sessionStorage.getItem("role");
+
+    if(role === "admin"){
+        document.getElementById("adminPanel").style.display = "block";
+    }else{
+        document.getElementById("adminPanel").style.display = "none";
+    }
+}
+
+function applyPermissions(){
+    let role = sessionStorage.getItem("role");
+
+    // لو مش أدمن نخفي الحاجات دي
+    if(role !== "admin"){
+        document.getElementById("adminPanel").style.display = "none";
+    }
 }
 
 // تقفيل وردية
@@ -1035,34 +1058,36 @@ function getTodaySales(){
 
 window.onload = function(){
 
-    getSalesPerDay();
+    loadLocalOrders();
 
     let cashier = sessionStorage.getItem("cashier");
 
-    if(!cashier){
-        document.getElementById("loginBox").style.display = "flex";
-        return;
+    if(cashier){
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("cashierName").innerText = "👤 " + cashier;
+        checkRole();
     }
 
-    document.getElementById("cashierName").innerText = "👤 " + cashier;
-
     db.ref('open_orders/global').once('value', snap => {
-        
+
         let data = snap.val();
 
         if(data){
             orders = data;
-        }
-
-        if(orders.length === 0){
-            newOrder();
+        } else {
+            loadLocalOrders(); // 👈 fallback لو مفيش داتا
         }
 
         renderOrderTabs();
         renderCart();
         renderTables();
 
-    }); // ✅ قفلنا هنا صح
+        if(orders.length === 0){
+            newOrder();
+        }
+
+    });
+
 };
         
 function toggleSales(){
@@ -1174,7 +1199,6 @@ function drawChart(data){
     });
 }
 
-    document.getElementById("cashierName").innerText = "👤 " + (sessionStorage.getItem("cashier") || "");
 
     db.ref('open_orders/global').once('value', snap => {
 
@@ -1205,12 +1229,17 @@ function saveLocalOrders(){
     localStorage.setItem("orders_backup", JSON.stringify(orders));
 }
 
+function autoSave(){
+    saveLocalOrders();
+}
+
 
 function loadLocalOrders(){
     let data = localStorage.getItem("orders_backup");
 
     if(data){
         orders = JSON.parse(data);
+        
     }
 }
 
@@ -1314,22 +1343,19 @@ getSalesPerDay();
 
 function startShift(){
     console.log("shift started");
-}
+            // document.addEventListener("visibilitychange", function() {
+//     if (document.hidden) {
+//         sessionStorage.removeItem("cashier");
+//         document.getElementById("loginBox").style.display = "flex";
+//     }
+// });
+    }
 
 // 👇 ده يفضل يفضل زي ما هو
 // أول ما الصفحة تفتح
 if(orders.length === 0){
 
 }
-
-document.addEventListener("visibilitychange", function() {
-    if (document.hidden) {
-        sessionStorage.removeItem("cashier");
-
-        // 👇 يرجع شاشة اللوجين
-        document.getElementById("loginBox").style.display = "flex";
-    }
-});
 
 function renderMainCategories(){
     let html = "";
@@ -1383,6 +1409,22 @@ margin-top:10px;
 </div>
 
 </div>
+</div>
+
+<div id="adminPanel" style="display:none; margin:10px; background:#020617; padding:10px; border-radius:10px;">
+    
+    <h3>👑 إدارة المستخدمين</h3>
+
+    <input id="newUser" placeholder="اسم المستخدم">
+    <input id="newPass" placeholder="كلمة المرور">
+
+    <select id="newRole">
+        <option value="user">كاشير</option>
+        <option value="admin">أدمن</option>
+    </select>
+
+    <button onclick="addUser()">➕ إضافة مستخدم</button>
+
 </div>
 
 </body>
