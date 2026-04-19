@@ -768,11 +768,16 @@ function printBill(){
     </html>
     `;
 
-    let w = window.open("");
-    w.document.write(html);
+    let w = window.open("", "_blank");
+
+w.document.open();
+w.document.write(html);
+w.document.close();
+
+// 👇 استني شوية وبعدين اطبع
+setTimeout(() => {
     w.print();
-    w.close();
-}
+}, 500);
 
 function newOrder(){
 
