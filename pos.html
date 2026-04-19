@@ -177,6 +177,12 @@ border-radius:12px;
 <h3>🔥 الأكثر مبيعًا</h3>
 <canvas id="topChart"></canvas>
 
+<!-- 👇 حطيه هنا -->
+<h3>🧾 آخر الطلبات</h3>
+
+<table id="lastOrders" style="width:100%;color:white;">
+</table>
+
 <!-- فلترة -->
 <select onchange="changeView(this.value)" style="
 margin-bottom:10px;
@@ -964,42 +970,38 @@ function closeShift(){
     db.ref('shifts/' + shiftId).once('value', snap=>{
 
         let total = 0;
-        let count = 0;
-        let ordersHTML = "";
+        let details = "";
 
         snap.forEach(o=>{
-            let data = o.val();
+            let order = o.val();
 
-            total += data.totalPrice || 0;
-            count++;
+            total += order.totalPrice || 0;
 
-            ordersHTML += `
+            details += `
             <tr>
-                <td>${data.orderNum || "-"}</td>
-                <td>${data.totalPrice}</td>
-                <td>${data.type}</td>
+                <td>${order.type}</td>
+                <td>${order.totalPrice}</td>
+                <td>${new Date(order.time).toLocaleTimeString()}</td>
             </tr>`;
         });
 
         let html = `
         <html dir="rtl">
         <body style="font-family:sans-serif;text-align:center;">
-
+        
         <h2>📊 تقرير الوردية</h2>
-        <p>${new Date().toLocaleString()}</p>
 
-        <table border="1" style="width:100%;margin-top:10px;">
-            <tr>
-                <th>رقم الطلب</th>
-                <th>الإجمالي</th>
-                <th>النوع</th>
-            </tr>
+        <table style="width:100%;border-collapse:collapse;">
+        <tr>
+            <th>النوع</th>
+            <th>السعر</th>
+            <th>الوقت</th>
+        </tr>
 
-            ${ordersHTML}
+        ${details}
         </table>
 
-        <h3>عدد الطلبات: ${count}</h3>
-        <h3>الإجمالي: ${total} ريال</h3>
+        <h3>💰 الإجمالي: ${total} ريال</h3>
 
         </body>
         </html>
@@ -1011,13 +1013,11 @@ function closeShift(){
         w.document.write(html);
         w.document.close();
 
-        // 👇 طباعة تلقائي
-        setTimeout(() => {
+        setTimeout(()=>{
             w.print();
-        }, 500);
+        },500);
 
         localStorage.removeItem("shiftId");
-
     });
 }
 
@@ -1121,6 +1121,10 @@ function getTodaySales(){
 window.onload = function(){
 
     loadLocalOrders();
+    
+    getLastOrders();
+    getTopItems();
+    
 
     let cashier = sessionStorage.getItem("cashier");
 
@@ -1261,6 +1265,21 @@ function drawChart(data){
     });
 }
 
+function toggleSales(){
+    let box = document.getElementById("salesBox");
+
+    if(box.style.display === "none" || box.style.display === ""){
+        box.style.display = "block";
+
+        // 👇 أول ما تفتح يعرض البيانات
+        getSalesPerDay();
+        getTopItems();
+
+    }else{
+        box.style.display = "none";
+    }
+}
+
 function saveOrdersToFirebase(){
     let cashier = sessionStorage.getItem("cashier");
     db.ref('open_orders/global').set(orders);
@@ -1393,6 +1412,33 @@ function startShift(){
 //     }
 // });
     }
+    
+    function getLastOrders(){
+
+    db.ref('live_orders').limitToLast(10).once('value', snap=>{
+
+        let html = `
+        <tr>
+            <th>رقم</th>
+            <th>المبلغ</th>
+            <th>النوع</th>
+        </tr>`;
+
+        snap.forEach(o=>{
+            let d = o.val();
+
+            html += `
+            <tr>
+                <td>${o.key}</td>
+                <td>${d.totalPrice}</td>
+                <td>${d.type}</td>
+            </tr>`;
+        });
+
+        document.getElementById("lastOrders").innerHTML = html;
+
+    });
+}
 
 
 function renderMainCategories(){
