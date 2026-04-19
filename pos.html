@@ -1203,27 +1203,6 @@ function drawChart(data){
     });
 }
 
-
-
-db.ref('open_orders/global').once('value', snap => {
-
-    let data = snap.val();
-
-    if(data){
-        orders = data;
-    }
-
-    if(orders.length === 0){
-        newOrder();
-    }
-
-    renderOrderTabs();
-    renderCart();
-    renderTables();
-
-});
-
-
 function saveOrdersToFirebase(){
     let cashier = sessionStorage.getItem("cashier");
     db.ref('open_orders/global').set(orders);
