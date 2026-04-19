@@ -540,7 +540,7 @@ if(!orders[currentOrderIndex]){
     let found = cart.find(i=>i.id === name);
 
     if(found) found.qty++;
-    else cart.push({...item, qty:1});
+    else cart.push({...item, id: name, qty:1});
 
     renderCart();
     
@@ -872,6 +872,11 @@ function login(){
     db.ref('users').once('value', snap => {
         let users = snap.val();
 
+        if(!users){
+            alert("❌ مفيش مستخدمين في السيستم");
+            return;
+        }
+
         let found = null;
 
         Object.keys(users).forEach(key => {
@@ -883,15 +888,14 @@ function login(){
         });
 
         if(found){
-            // حفظ الجلسة
             sessionStorage.setItem("cashier", found.username);
             sessionStorage.setItem("role", found.role);
 
             document.getElementById("loginBox").style.display = "none";
+            document.getElementById("cashierName").innerText = "👤 " + found.username;
 
             alert("تم تسجيل الدخول ✅");
-
-            applyPermissions(); // 👈 مهم
+            applyPermissions();
         }else{
             alert("بيانات غلط ❌");
         }
@@ -1090,19 +1094,19 @@ window.onload = function(){
 
 };
         
-function toggleSales(){
-    let box = document.getElementById("salesBox");
+function getTodayStats(){
+    db.ref('live_orders').once('value', snap=>{
+        let total = 0;
+        let count = 0;
 
-    if(box.style.display === "none"){
-        box.style.display = "block";
+        snap.forEach(o=>{
+            total += o.val().totalPrice || 0;
+            count++;
+        });
 
-        getSalesPerDay();
-        getTopItems();
-        getTodayStats();
-
-    }else{
-        box.style.display = "none";
-    }
+        document.getElementById("todayTotal").innerText = total;
+        document.getElementById("orderCount").innerText = count;
+    });
 }
 
 function changeView(type){
@@ -1200,7 +1204,6 @@ function drawChart(data){
 }
 
 
-    db.ref('open_orders/global').once('value', snap => {
 
     let data = snap.val();
 
