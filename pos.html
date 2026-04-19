@@ -706,7 +706,7 @@ function login(){
             return;
         }
 
-        if(data.pass != pass){ // 👈 خليها != مش !==
+        if(String(data.pass) !== String(pass)){ // 👈 خليها != مش !==
             alert("كلمة السر غلط ❌");
             return;
         }
