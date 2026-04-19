@@ -61,7 +61,18 @@ button{margin:3px;padding:5px 10px}
     transform:scale(1.05);
 }
 
-/* 👇 وبعدين */
+.table {
+    padding:15px;
+    border-radius:10px;
+    text-align:center;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.free { background:#22c55e; }   /* أخضر */
+.busy { background:#ef4444; }   /* أحمر */
+.open { background:#f59e0b; }   /* أصفر */
+
 </style>
 </head>
 
@@ -128,7 +139,12 @@ z-index: 999;
 <option value="سفري">سفري</option>
 </select>
 
-<input id="tableNumber" placeholder="رقم الترابيزة">
+<div id="tables" style="
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
+margin:10px 0;
+"></div>
 
 <div id="cart"></div>
 <div id="total">0 ريال</div>
@@ -150,7 +166,7 @@ const db = firebase.database();
 let orders = [];
 let currentOrderIndex = 0;
 let allItems = {};
-let activeOrders = [];
+let selectedTable = null;
 
 // 2. دالة الفلترة عشان الأزرار تشتغل
 let currentCategory = 'all';
@@ -227,12 +243,40 @@ function renderItems(items){
     document.getElementById('items').innerHTML = html;
 }
 
+function renderTables(){
+    let html = "";
+
+    for(let i=1; i<=12; i++){
+        let status = "free";
+
+        // لو فيه أوردر على الترابيزة
+        let found = orders.find(o => o.table == i && o.orderPath);
+
+        if(found) status = "open";
+
+        html += `
+        <div class="table ${status}" onclick="selectTable(${i})">
+            T${i}
+        </div>`;
+    }
+
+    document.getElementById("tables").innerHTML = html;
+}
+
+function selectTable(num){
+    selectedTable = num;
+    alert("تم اختيار الترابيزة " + num);
+}
+
 // إضافة للكارت
 function add(name){
 
-    if(!orders[currentOrderIndex]){
-        orders[currentOrderIndex] = {items: []};
-    }    
+if(!orders[currentOrderIndex]){
+    orders[currentOrderIndex] = {
+        items: [],
+        orderPath: null
+    };
+}
 
     let item = Object.values(allItems).find(i=>i.ar===name);
 
@@ -282,12 +326,20 @@ async function getTakeaway(){
 // إرسال الطلب
 async function sendOrder(){
 
+    // 👇 حطها هنا بالظبط
+    if(orders[currentOrderIndex]?.orderPath){
+        return alert("تم إرسال الطلب قبل كده ⚠️");
+    }
+
     let cart = orders[currentOrderIndex]?.items || [];
 
     if(cart.length === 0) return alert("السلة فاضية!");
 
     let type = document.getElementById('orderType').value;
-    let table = document.getElementById('tableNumber').value;
+    let table = selectedTable;
+    if(type === "محلي" && !table){
+    return alert("اختار ترابيزة الأول ❗");
+}
 
     let cashier = localStorage.getItem("cashier");
 
@@ -318,6 +370,10 @@ async function sendOrder(){
 
     db.ref('live_orders/' + orderPath).set(order);
 
+// 👇 احفظه جوه الأوردر
+   orders[currentOrderIndex].orderPath = orderPath;
+   saveOrdersToFirebase();
+
     let shiftId = localStorage.getItem("shiftId");
 
     if(!shiftId){
@@ -327,8 +383,6 @@ async function sendOrder(){
 
     db.ref('shifts/' + shiftId + '/' + orderPath).set(order);
 
-    activeOrders.push(orderPath);
-
     watchOrderStatus();
 
     alert("تم إرسال الطلب ✅");
@@ -336,9 +390,12 @@ async function sendOrder(){
 
 function completeOrder(){
 
-    if(activeOrders.length === 0) return alert("مفيش طلب");
 
-    let id = activeOrders[0];
+    let id = orders[currentOrderIndex]?.orderPath;
+
+if(!id){
+    return alert("الطلب لسه متبعتش ❌");
+}
     
     db.ref('live_orders/'+id).update({
         status:"تمت المحاسبة ✅",
@@ -354,18 +411,19 @@ function completeOrder(){
     renderCart();
     renderOrderTabs();
 
-    activeOrders.shift();
-
     alert("تم التحصيل 💰");
+    
+    newOrder();
 }
 
 function newOrder(){
     let orderNumber = Date.now(); // رقم فريد
 
-    orders.push({
-        items: [],
-        orderNumber: orderNumber
-    });
+orders.push({
+    items: [],
+    orderNumber: orderNumber,
+    orderPath: null // 👈 مهم
+});
     
     saveOrdersToFirebase();
 
@@ -381,9 +439,10 @@ function newOrder(){
 
 // متابعة حالة الأقسام
 function watchOrderStatus(){
-    if(activeOrders.length === 0) return;
 
-    let id = activeOrders[activeOrders.length - 1];
+    let id = orders[currentOrderIndex]?.orderPath;
+
+    if(!id) return;
 
     db.ref('live_orders/' + id).on('value', snap => {
         let o = snap.val();
@@ -488,12 +547,10 @@ window.onload = function(){
     let cashier = localStorage.getItem("cashier");
 
     if(!cashier){
-        // لو مفيش تسجيل دخول
         document.getElementById("loginBox").style.display = "flex";
         return;
     }
 
-    // لو فيه كاشير مخزن
     document.getElementById("loginBox").style.display = "none";
 
     db.ref('open_orders/' + cashier).once('value', snap => {
@@ -510,6 +567,7 @@ window.onload = function(){
 
         renderOrderTabs();
         renderCart();
+        renderTables();
     });
 }
 
