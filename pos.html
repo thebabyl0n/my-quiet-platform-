@@ -268,6 +268,14 @@ function renderCart(){
     document.getElementById('cart').innerHTML = html;
     document.getElementById('total').innerText = total + " ريال";
 }
+async function getTakeaway(){
+    let snap = await db.ref('takeaway_counter').once('value');
+    let num = snap.val() || 1;
+
+    await db.ref('takeaway_counter').set(num + 1);
+
+    return num;
+}
 
 // إرسال الطلب
 async function sendOrder(){
@@ -335,10 +343,12 @@ function completeOrder(){
         accountingTime:new Date().toISOString()
     });
 
-    // 👇 امسحي الفاتورة الحالية بس مش كل النظام
-    orders[currentOrderIndex].items = [];
+    // 👇 نحذف الفاتورة من الأساس
+    orders.splice(currentOrderIndex, 1);
+    currentOrderIndex = 0;
 
     renderCart();
+    renderOrderTabs();
 
     activeOrders.shift();
 
@@ -480,7 +490,9 @@ window.onload = function(){
 
 // 👇 ده يفضل يفضل زي ما هو
 // أول ما الصفحة تفتح
-newOrder();
+if(orders.length === 0){
+    newOrder();
+}
 
 </script>
 
