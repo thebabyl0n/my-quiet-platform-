@@ -1205,6 +1205,8 @@ function drawChart(data){
 
 
 
+db.ref('open_orders/global').once('value', snap => {
+
     let data = snap.val();
 
     if(data){
@@ -1218,6 +1220,7 @@ function drawChart(data){
     renderOrderTabs();
     renderCart();
     renderTables();
+
 });
 
 
@@ -1354,11 +1357,6 @@ function startShift(){
 // });
     }
 
-// 👇 ده يفضل يفضل زي ما هو
-// أول ما الصفحة تفتح
-if(orders.length === 0){
-
-}
 
 function renderMainCategories(){
     let html = "";
