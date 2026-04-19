@@ -687,23 +687,20 @@ function searchItems(text){
 
 function login(){
 
+    alert("1 - دخلنا الفنكشن");
+
     let name = document.getElementById("user").value.trim();
     let pass = document.getElementById("pass").value.trim();
 
-    console.log("entered:", name, pass); // 👈 هنا
-
-    if(!name || !pass){
-        alert("اكتب البيانات");
-        return;
-    }
-
-    alert("جاري الفحص...");
+    alert("2 - البيانات: " + name + " / " + pass);
 
     db.ref('users/' + name).once('value', snap => {
 
+        alert("3 - وصلنا Firebase");
+
         let data = snap.val();
 
-        console.log("firebase:", data); // 👈 وهنا
+        alert("4 - الداتا: " + JSON.stringify(data));
 
         if(!data){
             alert("المستخدم غير موجود ❌");
@@ -715,12 +712,7 @@ function login(){
             return;
         }
 
-        sessionStorage.setItem("cashier", name);
-
-        document.getElementById("loginBox").style.display = "none";
-        document.getElementById("cashierName").innerText = "👤 " + name;
-
-        startShift();
+        alert("تمام دخل 👌");
     });
 }
 
