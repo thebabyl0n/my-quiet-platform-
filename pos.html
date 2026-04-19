@@ -340,6 +340,8 @@ let currentOrderIndex = 0;
 let allItems = {};
 let selectedTable = null;
 
+let cachedHTML = {}; // 👈 هنا بالظبط
+
 let itemsMap = {}; // 👈 لازم دي
 
 let mainCategories = {};
@@ -388,7 +390,6 @@ function loadSubDepts(mainName) {
 function filterCat(catId, btn) {
     currentCategory = catId;
     
-    // تلوين الزرار النشط
     if(btn) {
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -396,7 +397,6 @@ function filterCat(catId, btn) {
 
     let itemsArray = Object.values(allItems);
     
-    // هنا التكة: بنخلي البرنامج يدور في الـ sub_id اللي الداشبورد بيبعتها
     let filtered = catId === 'all' ? itemsArray : itemsArray.filter(i => {
         return i.sub_id === catId || i.categoryId === catId;
     });
@@ -408,6 +408,8 @@ function filterCat(catId, btn) {
 // تحميل الأصناف
 db.ref('menu_items').on('value', snap=>{
     allItems = snap.val() || {};
+    
+    cachedHTML = {}; // 👈 مهم جدًا
 
     itemsMap = {}; // تصفير
 
@@ -422,24 +424,39 @@ db.ref('menu_items').on('value', snap=>{
 
 // عرض الأصناف
 function renderItems(items){
-    let html="";
+
+    let key = currentCategory || "all";
+
+    // 👇 لو متخزن قبل كده استخدمه
+    if(cachedHTML[key]){
+        document.getElementById('items').innerHTML = cachedHTML[key];
+        return;
+    }
+
+    let html = "";
 
     items.forEach(i=>{
         html += `
-<div class="item" onclick="add('${i.id}')">
+        <div class="item" onclick="add('${i.id}')">
 
-    <img src="${i.img || ''}" style="
-        width:100%;
-        height:80px;
-        object-fit:cover;
-        border-radius:10px;
-        margin-bottom:5px;
-    ">
+            <img src="${i.img || 'https://via.placeholder.com/150'}"
+            onerror="this.src='https://via.placeholder.com/150'"
+            style="
+                width:100%;
+                height:80px;
+                object-fit:cover;
+                border-radius:10px;
+                margin-bottom:5px;
+            ">
 
-    <strong>${i.ar}</strong>
-    <span class="item-p">${i.price} ريال</span>
-</div>`;
+            <strong>${i.ar}</strong>
+            <span class="item-p">${i.price} ريال</span>
+
+        </div>`;
     });
+
+    // 👇 خزّن النتيجة
+    cachedHTML[key] = html;
 
     document.getElementById('items').innerHTML = html;
 }
