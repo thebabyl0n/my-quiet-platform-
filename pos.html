@@ -137,6 +137,30 @@ button:hover {
     transform: scale(1.1);
 }
 
+.item:active {
+    transform: scale(0.97);
+}
+
+.item button:active {
+    transform: scale(1.2);
+}
+
+/* تأثير لمعة */
+.item::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: 0.5s;
+}
+
+.item:hover::after {
+    left: 100%;
+}
+
 /* الكارت */
 .cart-item {
     background: var(--soft);
