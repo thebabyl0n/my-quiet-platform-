@@ -531,14 +531,15 @@ renderTables();
 
     let cashier = sessionStorage.getItem("cashier");
 
-    let order = {
+let order = {
     items: cart.map(i => ({
-    ar: i.ar,
-    qty: i.qty,
-    p: i.price,
-    note: i.note || "", // 👈 المهم
-    dept: i.dept || "kitchen"
-}))
+        ar: i.ar,
+        qty: i.qty,
+        p: i.price,
+        note: i.note || "",
+        dept: i.dept || "kitchen"
+    })), // 👈 دي كانت ناقصة
+
     totalPrice: cart.reduce((t, i) => t + (i.price * i.qty), 0),
     status: "open",
     type: type,
