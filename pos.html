@@ -340,6 +340,8 @@ let currentOrderIndex = 0;
 let allItems = {};
 let selectedTable = null;
 
+let itemsMap = {}; // 👈 لازم دي
+
 let mainCategories = {};
 
 db.ref('main_categories').on('value', snap => {
@@ -359,27 +361,28 @@ db.ref('sub_categories').on('value', snap => {
 
 // 2. وظيفة عرض الأقسام الفرعية بناءً على القسم الرئيسي
 function loadSubDepts(mainName) {
-    // 1. تلوين الزرار الكبير اللي ضغطت عليه (باريستا/حلا/مطبخ)
-    // ملاحظة: لو مدي للزراير id أو class تقدر تميزهم بيه
+
+    let html = `<button class="cat-btn active" onclick="filterCat('all', this)">الكل</button>`;
     
-   let html = `<button class="cat-btn active" onclick="filterCat('all', this)">الكل</button>`;
-    
-    let foundAny = false;
+    let firstSub = null;
+
     Object.keys(allSubCats).forEach(key => {
         let cat = allSubCats[key];
-        // بنفلتر الأقسام الفرعية اللي تابعة للقسم الكبير ده
+
         if (cat.mainDept === mainName || cat.parent === mainName) {
+
+            if(!firstSub) firstSub = key; // 👈 أول قسم
+
             html += `<button class="cat-btn" onclick="filterCat('${key}', this)">${cat.name}</button>`;
-            foundAny = true;
         }
     });
 
-    // 2. تحديث قائمة الأقسام الفرعية
-    document.getElementById('categories').innerHTML = html || "<p style='color:#666'>لا توجد أقسام فرعية</p>";
+    document.getElementById('categories').innerHTML = html;
 
-    // 3. التعديل اللي إنت عايزه (إخفاء الأصناف)
-    // أول ما تدوس على باريستا، شاشة الأصناف تفضى وتستنى تختار قسم فرعي
-    document.getElementById('items').innerHTML = `<p style='text-align:center; width:100%; color:var(--gold);'>اختر قسماً فرعياً (مثل: ${mainName}) لعرض المنتجات</p>`;
+    // 👇 الجديد: يعرض أول قسم تلقائي
+    if(firstSub){
+        filterCat(firstSub);
+    }
 }
 
 function filterCat(catId, btn) {
@@ -405,19 +408,37 @@ function filterCat(catId, btn) {
 // تحميل الأصناف
 db.ref('menu_items').on('value', snap=>{
     allItems = snap.val() || {};
+
+    itemsMap = {}; // تصفير
+
+    Object.values(allItems).forEach(i=>{
+        itemsMap[i.id] = i; // 👈 نخزن بسرعة
+    });
+
     filterCat(currentCategory);
 });
 
 // عرض الأصناف
 function renderItems(items){
     let html="";
+
     items.forEach(i=>{
         html += `
         <div class="item" onclick="add('${i.id}')">
+
+                <img src="${i.img || 'https://via.placeholder.com/150'}">
+                width:100%;
+                height:80px;
+                object-fit:cover;
+                border-radius:10px;
+                margin-bottom:5px;
+            ">
+
             <strong>${i.ar}</strong>
             <span class="item-p">${i.price} ريال</span>
         </div>`;
     });
+
     document.getElementById('items').innerHTML = html;
 }
 
@@ -507,11 +528,11 @@ if(!orders[currentOrderIndex]){
     };
 }
 
-    let item = Object.values(allItems).find(i=>i.id===name);
+    let item = itemsMap[name];
 
     let cart = orders[currentOrderIndex].items;
 
-    let found = cart.find(i=>i.ar===name);
+    let found = cart.find(i=>i.id === name);
 
     if(found) found.qty++;
     else cart.push({...item, qty:1});
@@ -819,11 +840,19 @@ function saveNote(){
 }
 
 function searchItems(text){
+
     let itemsArray = Object.values(allItems);
 
-    let filtered = itemsArray.filter(i =>
-        i.ar.toLowerCase().includes(text.toLowerCase())
-    );
+    let filtered = itemsArray.filter(i => {
+
+        let matchText = i.ar.toLowerCase().includes(text.toLowerCase());
+
+        let matchCat = currentCategory === 'all' 
+            || i.sub_id === currentCategory 
+            || i.categoryId === currentCategory;
+
+        return matchText && matchCat;
+    });
 
     renderItems(filtered);
 }
