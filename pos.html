@@ -996,10 +996,26 @@ window.onload = function(){
         return;
     }
 
-
     document.getElementById("cashierName").innerText = "👤 " + cashier;
 
     db.ref('open_orders/global').once('value', snap => {
+        
+        let data = snap.val();
+
+        if(data){
+            orders = data;
+        }
+
+        if(orders.length === 0){
+            newOrder();
+        }
+
+        renderOrderTabs();
+        renderCart();
+        renderTables();
+
+    }); // ✅ قفلنا هنا صح
+};
         
 function toggleSales(){
     let box = document.getElementById("salesBox");
@@ -1009,7 +1025,7 @@ function toggleSales(){
 
         getSalesPerDay();
         getTopItems();
-        getTodayStats(); // 👈 دي الجديدة
+        getTodayStats();
 
     }else{
         box.style.display = "none";
