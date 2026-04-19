@@ -1000,22 +1000,6 @@ window.onload = function(){
     document.getElementById("cashierName").innerText = "👤 " + cashier;
 
     db.ref('open_orders/global').once('value', snap => {
-
-        let data = snap.val();
-
-        if(data){
-            orders = data;
-        }
-
-        if(orders.length === 0){
-            newOrder();
-        }
-
-        renderOrderTabs();
-        renderCart();
-        renderTables();
-    });
-};
         
 function toggleSales(){
     let box = document.getElementById("salesBox");
@@ -1130,21 +1114,20 @@ function drawChart(data){
 
     db.ref('open_orders/global').once('value', snap => {
 
-        let data = snap.val();
+    let data = snap.val();
 
-        if(data){
-            orders = data;
-        }
+    if(data){
+        orders = data;
+    }
 
-        if(orders.length === 0){
-            newOrder();
-        }
+    if(orders.length === 0){
+        newOrder();
+    }
 
-        renderOrderTabs();
-        renderCart();
-        renderTables();
-    });
-}
+    renderOrderTabs();
+    renderCart();
+    renderTables();
+});
 
 
 function saveOrdersToFirebase(){
