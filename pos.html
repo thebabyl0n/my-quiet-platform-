@@ -244,28 +244,47 @@ function renderItems(items){
 }
 
 function renderTables(){
-    let html = "";
 
-    for(let i=1; i<=12; i++){
-        let status = "free";
+    db.ref('live_orders').once('value', snap => {
 
-        // لو فيه أوردر على الترابيزة
-        let found = orders.find(o => o.table == i && o.orderPath);
+        let data = snap.val() || {};
+        let html = "";
 
-        if(found) status = "open";
+        for(let i=1; i<=12; i++){
+            let status = "free";
 
-        html += `
-        <div class="table ${status}" onclick="selectTable(${i})">
-            T${i}
-        </div>`;
-    }
+            let tableKey = 'T_' + i;
 
-    document.getElementById("tables").innerHTML = html;
+            if(data[tableKey]){
+                if(data[tableKey].status === "open"){
+                    status = "open"; // أصفر
+                }else{
+                    status = "busy"; // أحمر (لو اتحاسب)
+                }
+            }
+
+            html += `
+            <div class="table ${status}" onclick="selectTable(${i})">
+                T${i}
+            </div>`;
+        }
+
+        document.getElementById("tables").innerHTML = html;
+
+    });
 }
 
 function selectTable(num){
-    selectedTable = num;
-    alert("تم اختيار الترابيزة " + num);
+
+    db.ref('live_orders/T_' + num).once('value', snap => {
+
+        if(snap.exists()){
+            return alert("التربيزة دي مش فاضية ❌");
+        }
+
+        selectedTable = num;
+        alert("تم اختيار الترابيزة " + num);
+    });
 }
 
 // إضافة للكارت
@@ -326,6 +345,7 @@ async function getTakeaway(){
 // إرسال الطلب
 async function sendOrder(){
 
+renderTables();
     // 👇 حطها هنا بالظبط
     if(orders[currentOrderIndex]?.orderPath){
         return alert("تم إرسال الطلب قبل كده ⚠️");
@@ -390,6 +410,8 @@ async function sendOrder(){
 
 function completeOrder(){
 
+   renderTables();
+
 
     let id = orders[currentOrderIndex]?.orderPath;
 
@@ -417,22 +439,24 @@ if(!id){
 }
 
 function newOrder(){
-    let orderNumber = Date.now(); // رقم فريد
 
-orders.push({
-    items: [],
-    orderNumber: orderNumber,
-    orderPath: null // 👈 مهم
-});
-    
+    let orderNumber = Date.now();
+
+    orders.push({
+        items: [],
+        orderNumber: orderNumber,
+        orderPath: null
+    });
+
+    selectedTable = null; // 👈 مهم جدًا
+
     saveOrdersToFirebase();
 
     currentOrderIndex = orders.length - 1;
 
-    document.getElementById('tableNumber').value = "";
-
     renderCart();
     renderOrderTabs();
+    renderTables(); // 👈 عشان يحدث الألوان
 
     alert("تم فتح فاتورة رقم " + orderNumber);
 }
