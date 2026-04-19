@@ -413,7 +413,7 @@ function renderItems(items){
     let html="";
     items.forEach(i=>{
         html += `
-        <div class="item" onclick="add('${i.ar}')">
+        <div class="item" onclick="add('${i.id}')">
             <strong>${i.ar}</strong>
             <span class="item-p">${i.price} ريال</span>
         </div>`;
@@ -507,7 +507,7 @@ if(!orders[currentOrderIndex]){
     };
 }
 
-    let item = Object.values(allItems).find(i=>i.ar===name);
+    let item = Object.values(allItems).find(i=>i.id===name);
 
     let cart = orders[currentOrderIndex].items;
 
@@ -822,7 +822,7 @@ function searchItems(text){
     let itemsArray = Object.values(allItems);
 
     let filtered = itemsArray.filter(i =>
-        i.ar.includes(text)
+        i.ar.toLowerCase().includes(text.toLowerCase())
     );
 
     renderItems(filtered);
@@ -988,7 +988,6 @@ function getTodaySales(){
 window.onload = function(){
 
     getSalesPerDay();
-}
 
     let cashier = sessionStorage.getItem("cashier");
 
@@ -996,24 +995,27 @@ window.onload = function(){
         document.getElementById("loginBox").style.display = "flex";
         return;
     }
-    
-    function getTodayStats(){
-    db.ref('shifts').once('value', snap => {
 
-        let total = 0;
-        let count = 0;
 
-        snap.forEach(shift => {
-            shift.forEach(order => {
-                total += order.val().totalPrice || 0;
-                count++;
-            });
-        });
+    document.getElementById("cashierName").innerText = "👤 " + cashier;
 
-        document.getElementById("todayTotal").innerText = total;
-        document.getElementById("orderCount").innerText = count;
+    db.ref('open_orders/global').once('value', snap => {
+
+        let data = snap.val();
+
+        if(data){
+            orders = data;
+        }
+
+        if(orders.length === 0){
+            newOrder();
+        }
+
+        renderOrderTabs();
+        renderCart();
+        renderTables();
     });
-}
+};
         
 function toggleSales(){
     let box = document.getElementById("salesBox");
@@ -1124,7 +1126,6 @@ function drawChart(data){
     });
 }
 
-    document.getElementById("loginBox").style.display = "none";
     document.getElementById("cashierName").innerText = "👤 " + (sessionStorage.getItem("cashier") || "");
 
     db.ref('open_orders/global').once('value', snap => {
