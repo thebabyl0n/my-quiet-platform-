@@ -476,7 +476,7 @@ function renderItems(items){
     <strong>${i.ar}</strong>
     <div class="item-p">${i.price} ريال</div>
 
-    <button onclick="add('${i.id}')">+</button>
+    <button onclick="add('${i.id}', this)">+</button>
 
 </div>
 `;
@@ -485,6 +485,13 @@ function renderItems(items){
     cachedHTML[key] = html;
 
     document.getElementById('items').innerHTML = html;
+}
+
+function add(id, btn){
+
+    addItemToOrder(id); // لو عندك اسم مختلف قوليلي
+
+    flyToCart(btn);
 }
 
 
@@ -643,6 +650,36 @@ function renderCart(){
     document.getElementById('cart').innerHTML = html;
     document.getElementById('total').innerText = total + " ريال";
 
+}
+
+function flyToCart(btn){
+    let cart = document.querySelector('.orderBox'); // غيريها لو اسم الفاتورة مختلف
+
+    let rectBtn = btn.getBoundingClientRect();
+    let rectCart = cart.getBoundingClientRect();
+
+    let circle = document.createElement('div');
+    circle.style.position = 'fixed';
+    circle.style.width = '20px';
+    circle.style.height = '20px';
+    circle.style.borderRadius = '50%';
+    circle.style.background = '#22c55e';
+    circle.style.left = rectBtn.left + 'px';
+    circle.style.top = rectBtn.top + 'px';
+    circle.style.zIndex = 9999;
+    circle.style.transition = '0.7s ease-in-out';
+
+    document.body.appendChild(circle);
+
+    setTimeout(()=>{
+        circle.style.left = rectCart.left + 'px';
+        circle.style.top = rectCart.top + 'px';
+        circle.style.opacity = 0;
+    },10);
+
+    setTimeout(()=>{
+        circle.remove();
+    },700);
 }
 
 async function getTakeaway(){
