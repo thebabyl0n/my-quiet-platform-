@@ -67,6 +67,27 @@ button{margin:3px;padding:5px 10px}
 
 <body>
 
+<div id="loginBox" style="
+position:fixed;
+top:0;left:0;right:0;bottom:0;
+background:#0f172a;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:9999;
+">
+
+<h2>🔐 تسجيل الدخول</h2>
+
+<input id="user" placeholder="اسم المستخدم" style="margin:5px;padding:10px;">
+<input id="pass" placeholder="كلمة السر" type="password" style="margin:5px;padding:10px;">
+
+<button onclick="login()" style="padding:10px 20px;background:#22c55e;color:white;border:none;border-radius:8px;">
+دخول
+</button>
+
+</div>
 <div class="left">
 <input id="search" placeholder="🔍 بحث" oninput="searchItems(this.value)">
 <div class="main-depts" style="display:flex; gap:10px; margin-bottom:10px;">
@@ -192,6 +213,7 @@ db.ref('menu_items').on('value', snap=>{
     filterCat(currentCategory);
 });
 
+
 // عرض الأصناف
 function renderItems(items){
     let html="";
@@ -257,6 +279,8 @@ async function sendOrder(){
     let type = document.getElementById('orderType').value;
     let table = document.getElementById('tableNumber').value;
 
+    let cashier = localStorage.getItem("cashier");
+
     let order = {
         items: cart.map(i => ({
             ar: i.ar,
@@ -268,6 +292,7 @@ async function sendOrder(){
         status: "open",
         type: type,
         table: table,
+        cashier: cashier, // 👈 هنا الصح
         time: new Date().toISOString()
     };
 
@@ -281,10 +306,8 @@ async function sendOrder(){
         orderPath = 'TA_' + num;
     }
 
-    // حفظ الطلب الأساسي
     db.ref('live_orders/' + orderPath).set(order);
 
-    // 🔥 حفظ في الوردية (الجديد)
     let shiftId = localStorage.getItem("shiftId");
 
     if(!shiftId){
@@ -368,6 +391,40 @@ function searchItems(text){
     renderItems(filtered);
 }
 
+function login(){
+
+    let name = document.getElementById("user").value;
+    let pass = document.getElementById("pass").value;
+
+    if(!name || !pass){
+        alert("اكتب البيانات");
+        return;
+    }
+
+    localStorage.setItem("cashier", name);
+
+    document.getElementById("loginBox").style.display = "none";
+
+    startShift();
+}
+
+function startShift(){
+
+    let cashier = localStorage.getItem("cashier");
+
+    let shiftId = localStorage.getItem("shiftId");
+
+    if(!shiftId){
+        shiftId = "shift_" + Date.now();
+        localStorage.setItem("shiftId", shiftId);
+
+        db.ref('shifts/' + shiftId).set({
+            cashier: cashier,
+            startTime: new Date().toISOString()
+        });
+    }
+}
+
 // تقفيل وردية
 function closeShift(){
 
@@ -386,6 +443,15 @@ function closeShift(){
     });
 }
 
+
+function switchOrder(index){
+    currentOrderIndex = index;
+    renderCart();
+    renderOrderTabs();
+}
+
+
+// 👇 حطي هنا بالظبط
 function renderOrderTabs(){
     let html = "";
 
@@ -396,19 +462,23 @@ function renderOrderTabs(){
             color:white;
             margin:3px;
         ">
-        🧾 ${o.orderNumber || index + 1}
+        🧾 ${index + 1}
         </button>`;
     });
 
     document.getElementById("orderTabs").innerHTML = html;
 }
+window.onload = function(){
 
-function switchOrder(index){
-    currentOrderIndex = index;
-    renderCart();
-    renderOrderTabs();
+    let cashier = localStorage.getItem("cashier");
+
+    if(cashier){
+        document.getElementById("loginBox").style.display = "none";
+        startShift(); // 👈 ضيفي دي بس
+    }
 }
 
+// 👇 ده يفضل يفضل زي ما هو
 // أول ما الصفحة تفتح
 newOrder();
 
