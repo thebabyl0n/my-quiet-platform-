@@ -172,32 +172,6 @@ button:hover {
     margin-bottom: 8px;
 }
 
-/* تنسيق الصندوق الجديد */
-#cart-container {
-    transition: 0.3s;
-    overflow-y: auto;
-    max-height: 400px;
-}
-
-/* لو السلة فيها أصناف، البرواز المنقط يختفي ويبقى خط سادة */
-#cart-container:has(.cart-item) {
-    border-style: solid;
-    border-color: #3b82f6;
-    justify-content: flex-start;
-}
-
-/* ملاحظات الطلب */
-#note {
-    width: 100%;
-    background: #0f172a;
-    border: 1px solid #2d3343;
-    color: white;
-    border-radius: 10px;
-    padding: 10px;
-    margin-bottom: 10px;
-}
-
-
 /* 💰 Total */
 #total {
     font-size: 22px;
@@ -345,32 +319,12 @@ z-index:9999;
 
 <div id="tables" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;"></div>
 
-<div class="right-panel">
-    <h3>🧾 طلبك الحالي</h3>
-    
-    <div id="cart-container" style="
-        background: #1a1d26; 
-        border: 2px dashed #2d3343; 
-        border-radius: 15px; 
-        min-height: 250px; 
-        display: flex; 
-        flex-direction: column; 
-        justify-content: center; 
-        align-items: center; 
-        margin-bottom: 15px;
-        padding: 10px;
-    ">
-        <div id="cart" style="width: 100%;">
-            <div style="text-align:center; color:#64748b;">
-                <p style="font-size: 18px; font-weight: bold; margin: 0;">السلة فارغة</p>
-                <span style="font-size: 12px;">ابدأ بإضافة أصناف للطلب</span>
-            </div>
-        </div>
-    </div>
+<div id="cart"></div>
+<div id="total">0 ريال</div>
 
-    <div id="total" style="font-size: 24px; color: #22c55e; text-align: center; font-weight: bold; margin-bottom: 10px;">0 ريال</div>
-    <textarea id="note" placeholder="📝 ملاحظات الطلب..."></textarea>
-</div>
+<textarea id="note" placeholder="ملاحظات"></textarea>
+
+<div id="statusBox"></div>
 
 <button onclick="sendOrder()" class="btn-green">➕ إضافة</button>
 <button onclick="completeOrder()" class="btn-yellow">💰 تحصيل</button>
