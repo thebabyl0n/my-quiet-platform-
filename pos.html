@@ -195,6 +195,12 @@ button:hover {
     margin: 2px;
 }
 
+/* تأثير الحركة الناعمة للدوائر */
+.dept-badge, .status-circle, [id*="circle"] { 
+    transition: 1.2s cubic-bezier(0.22, 1, 0.36, 1) !important; 
+}
+
+
 </style>
 </head>
 
@@ -341,8 +347,6 @@ margin:10px 0;
 <div id="total">0 ريال</div>
 <textarea id="note" placeholder="📝 ملاحظات (مثال: بدون سكر - زيادة صوص)" 
 style="width:100%; margin-top:10px; padding:8px; border-radius:8px;"></textarea>
-
-circle.style.boxShadow = "0 0 15px #22c55e";
 
 <div id="statusBox" style="margin-top:10px; font-size:14px;"></div>
 
