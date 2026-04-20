@@ -11,7 +11,7 @@
 
 <style>
 
-:root { 
+:root {
     --bg: #0f172a;
     --card: #1e293b;
     --soft: #020617;
@@ -75,6 +75,11 @@ body {
     border-radius: 10px;
     text-align: center;
     font-weight: bold;
+}
+
+/* 🧠 Smooth Animation (مهم للسلة الطايرة) */
+.dept-badge, .status-circle, [id*="circle"] { 
+    transition: 1.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .free { background: #22c55e !important; }
@@ -1512,4 +1517,3 @@ margin-top:10px;
 </div>
 
 </body>
-
