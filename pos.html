@@ -470,17 +470,56 @@ function renderItems(items){
 
 function add(id, btn){
 
-    addItemToOrder(id);
+    // لو مفيش أوردر
+    if(!orders[currentOrderIndex]){
+        orders[currentOrderIndex] = {
+            items: [],
+            orderPath: null
+        };
+    }
 
-    flyToCart(btn);
+    let item = itemsMap[id];
 
-    // 👇 لمعة الفاتورة
+    if(!item){
+        console.error("❌ item مش موجود:", id);
+        return;
+    }
+
+    let cartArr = orders[currentOrderIndex].items;
+
+    let found = cartArr.find(i => i.id === id);
+
+    if(found){
+        found.qty++;
+    }else{
+        cartArr.push({
+            ...item,
+            id: id,
+            qty: 1,
+            note: ""
+        });
+    }
+
+    // تحديث الكارت
+    renderCart();
+
+    // حفظ
+    saveOrdersToFirebase();
+    saveLocalOrders();
+
+    // ✨ الأنيميشن القديم
+    if(btn) flyToCart(btn);
+
+    // ✨ لمعة الفاتورة
     let cart = document.getElementById('cart');
-    cart.style.boxShadow = "0 0 40px #22c55e";
 
-    setTimeout(()=>{
-        cart.style.boxShadow = "0 0 20px rgba(34,197,94,0.2)";
-    }, 400);
+    if(cart){
+        cart.style.boxShadow = "0 0 40px #22c55e";
+
+        setTimeout(()=>{
+            cart.style.boxShadow = "0 0 20px rgba(34,197,94,0.2)";
+        }, 400);
+    }
 }
 
 function renderTables(){
@@ -559,30 +598,6 @@ function selectTable(num){
         }
 
     });
-}
-
-// إضافة للكارت
-function add(name){
-
-if(!orders[currentOrderIndex]){
-    orders[currentOrderIndex] = {
-        items: [],
-        orderPath: null
-    };
-}
-
-    let item = itemsMap[name];
-
-    let cart = orders[currentOrderIndex].items;
-
-    let found = cart.find(i=>i.id === name);
-
-    if(found) found.qty++;
-    else cart.push({...item, id: name, qty:1});
-
-    renderCart();
-    
-    saveOrdersToFirebase();
 }
 
 function restoreOrders(){
