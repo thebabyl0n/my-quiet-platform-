@@ -62,12 +62,9 @@ body {
 
 /* الأزرار */
 button {
-    border: none;
-    border-radius: 12px;
-    padding: 10px;
-    cursor: pointer;
+    border-radius: 10px;
     font-weight: bold;
-    transition: 0.3s;
+    transition: 0.2s;
 }
 
 button:hover {
@@ -193,6 +190,18 @@ button:hover {
 #orderTabs button {
     border-radius: 8px;
     margin: 2px;
+}
+
+#cart {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 15px;
+    box-shadow: 0 0 20px rgba(34,197,94,0.2);
+    transition: 0.3s;
+}
+
+#cart:hover {
+    box-shadow: 0 0 30px rgba(34,197,94,0.4);
 }
 
 /* تأثير الحركة الناعمة للدوائر */
@@ -495,11 +504,18 @@ function renderItems(items){
 
 function add(id, btn){
 
-    addItemToOrder(id); // لو عندك اسم مختلف قوليلي
+    addItemToOrder(id);
 
     flyToCart(btn);
-}
 
+    // 👇 لمعة الفاتورة
+    let cart = document.getElementById('cart');
+    cart.style.boxShadow = "0 0 40px #22c55e";
+
+    setTimeout(()=>{
+        cart.style.boxShadow = "0 0 20px rgba(34,197,94,0.2)";
+    }, 400);
+}
 
 function renderTables(){
 
