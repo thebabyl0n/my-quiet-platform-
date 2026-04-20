@@ -11,7 +11,7 @@
 
 <style>
 
-:root { 
+:root {
     --bg: #0f172a;
     --card: #1e293b;
     --soft: #020617;
@@ -29,16 +29,8 @@ body {
     grid-template-columns: 60% 40%;
     height: 100vh;
     margin: 0;
-    gap: 12px;
-    padding: 12px;
-}
-
-/* 📦 Sections */
-.left, .right {
-    background: linear-gradient(145deg,#1e293b,#0f172a);
-    border-radius: 20px;
-    padding: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    gap: 10px;
+    padding: 10px;
 }
 
 /* 🔝 Top Bar */
@@ -46,13 +38,19 @@ body {
     display:flex;
     justify-content:space-between;
     align-items:center;
-    padding:15px;
+    padding:15px 20px;
+    background:linear-gradient(90deg,#0f172a,#1e293b);
     border-radius:15px;
-    background: linear-gradient(90deg,#0f172a,#1e293b);
+}
+
+.top-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
 }
 
 .search{
-    padding:10px 14px;
+    padding:8px 12px;
     border-radius:20px;
     border:none;
     background:#020617;
@@ -65,40 +63,67 @@ body {
     border-radius:20px;
 }
 
+/* 📦 Sections */
+.left, .right {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 12px;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+/* 🎨 Colors */
+.btn-green { background: var(--green); }
+.btn-blue { background: var(--blue); }
+.btn-red { background: #ef4444; }
+.btn-yellow { background: #f59e0b; }
+
 /* 🛍️ Items Grid */
 #items {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 15px;
 }
 
-/* 🎯 كارت المنتج */
 .item{
-    position: relative;
-    overflow: hidden;
     background: linear-gradient(145deg,#1e293b,#0f172a);
     border-radius: 18px;
     padding: 12px;
     text-align: center;
     transition: 0.3s;
-    box-shadow: 
-        0 10px 20px rgba(0,0,0,0.4),
-        inset 0 0 10px rgba(255,255,255,0.03);
 }
 
-/* 🖼️ الصورة */
 .item img{
     height: 100px;
-    width: 100%;
-    object-fit: cover;
     border-radius: 12px;
-    margin-bottom: 8px;
+}
+.item button{
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: #22c55e;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    box-shadow: 0 0 10px rgba(34,197,94,0.5);
 }
 
-/* 💰 السعر */
 .item-p {
     color: var(--green);
     font-weight: bold;
+}
+
+button{
+    border: none;
+    padding: 8px 12px;
+    color: white;
+    cursor: pointer;
+}
+
+button:active{
+    transform: scale(0.95);
 }
 
 /* ➕ زر الإضافة */
@@ -106,50 +131,35 @@ body {
     background: var(--green);
     border: none;
     color: white;
-    width: 36px;
-    height: 36px;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
     font-size: 18px;
     cursor: pointer;
-    transition: 0.2s;
 }
 
 .item button:hover {
-    transform: scale(1.15);
+    transform: scale(1.1);
 }
 
-.item button:active{
-    transform: scale(0.9);
-}
-
-/* ✨ لمعة احترافية */
+/* ✨ Shine Effect (سيبناه عشان الشكل) */
 .item::after {
     content: "";
     position: absolute;
     top: 0;
-    left: -120%;
-    width: 60%;
+    left: -100%;
+    width: 100%;
     height: 100%;
-    background: linear-gradient(
-        120deg,
-        transparent,
-        rgba(255,255,255,0.25),
-        transparent
-    );
-    transform: skewX(-20deg);
-    transition: 0.7s;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: 0.5s;
 }
 
 .item:hover::after {
-    left: 120%;
+    left: 100%;
 }
 
-/* 🔥 Hover احترافي */
 .item:hover{
-    transform: translateY(-6px) scale(1.03);
-    box-shadow: 
-        0 15px 30px rgba(0,0,0,0.6),
-        0 0 15px rgba(34,197,94,0.2);
+    transform: translateY(-5px) scale(1.02);
 }
 
 /* 🧾 Cart */
@@ -157,38 +167,26 @@ body {
     background: #020617;
     border-radius: 20px;
     padding: 15px;
-    max-height: 320px;
+    max-height: 300px;
     overflow-y: auto;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
 }
 
-/* ✨ Glow عند الوقوف */
 #cart:hover {
-    box-shadow: 
-        inset 0 0 10px rgba(0,0,0,0.5),
-        0 0 25px rgba(34,197,94,0.3);
+    box-shadow: 0 0 25px rgba(34,197,94,0.3);
 }
 
-/* 🧾 عنصر داخل السلة */
 .cart-item {
-    background: linear-gradient(145deg,#1e293b,#0f172a);
+    background: #1e293b;
     border-radius: 12px;
     padding: 10px;
-    margin-bottom: 10px;
-    transition: 0.3s;
+    margin-bottom: 8px;
 }
 
-.cart-item:hover{
-    transform: scale(1.02);
-}
-
-/* 💰 الإجمالي */
+/* 💰 Total */
 #total {
-    font-size: 24px;
+    font-size: 22px;
     color: var(--green);
     text-align: center;
-    font-weight: bold;
-    margin-top: 15px;
 }
 
 /* 🍽️ Tables */
@@ -197,35 +195,15 @@ body {
     border-radius: 10px;
     text-align: center;
     font-weight: bold;
-    transition: 0.3s;
 }
 
-.free { background: #22c55e; }
-.busy { background: #ef4444; }
-.open { background: #f59e0b; }
+.free { background: #22c55e !important; }
+.busy { background: #ef4444 !important; }
+.open { background: #f59e0b !important; }
 
-.table:hover{
-    transform: scale(1.05);
-}
-
-/* 📱 Responsive */
-@media (max-width: 768px){
-    body{
-        grid-template-columns: 1fr;
-    }
-
-    .right{
-        order: -1;
-    }
-
-    #items{
-        grid-template-columns: repeat(2,1fr);
-    }
-
-    .top-bar{
-        flex-direction: column;
-        gap: 10px;
-    }
+/* 🧠 Smooth Animation (مهم للسلة الطايرة) */
+.dept-badge, .status-circle, [id*="circle"] { 
+    transition: 1.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 
