@@ -342,6 +342,8 @@ margin:10px 0;
 <textarea id="note" placeholder="📝 ملاحظات (مثال: بدون سكر - زيادة صوص)" 
 style="width:100%; margin-top:10px; padding:8px; border-radius:8px;"></textarea>
 
+circle.style.boxShadow = "0 0 15px #22c55e";
+
 <div id="statusBox" style="margin-top:10px; font-size:14px;"></div>
 
 <button onclick="sendOrder()" class="btn-green">➕ إضافة</button>
@@ -668,7 +670,7 @@ function flyToCart(btn){
     circle.style.left = rectBtn.left + 'px';
     circle.style.top = rectBtn.top + 'px';
     circle.style.zIndex = 9999;
-    circle.style.transition = '0.7s ease-in-out';
+    circle.style.transition = '1.2s cubic-bezier(0.22, 1, 0.36, 1)';
 
     document.body.appendChild(circle);
 
