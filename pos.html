@@ -70,13 +70,6 @@ body {
     padding: 12px;
 }
 
-/* 🔘 Buttons */
-button {
-    border-radius: 10px;
-    font-weight: bold;
-    transition: 0.2s;
-}
-
 button:hover {
     transform: scale(1.05);
 }
@@ -94,30 +87,43 @@ button:hover {
     gap: 15px;
 }
 
-.item {
-    background: #1e293b;
-    border-radius: 16px;
-    padding: 10px;
+.item{
+    background: linear-gradient(145deg,#1e293b,#0f172a);
+    border-radius: 18px;
+    padding: 12px;
     text-align: center;
-    position: relative;
-    transition: 0.25s;
+    transition: 0.3s;
 }
 
-.item:hover{
-    transform:translateY(-5px);
-    box-shadow:0 8px 20px rgba(0,0,0,0.3);
-}
-
-.item img {
-    width: 100%;
+.item img{
     height: 100px;
-    object-fit: cover;
     border-radius: 12px;
+}
+.item button{
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: #22c55e;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    box-shadow: 0 0 10px rgba(34,197,94,0.5);
 }
 
 .item-p {
     color: var(--green);
     font-weight: bold;
+}
+
+button{
+    border: none;
+    padding: 8px 12px;
+    color: white;
+    cursor: pointer;
+}
+
+button:active{
+    transform: scale(0.95);
 }
 
 /* ➕ زر الإضافة */
@@ -152,13 +158,17 @@ button:hover {
     left: 100%;
 }
 
+.item:hover{
+    transform: translateY(-5px) scale(1.02);
+}
+
 /* 🧾 Cart */
-#cart {
+#cart{
     background: #020617;
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 15px;
-    box-shadow: 0 0 15px rgba(34,197,94,0.15);
-    transition: 0.3s;
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 #cart:hover {
@@ -1277,6 +1287,23 @@ function changeView(type){
         getSalesPerMonth();
     }
 
+}
+
+function change(index, delta){
+
+    let cart = orders[currentOrderIndex]?.items;
+
+    if(!cart || !cart[index]) return;
+
+    cart[index].qty += delta;
+
+    // لو الكمية بقت صفر نحذف المنتج
+    if(cart[index].qty <= 0){
+        cart.splice(index, 1);
+    }
+
+    renderCart();
+    saveOrdersToFirebase();
 }
 
 function getSalesPerMonth(){
