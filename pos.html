@@ -653,7 +653,8 @@ function renderCart(){
 }
 
 function flyToCart(btn){
-    let cart = document.querySelector('.orderBox'); // غيريها لو اسم الفاتورة مختلف
+
+    let cart = document.getElementById('cart'); // 👈 ده الصح عندك
 
     let rectBtn = btn.getBoundingClientRect();
     let rectCart = cart.getBoundingClientRect();
