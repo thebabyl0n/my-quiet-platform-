@@ -433,10 +433,10 @@ function renderItems(items){
 
     let key = currentCategory || "all";
 
-    if(cachedHTML[key]){
-        document.getElementById('items').innerHTML = cachedHTML[key];
-        return;
-    }
+    // if(cachedHTML[key]){
+//     document.getElementById('items').innerHTML = cachedHTML[key];
+//     return;
+// }
 
     let html = "";
 
@@ -463,7 +463,6 @@ function renderItems(items){
 `;
     });
 
-    cachedHTML[key] = html;
 
     document.getElementById('items').innerHTML = html;
 }
