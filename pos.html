@@ -180,16 +180,17 @@ button:hover {
 }  
   
 /* 🍽️ Tables */  
-.table {  
-    padding: 10px;  
-    border-radius: 10px;  
-    text-align: center;  
-    font-weight: bold;  
-}  
-  
-.free { background: #22c55e !important; }
-.busy { background: #ef4444 !important; }
-.open { background: #f59e0b !important; }
+.table {
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: white;
+}
+
+.table.free { background: #22c55e; }  /* أخضر */
+.table.open { background: #f59e0b; }  /* أصفر */
+.table.busy { background: #ef4444; }  /* أحمر */
   
 /* 🧠 Smooth Animation (مهم للسلة الطايرة) */  
 .dept-badge, .status-circle, [id*="circle"] {   
@@ -492,8 +493,8 @@ function renderTables(){
   
         document.getElementById("tables").innerHTML = html;  
   
-    });  
-}  
+    }); 
+} 
   
 function selectTable(num){  
   
