@@ -1072,6 +1072,7 @@ body {
 .btn-blue { background: var(--blue); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-family: 'Cairo', sans-serif; }
 .btn-red { background: var(--red); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-family: 'Cairo', sans-serif; }
 .btn-yellow { background: var(--yellow); color: black; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-family: 'Cairo', sans-serif; }
+.btn-settings { background: var(--card-light); color: white; border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-family: 'Cairo', sans-serif; }
 
 button:hover {
     transform: scale(1.02);
@@ -1096,9 +1097,57 @@ button:hover {
     border-color: var(--green);
 }
 
+/* Report Box */
+#reportBox {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--card);
+    padding: 24px;
+    border-radius: 16px;
+    z-index: 1000;
+    width: 90%;
+    max-width: 600px;
+    border: 1px solid var(--border);
+}
+
+#reportBox .close-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
 /* Order Type Select */
 #orderType {
     display: none;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+}
+
+.loading-spinner::after {
+    content: '';
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* Responsive */
@@ -1148,7 +1197,8 @@ button:hover {
     </div>
     
     <div class="header-left">
-        <div class="settings-menu">
+        <!-- 🔘 الإعدادات -->
+<div class="settings-menu">
     <button onclick="toggleMenu()" class="btn-settings">⚙️ الإعدادات</button>
 
     <div id="settingsDropdown" class="dropdown">
@@ -1161,8 +1211,9 @@ button:hover {
     </div>
 </div>
 
-<!-- مكان عرض النتائج -->
-<div id="reportBox" style="display:none;">
+<!-- 📊 مكان عرض النتائج -->
+<div id="reportBox">
+    <button onclick="closeReportBox()" class="close-btn">❌</button>
     <canvas id="salesChart"></canvas>
 </div>
 
@@ -1296,7 +1347,9 @@ button:hover {
         </div>
         
         <!-- Main Categories -->
-        <div id="mainCategories"></div>
+        <div id="mainCategories">
+            <div class="loading-spinner"></div>
+        </div>
         
         <!-- Items Header -->
         <div class="items-header">
@@ -1314,7 +1367,9 @@ button:hover {
         <div id="categories"></div>
         
         <!-- Items Grid -->
-        <div id="items"></div>
+        <div id="items">
+            <div class="loading-spinner"></div>
+        </div>
         
     </div>
 
@@ -1370,6 +1425,9 @@ button:hover {
 </select>
 
 <script>
+// ==========================================
+// 🔥 Firebase Configuration & Initialization
+// ==========================================
 const firebaseConfig = {
     apiKey: "AIzaSy...",
     databaseURL: "https://alphashadow-23689-default-rtdb.firebaseio.com/"
@@ -1377,6 +1435,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// ==========================================
+// 📦 Global State Variables
+// ==========================================
 let orders = [];
 let currentOrderIndex = 0;
 let allItems = {};
@@ -1384,8 +1445,15 @@ let selectedTable = null;
 let cachedHTML = {};
 let itemsMap = {};
 let mainCategories = {};
+let currentCategory = 'all';
+let allSubCats = {};
+let currentMainCategory = 'all';
+let isLoadingItems = false;
+let isLoadingCategories = false;
 
-// Clock Update
+// ==========================================
+// ⏰ Clock Update Function
+// ==========================================
 function updateClock() {
     const now = new Date();
     let hours = now.getHours();
@@ -1399,81 +1467,194 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// Main Categories
-db.ref('main_categories').on('value', snap => {
-    mainCategories = snap.val() || {};
-    renderMainCategories();
-});
+// ==========================================
+// 🏷️ DYNAMIC CATEGORIES - Firebase Realtime
+// ==========================================
 
-let currentCategory = 'all';
-let allSubCats = {};
+// Fetch Main Categories from Firebase
+function fetchMainCategories() {
+    isLoadingCategories = true;
+    document.getElementById('mainCategories').innerHTML = '<div class="loading-spinner"></div>';
+    
+    db.ref('main_categories').on('value', snap => {
+        mainCategories = snap.val() || {};
+        console.log('[v0] Main categories loaded from Firebase:', Object.keys(mainCategories).length);
+        renderMainCategories();
+        isLoadingCategories = false;
+    }, error => {
+        console.error('[v0] Error loading main categories:', error);
+        isLoadingCategories = false;
+        // Render default categories on error
+        renderMainCategories();
+    });
+}
 
-db.ref('sub_categories').on('value', snap => {
-    allSubCats = snap.val() || {};
-    loadSubDepts('barista');
-});
+// Fetch Sub Categories from Firebase
+function fetchSubCategories() {
+    db.ref('sub_categories').on('value', snap => {
+        allSubCats = snap.val() || {};
+        console.log('[v0] Sub categories loaded from Firebase:', Object.keys(allSubCats).length);
+        loadSubDepts(currentMainCategory);
+    }, error => {
+        console.error('[v0] Error loading sub categories:', error);
+    });
+}
 
+// Render Main Categories (Dynamic from Firebase)
+function renderMainCategories() {
+    let html = "";
+    
+    const icons = {
+        'desserts': '&#127856;',
+        'kitchen': '&#127858;',
+        'food': '&#127829;',
+        'drinks': '&#127864;',
+        'barista': '&#9749;',
+        'all': '&#9783;'
+    };
+
+    // Default categories (fallback if Firebase is empty)
+    const defaultCats = [
+        { key: 'all', name: 'الكل', desc: 'جميع الأصناف', icon: '&#9783;' },
+        { key: 'drinks', name: 'مشروبات', desc: 'باردة وساخنة', icon: '&#127864;' },
+        { key: 'food', name: 'أكلات', desc: 'وجبات رئيسية', icon: '&#127829;' },
+        { key: 'kitchen', name: 'مطبخ', desc: 'طلبات المطبخ', icon: '&#127858;' },
+        { key: 'desserts', name: 'حلويات', desc: 'حلويات ومعجنات', icon: '&#127856;' }
+    ];
+
+    // Render default categories
+    defaultCats.forEach((cat, index) => {
+        const isActive = (currentMainCategory === cat.key) || (index === 0 && currentMainCategory === 'all');
+        html += `
+        <button class="main-cat-btn ${isActive ? 'active' : ''}" onclick="selectMainCategory('${cat.key}', this)">
+            <span class="icon">${cat.icon}</span>
+            <span class="name">${cat.name}</span>
+            <span class="desc">${cat.desc}</span>
+        </button>`;
+    });
+
+    // Add categories from Firebase that are not in defaults
+    Object.keys(mainCategories).forEach(key => {
+        let cat = mainCategories[key];
+        if (cat.active && !defaultCats.find(d => d.key === key)) {
+            html += `
+            <button class="main-cat-btn" onclick="selectMainCategory('${key}', this)">
+                <span class="icon">${cat.icon || icons[key] || '&#128230;'}</span>
+                <span class="name">${cat.name}</span>
+                <span class="desc">${cat.desc || ''}</span>
+            </button>`;
+        }
+    });
+
+    document.getElementById("mainCategories").innerHTML = html;
+}
+
+// Select Main Category
+function selectMainCategory(categoryKey, btn) {
+    currentMainCategory = categoryKey;
+    
+    // Update active state
+    document.querySelectorAll('.main-cat-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    
+    // Load sub departments
+    loadSubDepts(categoryKey);
+}
+
+// Load Sub Departments (Sub Categories)
 function loadSubDepts(mainName) {
+    currentMainCategory = mainName;
     let html = `<button class="cat-btn active" onclick="filterCat('all', this)">الكل</button>`;
     let firstSub = null;
 
     Object.keys(allSubCats).forEach(key => {
         let cat = allSubCats[key];
-        if (cat.mainDept === mainName || cat.parent === mainName) {
-            if(!firstSub) firstSub = key;
+        if (mainName === 'all' || cat.mainDept === mainName || cat.parent === mainName) {
+            if (!firstSub) firstSub = key;
             html += `<button class="cat-btn" onclick="filterCat('${key}', this)">${cat.name}</button>`;
         }
     });
 
     document.getElementById('categories').innerHTML = html;
 
-    if(firstSub) {
-        filterCat(firstSub);
+    // Filter items based on main category
+    if (mainName === 'all') {
+        filterCat('all');
+    } else {
+        filterCat('all'); // Show all items in this main category
     }
 }
 
-function toggleMenu() {
-    let menu = document.getElementById("settingsDropdown");
-    menu.style.display = (menu.style.display === "block") ? "none" : "block";
-}
-
+// Filter by Sub Category
 function filterCat(catId, btn) {
     currentCategory = catId;
     
-    if(btn) {
+    if (btn) {
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
     }
 
     let itemsArray = Object.values(allItems);
     
-    let filtered = catId === 'all' ? itemsArray : itemsArray.filter(i => {
-        return i.sub_id === catId || i.categoryId === catId;
-    });
+    let filtered;
+    if (catId === 'all') {
+        // If main category is 'all', show everything
+        if (currentMainCategory === 'all') {
+            filtered = itemsArray;
+        } else {
+            // Filter by main category
+            filtered = itemsArray.filter(i => {
+                return i.mainDept === currentMainCategory || 
+                       i.dept === currentMainCategory ||
+                       i.category === currentMainCategory;
+            });
+        }
+    } else {
+        // Filter by sub category
+        filtered = itemsArray.filter(i => {
+            return i.sub_id === catId || i.categoryId === catId;
+        });
+    }
     
     renderItems(filtered);
 }
 
-// Load Items
-db.ref('menu_items').on('value', snap => {
-    allItems = snap.val() || {};
-    cachedHTML = {};
-    itemsMap = {};
+// ==========================================
+// 🍔 DYNAMIC ITEMS - Firebase Realtime
+// ==========================================
 
-    Object.keys(allItems).forEach(key => {
-        let i = allItems[key];
-        i.id = key;
-        itemsMap[key] = i;
+// Fetch Items from Firebase
+function fetchMenuItems() {
+    isLoadingItems = true;
+    document.getElementById('items').innerHTML = '<div class="loading-spinner"></div>';
+    
+    db.ref('menu_items').on('value', snap => {
+        allItems = snap.val() || {};
+        cachedHTML = {}; // Clear cache when data updates
+        itemsMap = {};
+
+        Object.keys(allItems).forEach(key => {
+            let i = allItems[key];
+            i.id = key;
+            itemsMap[key] = i;
+        });
+
+        console.log('[v0] Menu items loaded from Firebase:', Object.keys(allItems).length);
+        isLoadingItems = false;
+        filterCat(currentCategory);
+    }, error => {
+        console.error('[v0] Error loading menu items:', error);
+        isLoadingItems = false;
+        document.getElementById('items').innerHTML = '<div class="cart-empty"><h4>خطأ في تحميل الأصناف</h4></div>';
     });
+}
 
-    filterCat(currentCategory);
-});
-
-// Render Items
+// Render Items Grid
 function renderItems(items) {
-    let key = currentCategory || "all";
+    let key = `${currentMainCategory}_${currentCategory}`;
 
-    if(cachedHTML[key]) {
+    // Use cached HTML if available
+    if (cachedHTML[key]) {
         document.getElementById('items').innerHTML = cachedHTML[key];
         document.getElementById('itemsCount').innerText = items.length;
         return;
@@ -1481,28 +1662,52 @@ function renderItems(items) {
 
     let html = "";
 
-    items.forEach(i => {
-        html += `
+    if (items.length === 0) {
+        html = `
+        <div class="cart-empty" style="grid-column: 1 / -1;">
+            <div class="cart-empty-icon">&#128269;</div>
+            <h4>لا توجد أصناف</h4>
+            <p>جرب اختيار قسم آخر</p>
+        </div>`;
+    } else {
+        items.forEach(i => {
+            html += `
 <div class="item" onclick="add('${i.id}', this)">
     <img src="${i.img || 'https://via.placeholder.com/150'}"
          onerror="this.src='https://via.placeholder.com/150'">
     <div class="item-info">
-        <div class="item-name">${i.ar}</div>
-        <div class="item-p">${i.price} ريال</div>
+        <div class="item-name">${i.ar || i.name || 'بدون اسم'}</div>
+        <div class="item-p">${i.price || 0} ريال</div>
         <button onclick="event.stopPropagation(); add('${i.id}', this)">+</button>
     </div>
 </div>
 `;
-    });
+        });
+    }
 
     cachedHTML[key] = html;
     document.getElementById('items').innerHTML = html;
     document.getElementById('itemsCount').innerText = items.length;
 }
 
-// Add to Cart
+// Update Item Price (Dynamic from Firebase)
+function updateItemPrice(itemId, newPrice) {
+    db.ref('menu_items/' + itemId).update({
+        price: newPrice
+    }).then(() => {
+        console.log('[v0] Price updated for item:', itemId);
+    }).catch(error => {
+        console.error('[v0] Error updating price:', error);
+    });
+}
+
+// ==========================================
+// 🛒 Cart Functions
+// ==========================================
+
+// Add Item to Cart
 function add(id, btn) {
-    if(!orders[currentOrderIndex]) {
+    if (!orders[currentOrderIndex]) {
         orders[currentOrderIndex] = {
             items: [],
             orderPath: null
@@ -1511,15 +1716,15 @@ function add(id, btn) {
 
     let item = itemsMap[id];
 
-    if(!item) {
-        console.error("Item not found:", id);
+    if (!item) {
+        console.error("[v0] Item not found:", id);
         return;
     }
 
     let cartArr = orders[currentOrderIndex].items;
     let found = cartArr.find(i => i.id === id);
 
-    if(found) {
+    if (found) {
         found.qty++;
     } else {
         cartArr.push({
@@ -1536,7 +1741,7 @@ function add(id, btn) {
 
     // Animation
     let cart = document.getElementById('cart');
-    if(cart) {
+    if (cart) {
         cart.style.boxShadow = "0 0 40px #22c55e";
         setTimeout(() => {
             cart.style.boxShadow = "none";
@@ -1544,80 +1749,12 @@ function add(id, btn) {
     }
 }
 
-// Render Tables
-function renderTables() {
-    db.ref('live_orders').on('value', snap => {
-        let data = snap.val() || {};
-        let html = "";
-
-        for(let i = 1; i <= 12; i++) {
-            let status = "free";
-            let tableKey = 'T_' + i;
-
-            if(data[tableKey]) {
-                if(data[tableKey].status === "open") {
-                    status = "open";
-                } else {
-                    status = "busy";
-                }
-            }
-
-            html += `<div class="table ${status}" onclick="selectTable(${i})">T${i}</div>`;
-        }
-
-        document.getElementById("tables").innerHTML = html;
-    });
-}
-
-function selectTable(num) {
-    let tableKey = 'T_' + num;
-
-    db.ref('live_orders/' + tableKey).once('value', snap => {
-        if(snap.exists()) {
-            let data = snap.val();
-            let existingIndex = orders.findIndex(o => o.orderPath === tableKey);
-
-            if(existingIndex !== -1) {
-                currentOrderIndex = existingIndex;
-            } else {
-                orders.push({
-                    items: data.items.map(i => ({
-                        ar: i.ar,
-                        qty: i.qty,
-                        price: i.p
-                    })),
-                    orderPath: tableKey
-                });
-                currentOrderIndex = orders.length - 1;
-                saveOrdersToFirebase();
-            }
-
-            selectedTable = num;
-            renderCart();
-            renderOrderTabs();
-            saveOrdersToFirebase();
-            alert("تم فتح الفاتورة");
-        } else {
-            newOrder();
-            selectedTable = num;
-        }
-    });
-}
-
-function restoreOrders() {
-    loadLocalOrders();
-    renderCart();
-    renderOrderTabs();
-    renderTables();
-    alert("تم استرجاع الطلبات");
-}
-
 // Render Cart
 function renderCart() {
     let cart = orders[currentOrderIndex]?.items || [];
     let html = "", total = 0, itemCount = 0;
 
-    if(cart.length === 0) {
+    if (cart.length === 0) {
         html = `
         <div class="cart-empty">
             <div class="cart-empty-icon">&#128722;</div>
@@ -1632,7 +1769,7 @@ function renderCart() {
             html += `
             <div class="cart-item">
                 <div class="cart-item-row">
-                    <span class="cart-item-name">${i.ar} x ${i.qty}</span>
+                    <span class="cart-item-name">${i.ar || i.name} x ${i.qty}</span>
                     <div class="cart-item-controls">
                         <button onclick="change(${idx}, 1)">+</button>
                         <button onclick="change(${idx}, -1)">-</button>
@@ -1661,59 +1798,138 @@ function renderCart() {
     document.getElementById('itemCount').innerText = itemCount;
 }
 
-function flyToCart(btn) {
-    let cart = document.getElementById('cart');
-    let rectBtn = btn.getBoundingClientRect();
-    let rectCart = cart.getBoundingClientRect();
+// Change Item Quantity
+function change(index, delta) {
+    let cart = orders[currentOrderIndex]?.items;
 
-    let circle = document.createElement('div');
-    circle.style.position = 'fixed';
-    circle.style.width = '20px';
-    circle.style.height = '20px';
-    circle.style.borderRadius = '50%';
-    circle.style.background = '#22c55e';
-    circle.style.left = rectBtn.left + 'px';
-    circle.style.top = rectBtn.top + 'px';
-    circle.style.zIndex = 9999;
-    circle.style.transition = '0.5s cubic-bezier(0.22, 1, 0.36, 1)';
+    if (!cart || !cart[index]) return;
 
-    document.body.appendChild(circle);
+    cart[index].qty += delta;
 
-    setTimeout(() => {
-        circle.style.left = rectCart.left + 'px';
-        circle.style.top = rectCart.top + 'px';
-        circle.style.opacity = 0;
-    }, 10);
+    if (cart[index].qty <= 0) {
+        cart.splice(index, 1);
+    }
 
-    setTimeout(() => {
-        circle.remove();
-    }, 700);
+    renderCart();
+    saveOrdersToFirebase();
 }
 
-async function getTakeaway() {
-    let snap = await db.ref('takeaway_counter').once('value');
-    let num = snap.val() || 1;
-    await db.ref('takeaway_counter').set(num + 1);
-    return num;
+// Clear Cart
+function clearCart() {
+    if (orders[currentOrderIndex]) {
+        orders[currentOrderIndex].items = [];
+        renderCart();
+        saveOrdersToFirebase();
+    }
+}
+
+// ==========================================
+// 🪑 Tables Functions
+// ==========================================
+
+// Render Tables
+function renderTables() {
+    db.ref('live_orders').on('value', snap => {
+        let data = snap.val() || {};
+        let html = "";
+
+        for (let i = 1; i <= 12; i++) {
+            let status = "free";
+            let tableKey = 'T_' + i;
+
+            if (data[tableKey]) {
+                if (data[tableKey].status === "open") {
+                    status = "open";
+                } else {
+                    status = "busy";
+                }
+            }
+
+            html += `<div class="table ${status}" onclick="selectTable(${i})">T${i}</div>`;
+        }
+
+        document.getElementById("tables").innerHTML = html;
+    });
+}
+
+// Select Table
+function selectTable(num) {
+    let tableKey = 'T_' + num;
+
+    db.ref('live_orders/' + tableKey).once('value', snap => {
+        if (snap.exists()) {
+            let data = snap.val();
+            let existingIndex = orders.findIndex(o => o.orderPath === tableKey);
+
+            if (existingIndex !== -1) {
+                currentOrderIndex = existingIndex;
+            } else {
+                orders.push({
+                    items: data.items.map(i => ({
+                        ar: i.ar,
+                        qty: i.qty,
+                        price: i.p
+                    })),
+                    orderPath: tableKey
+                });
+                currentOrderIndex = orders.length - 1;
+                saveOrdersToFirebase();
+            }
+
+            selectedTable = num;
+            renderCart();
+            renderOrderTabs();
+            saveOrdersToFirebase();
+            alert("تم فتح الفاتورة");
+        } else {
+            newOrder();
+            selectedTable = num;
+        }
+    });
+}
+
+// ==========================================
+// 📋 Order Functions
+// ==========================================
+
+// New Order
+function newOrder() {
+    let orderNumber = Date.now();
+
+    orders.push({
+        items: [],
+        orderNumber: orderNumber,
+        orderPath: null
+    });
+
+    selectedTable = null;
+    saveOrdersToFirebase();
+    currentOrderIndex = orders.length - 1;
+
+    renderCart();
+    renderOrderTabs();
+    renderTables();
+
+    alert("تم فتح فاتورة رقم " + orderNumber);
 }
 
 // Send Order
 async function sendOrder() {
     renderTables();
     
-    if(orders[currentOrderIndex]?.orderPath) {
+    if (orders[currentOrderIndex]?.orderPath) {
         return alert("تم إرسال الطلب قبل كده");
     }
 
     let cart = orders[currentOrderIndex]?.items || [];
-    if(cart.length === 0) return alert("السلة فاضية!");
+    if (cart.length === 0) return alert("السلة فاضية!");
     
     document.getElementById("note").value = "";
 
     let type = document.getElementById('orderType').value;
     let table = selectedTable;
     
-    if(type === "محلي" && !table) {
+    if (type === "محلي" && !table) {
         return alert("اختار ترابيزة الأول");
     }
 
@@ -1721,7 +1937,7 @@ async function sendOrder() {
 
     let order = {
         items: cart.map(i => ({
-            ar: i.ar,
+            ar: i.ar || i.name,
             qty: i.qty,
             p: i.price,
             note: i.note || "",
@@ -1738,7 +1954,7 @@ async function sendOrder() {
 
     let orderPath;
 
-    if(type === "محلي") {
+    if (type === "محلي") {
         orderPath = 'T_' + table;
     } else {
         let num = await getTakeaway();
@@ -1751,7 +1967,7 @@ async function sendOrder() {
     saveOrdersToFirebase();
 
     let shiftId = localStorage.getItem("shiftId");
-    if(!shiftId) {
+    if (!shiftId) {
         shiftId = "shift_" + Date.now();
         localStorage.setItem("shiftId", shiftId);
     }
@@ -1761,10 +1977,11 @@ async function sendOrder() {
     alert("تم إرسال الطلب");
 }
 
+// Complete Order
 function completeOrder() {
     let id = orders[currentOrderIndex]?.orderPath;
 
-    if(!id) {
+    if (!id) {
         return alert("الطلب لسه متبعتش");
     }
     
@@ -1783,54 +2000,282 @@ function completeOrder() {
     newOrder();
 }
 
-function getYearlySales() {
-    db.ref('shifts').once('value', snap => {
-        let result = {};
+// Get Takeaway Number
+async function getTakeaway() {
+    let snap = await db.ref('takeaway_counter').once('value');
+    let num = snap.val() || 1;
+    await db.ref('takeaway_counter').set(num + 1);
+    return num;
+}
 
-        snap.forEach(shift => {
-            shift.forEach(order => {
-                let d = new Date(order.val().time);
-                let year = d.getFullYear();
-                if(!result[year]) result[year] = 0;
-                result[year] += (order.val().totalPrice || 0);
-            });
-        });
+// Watch Order Status
+function watchOrderStatus() {
+    let id = orders[currentOrderIndex]?.orderPath;
+    if (!id) return;
 
-        drawChart(result);
+    db.ref('live_orders/' + id).on('value', snap => {
+        let o = snap.val();
+        if (!o) return;
 
-        let html = "";
-        for(let y in result) {
-            html += `<div>${y} : ${result[y]} ريال</div>`;
-        }
-        openReport("التقرير السنوي", html);
+        document.getElementById('statusBox').innerHTML = `
+        <span style="color:${o.baristaReady ? '#22c55e' : '#fbbf24'}">باريستا</span> |
+        <span style="color:${o.kitchenReady ? '#22c55e' : '#fbbf24'}">مطبخ</span> |
+        <span style="color:${o.dessertReady ? '#22c55e' : '#fbbf24'}">حلا</span>
+        `;
     });
 }
 
-function getInventoryReport() {
-    db.ref('shifts').once('value', snap => {
-        let items = {};
+// Render Order Tabs
+function renderOrderTabs() {
+    let html = "";
 
-        snap.forEach(shift => {
-            shift.forEach(order => {
-                if(order.val().items) {
-                    order.val().items.forEach(i => {
-                        let name = i.ar;
-                        if(!items[name]) items[name] = 0;
-                        items[name] += i.qty || 1;
-                    });
-                }
-            });
+    orders.forEach((o, index) => {
+        let color = "#1a2332";
+
+        if (o.orderPath) {
+            color = "#f59e0b";
+        }
+
+        if (index === currentOrderIndex) {
+            color = "#22c55e";
+        }
+
+        html += `
+        <div style="display:inline-flex; align-items:center; margin:3px;">
+            <button onclick="switchOrder(${index})" style="
+                background:${color};
+                color:white;
+                border:none;
+                padding:6px 10px;
+                border-radius:8px 0 0 8px;
+                font-family:'Cairo',sans-serif;
+                cursor:pointer;
+            ">
+            ${o.orderPath ? o.orderPath : index + 1}
+            </button>
+            <button onclick="closeTab(${index})" style="
+                background:#ef4444;
+                color:white;
+                border:none;
+                padding:6px 8px;
+                border-radius:0 8px 8px 0;
+                cursor:pointer;
+            ">
+            &#10060;
+            </button>
+        </div>`;
+    });
+
+    document.getElementById("orderTabs").innerHTML = html;
+}
+
+// Switch Order
+function switchOrder(index) {
+    currentOrderIndex = index;
+    renderCart();
+    renderOrderTabs();
+}
+
+// Close Tab
+function closeTab(index) {
+    if (index === currentOrderIndex) {
+        orders.splice(index, 1);
+        currentOrderIndex = 0;
+    } else {
+        orders.splice(index, 1);
+    }
+
+    if (orders.length === 0) {
+        newOrder();
+    }
+
+    saveOrdersToFirebase();
+    renderOrderTabs();
+    renderCart();
+}
+
+// ==========================================
+// 💾 Save/Load Functions
+// ==========================================
+
+// Save Orders to Firebase
+function saveOrdersToFirebase() {
+    db.ref('open_orders/global').set(orders);
+    saveLocalOrders();
+}
+
+// Save Local Orders
+function saveLocalOrders() {
+    localStorage.setItem("orders_backup", JSON.stringify(orders));
+}
+
+// Load Local Orders
+function loadLocalOrders() {
+    let data = localStorage.getItem("orders_backup");
+    if (data) {
+        orders = JSON.parse(data);
+    }
+}
+
+// Auto Save
+function autoSave() {
+    saveLocalOrders();
+}
+
+// Restore Orders
+function restoreOrders() {
+    loadLocalOrders();
+    renderCart();
+    renderOrderTabs();
+    renderTables();
+    alert("تم استرجاع الطلبات");
+}
+
+// ==========================================
+// 📝 Notes Functions
+// ==========================================
+
+let currentNoteIndex = null;
+
+function openNotePopup(index) {
+    currentNoteIndex = index;
+    let item = orders[currentOrderIndex].items[index];
+    document.getElementById("popupNote").value = item.note || "";
+    document.getElementById("notePopup").style.display = "flex";
+}
+
+function closeNotePopup() {
+    document.getElementById("notePopup").style.display = "none";
+}
+
+function saveNote() {
+    let value = document.getElementById("popupNote").value;
+
+    if (currentNoteIndex !== null) {
+        orders[currentOrderIndex].items[currentNoteIndex].note = value;
+    }
+
+    saveOrdersToFirebase();
+    renderCart();
+    closeNotePopup();
+}
+
+// ==========================================
+// 🔍 Search Function
+// ==========================================
+
+function searchItems(text) {
+    let itemsArray = Object.values(allItems);
+
+    let filtered = itemsArray.filter(i => {
+        let name = i.ar || i.name || '';
+        let matchText = name.toLowerCase().includes(text.toLowerCase());
+        let matchCat = currentCategory === 'all' 
+            || i.sub_id === currentCategory 
+            || i.categoryId === currentCategory;
+        let matchMain = currentMainCategory === 'all'
+            || i.mainDept === currentMainCategory
+            || i.dept === currentMainCategory
+            || i.category === currentMainCategory;
+        return matchText && (currentCategory === 'all' ? matchMain : matchCat);
+    });
+
+    // Clear cache to show search results
+    cachedHTML = {};
+    renderItems(filtered);
+}
+
+// ==========================================
+// 👤 Login/Auth Functions
+// ==========================================
+
+function login() {
+    let username = document.getElementById("user").value;
+    let password = document.getElementById("pass").value;
+
+    db.ref('users').once('value', snap => {
+        let users = snap.val();
+
+        if (!users) {
+            alert("مفيش مستخدمين في السيستم");
+            return;
+        }
+
+        let found = null;
+
+        Object.keys(users).forEach(key => {
+            let u = users[key];
+            if (u.username === username && u.password === password) {
+                found = u;
+            }
         });
 
-        drawPieChart(items);
+        if (found) {
+            sessionStorage.setItem("cashier", found.username);
+            sessionStorage.setItem("role", found.role);
 
-        let html = "";
-        for(let i in items) {
-            html += `<div>${i} : ${items[i]}</div>`;
+            document.getElementById("loginBox").style.display = "none";
+            document.getElementById("cashierName").innerText = found.username;
+
+            alert("تم تسجيل الدخول");
+            applyPermissions();
+        } else {
+            alert("بيانات غلط");
         }
-        openReport("تقرير المخزون", html);
     });
 }
+
+function logout() {
+    sessionStorage.removeItem("cashier");
+    document.getElementById("loginBox").style.display = "flex";
+    alert("تم تسجيل الخروج");
+}
+
+function addUser() {
+    let u = document.getElementById("newUser").value;
+    let p = document.getElementById("newPass").value;
+    let r = document.getElementById("newRole").value;
+
+    if (!u || !p) {
+        alert("اكتب البيانات");
+        return;
+    }
+
+    let newRef = db.ref("users").push();
+
+    newRef.set({
+        username: u,
+        password: p,
+        role: r
+    });
+
+    alert("تم إضافة المستخدم");
+
+    document.getElementById("newUser").value = "";
+    document.getElementById("newPass").value = "";
+}
+
+function checkRole() {
+    let role = sessionStorage.getItem("role");
+
+    if (role === "admin") {
+        document.getElementById("adminPanel").style.display = "block";
+    } else {
+        document.getElementById("adminPanel").style.display = "none";
+    }
+}
+
+function applyPermissions() {
+    let role = sessionStorage.getItem("role");
+
+    if (role !== "admin") {
+        document.getElementById("adminPanel").style.display = "none";
+    }
+}
+
+// ==========================================
+// 🖨️ Print Functions
+// ==========================================
 
 function printBill() {
     let cart = orders[currentOrderIndex]?.items || [];
@@ -1841,7 +2286,7 @@ function printBill() {
         total += i.price * i.qty;
         itemsHTML += `
         <tr>
-            <td>${i.ar}</td>
+            <td>${i.ar || i.name}</td>
             <td>${i.qty}</td>
             <td>${i.price}</td>
             <td>${i.price * i.qty}</td>
@@ -1891,167 +2336,287 @@ function printBill() {
     }, 500);
 }
 
-function newOrder() {
-    let orderNumber = Date.now();
+// ==========================================
+// 📊 Reports & Charts Functions
+// ==========================================
 
-    orders.push({
-        items: [],
-        orderNumber: orderNumber,
-        orderPath: null
+let chartInstance;
+let pieInstance;
+
+function toggleMenu() {
+    let menu = document.getElementById("settingsDropdown");
+    menu.style.display = (menu.style.display === "block") ? "none" : "block";
+}
+
+function toggleSales() {
+    let box = document.getElementById("reportBox");
+    box.style.display = "block";
+    getSalesPerDay();
+}
+
+function closeReportBox() {
+    document.getElementById("reportBox").style.display = "none";
+}
+
+function showYearReport() {
+    let monthly = Array(12).fill(0);
+
+    db.ref('shifts').once('value', snap => {
+        snap.forEach(shift => {
+            shift.forEach(order => {
+                let time = order.val().time;
+                if (!time) return;
+
+                let date = new Date(time);
+                if (isNaN(date)) return;
+
+                let month = date.getMonth();
+                monthly[month] += Number(order.val().totalPrice) || 0;
+            });
+        });
+
+        console.log("[v0] Year data:", monthly);
+
+        let labels = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 
+                      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+        let data = {};
+        labels.forEach((l, i) => data[l] = monthly[i]);
+        
+        drawChart(data);
+        document.getElementById("reportBox").style.display = "block";
     });
-
-    selectedTable = null;
-    saveOrdersToFirebase();
-    currentOrderIndex = orders.length - 1;
-
-    renderCart();
-    renderOrderTabs();
-    renderTables();
-
-    alert("تم فتح فاتورة رقم " + orderNumber);
 }
 
-function clearCart() {
-    if(orders[currentOrderIndex]) {
-        orders[currentOrderIndex].items = [];
-        renderCart();
-        saveOrdersToFirebase();
-    }
-}
+function showInventory() {
+    db.ref('products').once('value', snap => {
+        let data = [];
 
-autoSave();
+        snap.forEach(p => {
+            data.push({
+                name: p.val().name,
+                qty: p.val().quantity
+            });
+        });
 
-function watchOrderStatus() {
-    let id = orders[currentOrderIndex]?.orderPath;
-    if(!id) return;
-
-    db.ref('live_orders/' + id).on('value', snap => {
-        let o = snap.val();
-        if(!o) return;
-
-        document.getElementById('statusBox').innerHTML = `
-        <span style="color:${o.baristaReady ? '#22c55e' : '#fbbf24'}">باريستا</span> |
-        <span style="color:${o.kitchenReady ? '#22c55e' : '#fbbf24'}">مطبخ</span> |
-        <span style="color:${o.dessertReady ? '#22c55e' : '#fbbf24'}">حلا</span>
-        `;
+        console.log("[v0] المخزون:", data);
+        alert("تم عرض المخزون في الكونسول");
     });
 }
 
-let currentNoteIndex = null;
+function checkLowStock() {
+    db.ref('products').once('value', snap => {
+        let low = [];
 
-function openNotePopup(index) {
-    currentNoteIndex = index;
-    let item = orders[currentOrderIndex].items[index];
-    document.getElementById("popupNote").value = item.note || "";
-    document.getElementById("notePopup").style.display = "flex";
-}
-
-function closeNotePopup() {
-    document.getElementById("notePopup").style.display = "none";
-}
-
-function saveNote() {
-    let value = document.getElementById("popupNote").value;
-
-    if(currentNoteIndex !== null) {
-        orders[currentOrderIndex].items[currentNoteIndex].note = value;
-    }
-
-    saveOrdersToFirebase();
-    renderCart();
-    closeNotePopup();
-}
-
-function searchItems(text) {
-    let itemsArray = Object.values(allItems);
-
-    let filtered = itemsArray.filter(i => {
-        let matchText = i.ar.toLowerCase().includes(text.toLowerCase());
-        let matchCat = currentCategory === 'all' 
-            || i.sub_id === currentCategory 
-            || i.categoryId === currentCategory;
-        return matchText && matchCat;
-    });
-
-    renderItems(filtered);
-}
-
-function login() {
-    let username = document.getElementById("user").value;
-    let password = document.getElementById("pass").value;
-
-    db.ref('users').once('value', snap => {
-        let users = snap.val();
-
-        if(!users) {
-            alert("مفيش مستخدمين في السيستم");
-            return;
-        }
-
-        let found = null;
-
-        Object.keys(users).forEach(key => {
-            let u = users[key];
-            if(u.username === username && u.password === password) {
-                found = u;
+        snap.forEach(p => {
+            if (p.val().quantity < 5) {
+                low.push(p.val().name);
             }
         });
 
-        if(found) {
-            sessionStorage.setItem("cashier", found.username);
-            sessionStorage.setItem("role", found.role);
-
-            document.getElementById("loginBox").style.display = "none";
-            document.getElementById("cashierName").innerText = found.username;
-
-            alert("تم تسجيل الدخول");
-            applyPermissions();
+        if (low.length > 0) {
+            alert("⚠️ منتجات قربت تخلص:\n" + low.join("\n"));
         } else {
-            alert("بيانات غلط");
+            alert("✅ كل المخزون كويس");
         }
     });
 }
 
-function addUser() {
-    let u = document.getElementById("newUser").value;
-    let p = document.getElementById("newPass").value;
-    let r = document.getElementById("newRole").value;
+function compareMonths() {
+    showYearReport();
+}
 
-    if(!u || !p) {
-        alert("اكتب البيانات");
-        return;
-    }
+function predictSales() {
+    db.ref('shifts').once('value', snap => {
+        let total = 0;
+        let count = 0;
 
-    let newRef = db.ref("users").push();
+        snap.forEach(shift => {
+            shift.forEach(order => {
+                total += (order.val().totalPrice || 0);
+                count++;
+            });
+        });
 
-    newRef.set({
-        username: u,
-        password: p,
-        role: r
+        let avg = count > 0 ? total / count : 0;
+        let prediction = avg * 30;
+
+        alert("📉 التوقع للشهر الجاي: " + Math.round(prediction) + " ريال");
     });
-
-    alert("تم إضافة المستخدم");
-
-    document.getElementById("newUser").value = "";
-    document.getElementById("newPass").value = "";
 }
 
-function checkRole() {
-    let role = sessionStorage.getItem("role");
+function getSalesPerDay() {
+    db.ref('shifts').once('value', snap => {
+        let result = {};
 
-    if(role === "admin") {
-        document.getElementById("adminPanel").style.display = "block";
-    } else {
-        document.getElementById("adminPanel").style.display = "none";
-    }
+        snap.forEach(shift => {
+            shift.forEach(order => {
+                let time = order.val().time;
+                if (!time) return;
+                let date = new Date(time).toLocaleDateString('ar-EG');
+                result[date] = (result[date] || 0) + (order.val().totalPrice || 0);
+            });
+        });
+
+        console.log("[v0] Sales per day:", result);
+        drawChart(result);
+    });
 }
 
-function applyPermissions() {
-    let role = sessionStorage.getItem("role");
+function getSalesPerMonth() {
+    db.ref('shifts').once('value', snap => {
+        let data = snap.val() || {};
+        let months = {};
 
-    if(role !== "admin") {
-        document.getElementById("adminPanel").style.display = "none";
+        Object.values(data).forEach(shift => {
+            Object.values(shift).forEach(order => {
+                let d = new Date(order.time);
+                let month = d.getFullYear() + "-" + (d.getMonth() + 1);
+
+                if (!months[month]) months[month] = 0;
+                months[month] += order.totalPrice || 0;
+            });
+        });
+
+        drawChart(months);
+    });
+}
+
+function drawChart(data) {
+    let labels = Object.keys(data);
+    let values = Object.values(data);
+
+    let ctx = document.getElementById('salesChart').getContext('2d');
+
+    if (chartInstance) {
+        chartInstance.destroy();
     }
+
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'المبيعات',
+                data: values,
+                borderColor: '#22c55e',
+                backgroundColor: 'rgba(34,197,94,0.2)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: 'white' }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: 'white' }
+                },
+                y: {
+                    ticks: { color: 'white' }
+                }
+            }
+        }
+    });
+}
+
+function drawPieChart(data) {
+    let canvas = document.getElementById('topChart');
+    if (!canvas) return;
+    
+    let labels = Object.keys(data);
+    let values = Object.values(data);
+
+    let ctx = canvas.getContext('2d');
+
+    if (pieInstance) {
+        pieInstance.destroy();
+    }
+
+    pieInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: [
+                    '#22c55e',
+                    '#3b82f6',
+                    '#f59e0b',
+                    '#ef4444',
+                    '#a855f7',
+                    '#14b8a6'
+                ]
+            }]
+        },
+        options: {
+            plugins: {
+                legend: {
+                    labels: { color: 'white' }
+                }
+            }
+        }
+    });
+}
+
+function getTopItems() {
+    db.ref('shifts').once('value', snap => {
+        let data = snap.val() || {};
+        let items = {};
+
+        Object.values(data).forEach(shift => {
+            Object.values(shift).forEach(order => {
+                if (order.items) {
+                    order.items.forEach(i => {
+                        let name = i.ar;
+                        if (!items[name]) items[name] = 0;
+                        items[name] += i.qty || 1;
+                    });
+                }
+            });
+        });
+
+        drawPieChart(items);
+    });
+}
+
+function getLastOrders() {
+    db.ref('live_orders').limitToLast(10).once('value', snap => {
+        let el = document.getElementById("lastOrders");
+        if (!el) return;
+        
+        let html = `
+        <tr>
+            <th>رقم</th>
+            <th>المبلغ</th>
+            <th>النوع</th>
+        </tr>`;
+
+        snap.forEach(o => {
+            let d = o.val();
+            html += `
+            <tr>
+                <td>${o.key}</td>
+                <td>${d.totalPrice}</td>
+                <td>${d.type}</td>
+            </tr>`;
+        });
+
+        el.innerHTML = html;
+    });
+}
+
+function openReport(title, content) {
+    document.getElementById("reportTitle").innerText = title;
+    document.getElementById("reportContent").innerHTML = content;
+    document.getElementById("reportModal").style.display = "flex";
+}
+
+function closeReport() {
+    document.getElementById("reportModal").style.display = "none";
 }
 
 function closeShift() {
@@ -2066,7 +2631,7 @@ function closeShift() {
             total += order.totalPrice || 0;
 
             let itemsText = "";
-            if(order.items) {
+            if (order.items) {
                 order.items.forEach(i => {
                     itemsText += `${i.ar} x${i.qty} <br>`;
                 });
@@ -2120,78 +2685,6 @@ function closeShift() {
     });
 }
 
-function logout() {
-    sessionStorage.removeItem("cashier");
-    document.getElementById("loginBox").style.display = "flex";
-    alert("تم تسجيل الخروج");
-}
-
-function switchOrder(index) {
-    currentOrderIndex = index;
-    renderCart();
-    renderOrderTabs();
-}
-
-function renderOrderTabs() {
-    let html = "";
-
-    orders.forEach((o, index) => {
-        let color = "#1a2332";
-
-        if(o.orderPath) {
-            color = "#f59e0b";
-        }
-
-        if(index === currentOrderIndex) {
-            color = "#22c55e";
-        }
-
-        html += `
-        <div style="display:inline-flex; align-items:center; margin:3px;">
-            <button onclick="switchOrder(${index})" style="
-                background:${color};
-                color:white;
-                border:none;
-                padding:6px 10px;
-                border-radius:8px 0 0 8px;
-                font-family:'Cairo',sans-serif;
-                cursor:pointer;
-            ">
-            ${o.orderPath ? o.orderPath : index + 1}
-            </button>
-            <button onclick="closeTab(${index})" style="
-                background:#ef4444;
-                color:white;
-                border:none;
-                padding:6px 8px;
-                border-radius:0 8px 8px 0;
-                cursor:pointer;
-            ">
-            &#10060;
-            </button>
-        </div>`;
-    });
-
-    document.getElementById("orderTabs").innerHTML = html;
-}
-
-function closeTab(index) {
-    if(index === currentOrderIndex) {
-        orders.splice(index, 1);
-        currentOrderIndex = 0;
-    } else {
-        orders.splice(index, 1);
-    }
-
-    if(orders.length === 0) {
-        newOrder();
-    }
-
-    saveOrdersToFirebase();
-    renderOrderTabs();
-    renderCart();
-}
-
 function getTodaySales() {
     db.ref('live_orders').on('value', snap => {
         let total = 0;
@@ -2206,26 +2699,41 @@ function getTodaySales() {
     });
 }
 
+// ==========================================
+// 🚀 Initialization - Window Load
+// ==========================================
+
 window.onload = function() {
+    console.log('[v0] POS System Initializing...');
+    
+    // Load local backup first
     loadLocalOrders();
+    
+    // Fetch dynamic data from Firebase
+    fetchMainCategories();
+    fetchSubCategories();
+    fetchMenuItems();
+    
+    // Other initializations
     getLastOrders();
     getTopItems();
 
     let cashier = sessionStorage.getItem("cashier");
 
-    if(cashier) {
+    if (cashier) {
         document.getElementById("loginBox").style.display = "none";
         let el = document.getElementById("cashierName");
-        if(el) {
+        if (el) {
             el.innerText = cashier;
         }
         checkRole();
     }
 
+    // Load orders from Firebase
     db.ref('open_orders/global').once('value', snap => {
         let data = snap.val();
 
-        if(data) {
+        if (data) {
             orders = data;
         } else {
             loadLocalOrders();
@@ -2235,409 +2743,24 @@ window.onload = function() {
         renderCart();
         renderTables();
 
-        if(orders.length === 0) {
+        if (orders.length === 0) {
             newOrder();
         }
+        
+        console.log('[v0] POS System Ready! 🔥');
     });
+    
+    // Auto save interval
+    setInterval(autoSave, 30000);
 };
 
-function getTodayStats() {
-    db.ref('live_orders').on('value', snap => {
-        let total = 0;
-        let count = 0;
-
-        snap.forEach(o => {
-            total += o.val().totalPrice || 0;
-            count++;
-        });
-
-        document.getElementById("todayTotal").innerText = total;
-        document.getElementById("orderCount").innerText = count;
-    });
-}
-
-function changeView(type) {
-    if(type === "day") {
-        getSalesPerDay();
-    } else {
-        getSalesPerMonth();
-    }
-}
-
-function change(index, delta) {
-    let cart = orders[currentOrderIndex]?.items;
-
-    if(!cart || !cart[index]) return;
-
-    cart[index].qty += delta;
-
-    if(cart[index].qty <= 0) {
-        cart.splice(index, 1);
-    }
-
-    renderCart();
-    saveOrdersToFirebase();
-}
-
-function getSalesPerMonth() {
-    db.ref('shifts').once('value', snap => {
-        let data = snap.val() || {};
-        let months = {};
-
-        Object.values(data).forEach(shift => {
-            Object.values(shift).forEach(order => {
-                let d = new Date(order.time);
-                let month = d.getFullYear() + "-" + (d.getMonth()+1);
-
-                if(!months[month]) months[month] = 0;
-                months[month] += order.totalPrice || 0;
-            });
-        });
-
-        drawChart(months);
-    });
-}
-
-let chartInstance;
-
-function drawChart(data) {
-    let labels = Object.keys(data);
-    let values = Object.values(data);
-
-    let ctx = document.getElementById('salesChart').getContext('2d');
-
-    if(chartInstance) {
-        chartInstance.destroy();
-    }
-
-    chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'المبيعات',
-                data: values,
-                borderColor: '#22c55e',
-                backgroundColor: 'rgba(34,197,94,0.2)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    labels: { color: 'white' }
-                }
-            },
-            scales: {
-                x: {
-                    ticks: { color: 'white' }
-                },
-                y: {
-                    ticks: { color: 'white' }
-                }
-            }
-        }
-    });
-}
-
-function topItems() {
-    let map = {};
-
-    db.ref('live_orders').on('value', snap => {
-        snap.forEach(o => {
-            o.val().items.forEach(i => {
-                map[i.ar] = (map[i.ar] || 0) + i.qty;
-            });
-        });
-        console.log(map);
-    });
-}
-
-function toggleSales() {
-    let box = document.getElementById("salesBox");
-
-    if(box.style.display === "none" || box.style.display === "") {
-        box.style.display = "block";
-        getSalesPerDay();
-        getTopItems();
-    } else {
-        box.style.display = "none";
-    }
-}
-
-function showYearReport() {
-    let monthly = Array(12).fill(0);
-
-    db.ref('shifts').once('value', snap => {
-        snap.forEach(shift => {
-            shift.forEach(order => {
-                let time = order.val().time;
-
-                if (!time) return; // لو مفيش وقت
-
-                let date = new Date(time);
-
-                if (isNaN(date)) return; // لو التاريخ غلط
-
-                let month = date.getMonth();
-
-                monthly[month] += Number(order.val().totalPrice) || 0;
-            });
-        });
-
-        console.log("year data:", monthly);
-
-        drawChart(monthly);
-        document.getElementById("reportBox").style.display = "block";
-    });
-}
-
-function showInventory() {
-    db.ref('products').once('value', snap => {
-        let data = [];
-
-        snap.forEach(p => {
-            data.push({
-                name: p.val().name,
-                qty: p.val().quantity
-            });
-        });
-
-        console.log("المخزون:", data);
-        alert("تم عرض المخزون في الكونسول");
-    });
-}
-
-function checkLowStock() {
-    db.ref('products').once('value', snap => {
-        let low = [];
-
-        snap.forEach(p => {
-            if(p.val().quantity < 5) {
-                low.push(p.val().name);
-            }
-        });
-
-        if(low.length > 0) {
-            alert("⚠️ منتجات قربت تخلص:\n" + low.join("\n"));
-        } else {
-            alert("✅ كل المخزون كويس");
-        }
-    });
-}
-
-function compareMonths() {
-    showYearReport(); // نفس الرسم بس بيعرض المقارنة
-}
-
-function predictSales() {
-    db.ref('shifts').once('value', snap => {
-        let total = 0;
-        let count = 0;
-
-        snap.forEach(shift => {
-            shift.forEach(order => {
-                total += (order.val().totalPrice || 0);
-                count++;
-            });
-        });
-
-        let avg = total / count;
-        let prediction = avg * 30;
-
-        alert("📉 التوقع للشهر الجاي: " + Math.round(prediction) + " ريال");
-    });
-}
-
-
-
-function saveOrdersToFirebase() {
-    let cashier = sessionStorage.getItem("cashier");
-    db.ref('open_orders/global').set(orders);
-    saveLocalOrders();
-}
-
-function saveLocalOrders() {
-    localStorage.setItem("orders_backup", JSON.stringify(orders));
-}
-
-function autoSave() {
-    saveLocalOrders();
-}
-
-function loadLocalOrders() {
-    let data = localStorage.getItem("orders_backup");
-
-    if(data) {
-        orders = JSON.parse(data);
-    }
-}
-
-function getTopItems() {
-    db.ref('shifts').once('value', snap => {
-        let data = snap.val() || {};
-        let items = {};
-
-        Object.values(data).forEach(shift => {
-            Object.values(shift).forEach(order => {
-                if(order.items) {
-                    order.items.forEach(i => {
-                        let name = i.ar;
-                        if(!items[name]) items[name] = 0;
-                        items[name] += i.qty || 1;
-                    });
-                }
-            });
-        });
-
-        drawPieChart(items);
-    });
-}
-
-let pieInstance;
-
-function drawPieChart(data) {
-    let labels = Object.keys(data);
-    let values = Object.values(data);
-
-    let ctx = document.getElementById('topChart').getContext('2d');
-
-    if(pieInstance) {
-        pieInstance.destroy();
-    }
-
-    pieInstance = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: values,
-                backgroundColor: [
-                    '#22c55e',
-                    '#3b82f6',
-                    '#f59e0b',
-                    '#ef4444',
-                    '#a855f7',
-                    '#14b8a6'
-                ]
-            }]
-        },
-        options: {
-            plugins: {
-                legend: {
-                    labels: { color: 'white' }
-                }
-            }
-        }
-    });
-}
-
-function getSalesPerDay() {
-    db.ref('shifts').once('value', snap => {
-        let result = {};
-
-        snap.forEach(shift => {
-            shift.forEach(order => {
-                let date = new Date(order.val().time).toLocaleDateString();
-                result[date] = (result[date] || 0) + (order.val().totalPrice || 0);
-            });
-        });
-
-        console.log(result);
-        drawChart(result);
-    });
-}
-
-getSalesPerDay();
-
-function startShift() {
-    console.log("shift started");
-}
-
-function getLastOrders() {
-    db.ref('live_orders').limitToLast(10).once('value', snap => {
-        let html = `
-        <tr>
-            <th>رقم</th>
-            <th>المبلغ</th>
-            <th>النوع</th>
-        </tr>`;
-
-        snap.forEach(o => {
-            let d = o.val();
-
-            html += `
-            <tr>
-                <td>${o.key}</td>
-                <td>${d.totalPrice}</td>
-                <td>${d.type}</td>
-            </tr>`;
-        });
-
-        document.getElementById("lastOrders").innerHTML = html;
-    });
-}
-
-function openReport(title, content) {
-    document.getElementById("reportTitle").innerText = title;
-    document.getElementById("reportContent").innerHTML = content;
-    document.getElementById("reportModal").style.display = "flex";
-}
-
-function closeReport() {
-    document.getElementById("reportModal").style.display = "none";
-}
-
-function renderMainCategories() {
-    let html = "";
-    
-    const icons = {
-        'desserts': '&#127856;',
-        'kitchen': '&#127858;',
-        'food': '&#127829;',
-        'drinks': '&#127864;',
-        'barista': '&#9749;',
-        'all': '&#9783;'
-    };
-
-    const defaultCats = [
-        { key: 'all', name: 'الكل', desc: 'جميع الأصناف', icon: '&#9783;' },
-        { key: 'drinks', name: 'مشروبات', desc: 'باردة وساخنة', icon: '&#127864;' },
-        { key: 'food', name: 'أكلات', desc: 'وجبات رئيسية', icon: '&#127829;' },
-        { key: 'kitchen', name: 'مطبخ', desc: 'طلبات المطبخ', icon: '&#127858;' },
-        { key: 'desserts', name: 'حلويات', desc: 'حلويات ومعجنات', icon: '&#127856;' }
-    ];
-
-    defaultCats.forEach((cat, index) => {
-        html += `
-        <button class="main-cat-btn ${index === 0 ? 'active' : ''}" onclick="loadSubDepts('${cat.key}'); setActiveMainCat(this)">
-            <span class="icon">${cat.icon}</span>
-            <span class="name">${cat.name}</span>
-            <span class="desc">${cat.desc}</span>
-        </button>`;
-    });
-
-    Object.keys(mainCategories).forEach(key => {
-        let cat = mainCategories[key];
-
-        if(cat.active && !defaultCats.find(d => d.key === key)) {
-            html += `
-            <button class="main-cat-btn" onclick="loadSubDepts('${key}'); setActiveMainCat(this)">
-                <span class="icon">${icons[key] || '&#128230;'}</span>
-                <span class="name">${cat.name}</span>
-            </button>`;
-        }
-    });
-
-    document.getElementById("mainCategories").innerHTML = html;
-}
-
+// Helper function for backward compatibility
 function setActiveMainCat(btn) {
     document.querySelectorAll('.main-cat-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
 }
+
+console.log('[v0] POS System Script Loaded - By Engineer Mahmoud Salah 💀🔥⚓️');
 </script>
 
 </body>
