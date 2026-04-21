@@ -146,6 +146,34 @@ body {
     color: var(--text-muted);
 }
 
+.settings-menu {
+    position: relative;
+}
+
+.dropdown {
+    display: none;
+    position: absolute;
+    background: #111827;
+    border-radius: 10px;
+    padding: 10px;
+    width: 220px;
+    z-index: 1000;
+}
+
+.dropdown button {
+    width: 100%;
+    background: none;
+    border: none;
+    color: white;
+    padding: 10px;
+    text-align: right;
+    cursor: pointer;
+}
+
+.dropdown button:hover {
+    background: #1f2937;
+}
+
 /* ===== MAIN LAYOUT ===== */
 #mainLayout {
     display: grid;
@@ -1120,12 +1148,24 @@ button:hover {
     </div>
     
     <div class="header-left">
-        <button class="header-btn" onclick="document.getElementById('settingsModal').style.display='flex'">
-            <span>&#9881;</span> الإعدادات
-            </button>
-            <button onclick="toggleSales()" class="btn-green">
-        📊 عرض المبيعات
-        </button>
+        <div class="settings-menu">
+    <button onclick="toggleMenu()" class="btn-settings">⚙️ الإعدادات</button>
+
+    <div id="settingsDropdown" class="dropdown">
+        <button onclick="toggleSales()">📊 عرض المبيعات</button>
+        <button onclick="showYearReport()">📅 التقرير السنوي</button>
+        <button onclick="showInventory()">📦 المخزون</button>
+        <button onclick="checkLowStock()">⚠️ تنبيه المخزون</button>
+        <button onclick="compareMonths()">📊 مقارنة شهور</button>
+        <button onclick="predictSales()">📉 توقع المبيعات</button>
+    </div>
+</div>
+
+<!-- مكان عرض النتائج -->
+<div id="reportBox" style="display:none;">
+    <canvas id="salesChart"></canvas>
+</div>
+
         <button class="header-btn logout" onclick="logout()">
             تسجيل الخروج <span>&#10148;</span>
         </button>
@@ -1302,21 +1342,6 @@ button:hover {
     <button onclick="login()">دخول</button>
 </div>
 
-<!-- SALES BOX -->
-<div id="salesBox">
-    <h3>&#128202; المبيعات</h3>
-    <h4>&#128293; الأكثر مبيعا</h4>
-    <canvas id="topChart"></canvas>
-    <h4>&#129534; آخر الطلبات</h4>
-    <table id="lastOrders"></table>
-    <select onchange="changeView(this.value)">
-        <option value="day">يومي</option>
-        <option value="month">شهري</option>
-    </select>
-    <canvas id="salesChart"></canvas>
-    <button onclick="toggleSales()" class="btn-red">&#10060; إغلاق</button>
-</div>
-
 <!-- REPORT MODAL -->
 <div id="reportModal">
     <div>
@@ -1405,6 +1430,11 @@ function loadSubDepts(mainName) {
     if(firstSub) {
         filterCat(firstSub);
     }
+}
+
+function toggleMenu() {
+    let menu = document.getElementById("settingsDropdown");
+    menu.style.display = (menu.style.display === "block") ? "none" : "block";
 }
 
 function filterCat(catId, btn) {
@@ -2336,6 +2366,81 @@ function toggleSales() {
         box.style.display = "none";
     }
 }
+
+function showYearReport() {
+    let monthly = Array(12).fill(0);
+
+    db.ref('shifts').once('value', snap => {
+        snap.forEach(shift => {
+            shift.forEach(order => {
+                let date = new Date(order.val().time);
+                let month = date.getMonth();
+                monthly[month] += order.val().totalPrice;
+            });
+        });
+
+        drawChart(monthly);
+    });
+}
+
+function showInventory() {
+    db.ref('products').once('value', snap => {
+        let data = [];
+
+        snap.forEach(p => {
+            data.push({
+                name: p.val().name,
+                qty: p.val().quantity
+            });
+        });
+
+        console.log("المخزون:", data);
+        alert("تم عرض المخزون في الكونسول");
+    });
+}
+
+function checkLowStock() {
+    db.ref('products').once('value', snap => {
+        let low = [];
+
+        snap.forEach(p => {
+            if(p.val().quantity < 5) {
+                low.push(p.val().name);
+            }
+        });
+
+        if(low.length > 0) {
+            alert("⚠️ منتجات قربت تخلص:\n" + low.join("\n"));
+        } else {
+            alert("✅ كل المخزون كويس");
+        }
+    });
+}
+
+function compareMonths() {
+    showYearReport(); // نفس الرسم بس بيعرض المقارنة
+}
+
+function predictSales() {
+    db.ref('shifts').once('value', snap => {
+        let total = 0;
+        let count = 0;
+
+        snap.forEach(shift => {
+            shift.forEach(order => {
+                total += order.val().totalPrice;
+                count++;
+            });
+        });
+
+        let avg = total / count;
+        let prediction = avg * 30;
+
+        alert("📉 التوقع للشهر الجاي: " + Math.round(prediction) + " ريال");
+    });
+}
+
+
 
 function saveOrdersToFirebase() {
     let cashier = sessionStorage.getItem("cashier");
