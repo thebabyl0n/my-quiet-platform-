@@ -216,6 +216,9 @@ button:hover {
 
         <!-- 👤 المستخدم -->
         <div class="user" id="username">👤</div>
+        
+            <!-- 👇 ضيفي ده هنا -->
+    <div id="cashierName" style="color:white; font-weight:bold;"></div>
 
         <!-- 🔍 بحث -->
         <input type="text" placeholder="بحث..." class="search"
@@ -1240,7 +1243,10 @@ let cashier = sessionStorage.getItem("cashier");
 
 if(cashier){  
     document.getElementById("loginBox").style.display = "none";  
-    document.getElementById("cashierName").innerText = "👤 " + cashier;  
+    let el = document.getElementById("cashierName");
+if(el){
+    el.innerText = "👤 " + cashier;
+}
     checkRole();  
 }  
 
