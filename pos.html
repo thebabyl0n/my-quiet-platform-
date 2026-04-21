@@ -1792,7 +1792,7 @@ function getYearlySales() {
                 let d = new Date(order.val().time);
                 let year = d.getFullYear();
                 if(!result[year]) result[year] = 0;
-                result[year] += order.val().totalPrice || 0;
+                result[year] += (order.val().totalPrice || 0);
             });
         });
 
@@ -2373,13 +2373,24 @@ function showYearReport() {
     db.ref('shifts').once('value', snap => {
         snap.forEach(shift => {
             shift.forEach(order => {
-                let date = new Date(order.val().time);
+                let time = order.val().time;
+
+                if (!time) return; // لو مفيش وقت
+
+                let date = new Date(time);
+
+                if (isNaN(date)) return; // لو التاريخ غلط
+
                 let month = date.getMonth();
-                monthly[month] += order.val().totalPrice;
+
+                monthly[month] += Number(order.val().totalPrice) || 0;
             });
         });
 
+        console.log("year data:", monthly);
+
         drawChart(monthly);
+        document.getElementById("reportBox").style.display = "block";
     });
 }
 
@@ -2428,7 +2439,7 @@ function predictSales() {
 
         snap.forEach(shift => {
             shift.forEach(order => {
-                total += order.val().totalPrice;
+                total += (order.val().totalPrice || 0);
                 count++;
             });
         });
@@ -2530,7 +2541,7 @@ function getSalesPerDay() {
         snap.forEach(shift => {
             shift.forEach(order => {
                 let date = new Date(order.val().time).toLocaleDateString();
-                result[date] = (result[date] || 0) + order.val().totalPrice;
+                result[date] = (result[date] || 0) + (order.val().totalPrice || 0);
             });
         });
 
