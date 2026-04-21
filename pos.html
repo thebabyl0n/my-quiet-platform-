@@ -1320,16 +1320,19 @@ button:hover {
         </button>
         
         <!-- Admin Panel -->
-        <div id="adminPanel">
+            <div id="adminPanel">
             <h3>&#128081; إدارة المستخدمين</h3>
-            <input id="newUser" placeholder="اسم المستخدم">
-            <input id="newPass" placeholder="كلمة المرور">
-            <select id="newRole">
-                <option value="user">كاشير</option>
-                <option value="admin">أدمن</option>
-            </select>
-            <button onclick="addUser()">+ إضافة مستخدم</button>
-        </div>
+
+           <input id="newUser" placeholder="اسم المستخدم">
+           <input id="newPass" placeholder="كلمة المرور">
+
+           <select id="newRole">
+           <option value="cashier">كاشير</option>
+           <option value="admin">أدمن</option>
+           </select>
+
+           <button onclick="addUser()">+ إضافة مستخدم</button>
+           </div>
         
     </div>
 
@@ -2267,9 +2270,16 @@ function logout() {
 }
 
 function addUser() {
+
+    // 🔐 منع غير الأدمن
+    if (sessionStorage.getItem("role") !== "admin") {
+        alert("❌ مش مسموح");
+        return;
+    }
+
     let u = document.getElementById("newUser").value;
     let p = document.getElementById("newPass").value;
-    let r = document.getElementById("newRole").value;
+    let r = document.getElementById("newRole").value || "cashier"; // لو فاضي يبقى كاشير
 
     if (!u || !p) {
         alert("اكتب البيانات");
@@ -2284,7 +2294,7 @@ function addUser() {
         role: r
     });
 
-    alert("تم إضافة المستخدم");
+    alert("✅ تم إضافة المستخدم");
 
     document.getElementById("newUser").value = "";
     document.getElementById("newPass").value = "";
