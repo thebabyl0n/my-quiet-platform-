@@ -274,13 +274,30 @@ button:hover {
 
         </div>
 
-        <!-- 🧾 اليمين -->
-        <div id="rightPanel">
-            <div id="cart"></div>
-        </div>
+<div id="rightPanel">
+
+    <div id="orderTabs"></div>
+
+    <h3>🧾 الفاتورة</h3>
+
+    <div id="cart"></div>
+
+    <div id="total">0 ريال</div>
+
+    <button onclick="openNotePopup()" class="btn-yellow">
+        📝 إضافة ملاحظة
+    </button>
+
+    <button onclick="sendOrder()" class="btn-green">➕ إضافة</button>
+    <button onclick="completeOrder()" class="btn-yellow">💰 تحصيل</button>
+    <button onclick="printBill()" class="btn-blue">🧾 طباعة</button>
+    <button onclick="closeShift()" class="btn-blue">📊 تقفيل وردية</button>
+    <button onclick="restoreOrders()" class="btn-yellow">🔄 استرجاع</button>
+
+</div>
 
     </div>
-
+    
     <!-- 🔝 الأزرار فوق -->
     <div class="top-actions">
 
@@ -356,29 +373,6 @@ z-index:9999;
     <button onclick="newOrder()" class="btn-green" style="width:100%;">
         🆕 فاتورة جديدة
     </button>
-</div>
-
-<div id="rightPanel">
-
-    <div id="orderTabs"></div>
-
-    <h3>🧾 الفاتورة</h3>
-
-    <div id="cart"></div>
-
-    <div id="total">0 ريال</div>
-
-    <!-- زرار الملاحظة -->
-    <button onclick="openNotePopup()" class="btn-yellow">
-        📝 إضافة ملاحظة
-    </button>
-
-    <button onclick="sendOrder()" class="btn-green">➕ إضافة</button>
-    <button onclick="completeOrder()" class="btn-yellow">💰 تحصيل</button>
-    <button onclick="printBill()" class="btn-blue">🧾 طباعة</button>
-    <button onclick="closeShift()" class="btn-blue">📊 تقفيل وردية</button>
-    <button onclick="restoreOrders()" class="btn-yellow">🔄 استرجاع</button>
-
 </div>
 
 <script>  
@@ -1796,4 +1790,3 @@ margin-top:10px;
 </div>
 
 </body>
-
