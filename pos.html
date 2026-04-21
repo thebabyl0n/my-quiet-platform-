@@ -8,6 +8,8 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <!-- 👇 حطي Chart هنا -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
   
 :root {  
     --bg: #0f172a;  
@@ -98,13 +100,15 @@ button:hover {
     padding: 10px;  
     text-align: center;  
     position: relative;  
-    transition: 0.25s;  
-}  
+    overflow: hidden;
+    transition: 0.25s; 
+}
+
   
-.item:hover{  
-    transform:translateY(-5px);  
-    box-shadow:0 8px 20px rgba(0,0,0,0.3);  
-}  
+.item:hover {
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
   
 .item img {  
     width: 100%;  
@@ -178,16 +182,29 @@ button:hover {
 }  
   
 /* 🍽️ Tables */  
-.table {  
-    padding: 10px;  
-    border-radius: 10px;  
-    text-align: center;  
-    font-weight: bold;  
-}  
-  
-.free { background: #22c55e; }  
-.busy { background: #ef4444; }  
-.open { background: #f59e0b; }  
+.table {
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: white;
+}
+
+#tables .table {
+    transition: 0.3s;
+}
+
+.table.free {
+    background: #22c55e;
+}
+
+.table.open {
+    background: #f59e0b;
+}
+
+.table.busy {
+    background: #ef4444;
+}
   
 /* 🧠 Smooth Animation (مهم للسلة الطايرة) */  
 .dept-badge, .status-circle, [id*="circle"] {   
@@ -373,10 +390,10 @@ function renderItems(items){
   
     let key = currentCategory || "all";  
   
-    if(cachedHTML[key]){  
-        document.getElementById('items').innerHTML = cachedHTML[key];  
-        return;  
-    }  
+   // if(cachedHTML[key]){
+//     document.getElementById('items').innerHTML = cachedHTML[key];
+//     return;
+// }
   
     let html = "";  
   
@@ -403,56 +420,142 @@ function renderItems(items){
 `;  
     });  
   
-    cachedHTML[key] = html;  
+    // cachedHTML[key] = html;
   
     document.getElementById('items').innerHTML = html;  
 }  
+
+function calculateTotals(cart){
+    let subtotal = cart.reduce((sum,i)=> sum + (i.price * i.qty), 0);
+
+    let vatRate = 0.15; // ضريبة السعودية
+    let vat = subtotal * vatRate;
+
+    let total = subtotal + vat;
+
+    return {
+        subtotal,
+        vat,
+        total
+    };
+}
   
-function add(id, btn){  
+function add(id, btn){
+
+    // 🔒 تأكد إن الداتا جاهزة
+    if(!itemsMap || Object.keys(itemsMap).length === 0){
+        console.warn("⚠️ itemsMap لسه محملش");
+        return;
+    }
+
+    // لو مفيش أوردر
+    if(!orders[currentOrderIndex]){
+        orders[currentOrderIndex] = {
+            items: [],
+            orderPath: null
+        };
+    }
+
+    let item = itemsMap[id];
+
+    if(!item){
+        console.error("❌ item مش موجود:", id);
+        return;
+    }
+
+    let cartArr = orders[currentOrderIndex].items;
+
+    // 🔒 توحيد ID (حل مشكلة المقارنة)
+    let found = cartArr.find(i => String(i.id) === String(id));
+
+    if(found){
+        found.qty++;
+
+        // 🧠 تأكد إن السعر رقم
+        found.price = Number(found.price) || 0;
+
+    }else{
+        cartArr.push({
+            ...item,
+            id: id,
+            qty: 1,
+            note: "",
+            price: Number(item.price) || 0 // 🔒 حماية السعر
+        });
+    }
+
+    // 🔄 تحديث فوري
+    renderCart();
+
+    // 💾 حفظ
+    saveOrdersToFirebase();
+    saveLocalOrders();
+
+    // ✨ الأنيميشن القديم (كما هو)
+    if(btn) flyToCart(btn);
+
+    // ✨ لمعة الفاتورة (كما هي)
+    let cart = document.getElementById('cart');
+
+    if(cart){
+        cart.style.boxShadow = "0 0 40px #22c55e";
+
+        setTimeout(()=>{
+            cart.style.boxShadow = "0 0 20px rgba(34,197,94,0.2)";
+        }, 400);
+    }
+
+    // 🔥 إضافة تحسين UX (جديد بدون حذف)
+    navigator.vibrate?.(50); // اهتزاز خفيف لو الجهاز يدعم
+}
   
-    addItemToOrder(id);  
-  
-    flyToCart(btn);  
-  
-    // 👇 لمعة الفاتورة  
-    let cart = document.getElementById('cart');  
-    cart.style.boxShadow = "0 0 40px #22c55e";  
-  
-    setTimeout(()=>{  
-        cart.style.boxShadow = "0 0 20px rgba(34,197,94,0.2)";  
-    }, 400);  
-}  
-  
-function renderTables(){  
-  
-    db.ref('live_orders').once('value', snap => {  
-  
-        let data = snap.val() || {};  
-        let html = "";  
-  
-        for(let i=1; i<=12; i++){  
-            let status = "free";  
-  
-            let tableKey = 'T_' + i;  
-  
-            if(data[tableKey]){  
-                if(data[tableKey].status === "open"){  
-                    status = "open"; // أصفر  
-                }else{  
-                    status = "busy"; // أحمر (لو اتحاسب)  
-                }  
-            }  
-  
-            html += `  
-            <div class="table ${status}" onclick="selectTable(${i})">  
-                T${i}  
-            </div>`;  
-        }  
-  
-        document.getElementById("tables").innerHTML = html;  
-  
-    });  
-}  
+let tablesListener = null;
+
+function renderTables(){
+
+    // 🧠 امنع تكرار الليسنر
+    if(tablesListener){
+        db.ref('live_orders').off('value', tablesListener);
+    }
+
+    tablesListener = function(snap){
+
+        let data = snap.val() || {};
+        let html = "";
+
+        for(let i=1; i<=12; i++){
+
+            let tableKey = 'T_' + i;
+            let status = "free";
+
+            if(data[tableKey]){
+                if(data[tableKey].status === "open"){
+                    status = "open";
+                }else{
+                    status = "busy";
+                }
+            }
+
+            html += `
+            <div class="table ${status}" onclick="selectTable(${i})">
+                T${i}
+            </div>`;
+        }
+
+        let el = document.getElementById("tables");
+
+        // 🔒 تأكد إن العنصر موجود
+        if(!el){
+            console.warn("❌ عنصر tables مش موجود في الصفحة");
+            return;
+        }
+
+        el.innerHTML = html;
+    };
+
+    // 🔥 اربط الليسنر مرة واحدة بس
+    db.ref('live_orders').on('value', tablesListener);
+}
   
 function selectTable(num){  
   
@@ -500,30 +603,7 @@ function selectTable(num){
   
     });  
 }  
-  
-// إضافة للكارت  
-function add(name){  
-  
-if(!orders[currentOrderIndex]){  
-    orders[currentOrderIndex] = {  
-        items: [],  
-        orderPath: null  
-    };  
-}  
-  
-    let item = itemsMap[name];  
-  
-    let cart = orders[currentOrderIndex].items;  
-  
-    let found = cart.find(i=>i.id === name);  
-  
-    if(found) found.qty++;  
-    else cart.push({...item, id: name, qty:1});  
-  
-    renderCart();  
-      
-    saveOrdersToFirebase();  
-}  
+
   
 function restoreOrders(){  
   
@@ -531,7 +611,6 @@ function restoreOrders(){
   
     renderCart();  
     renderOrderTabs();  
-    renderTables();  
   
     alert("تم استرجاع الطلبات 🔄");  
       
@@ -542,10 +621,9 @@ function renderCart(){
   
     let cart = orders[currentOrderIndex]?.items || [];  
   
-    let html="", total=0;  
+    let html="";  
   
-    cart.forEach((i,idx)=>{  
-        total += i.price*i.qty;  
+    cart.forEach((i,idx)=>{    
   
         html += `<div class="cart-item" style="flex-direction:column; align-items:flex-start;">  
       
@@ -572,44 +650,66 @@ function renderCart(){
   
 </div>`;  
   
-  
     });  
-  
+
+    // ✅ الحساب الجديد (بدون كسر القديم)
+    let totals = calculateTotals(cart);
+
     document.getElementById('cart').innerHTML = html;  
-    document.getElementById('total').innerText = total + " ريال";  
+
+    document.getElementById('total').innerHTML = `
+        <div style="font-size:14px;color:#94a3b8;">
+            🧾 قبل الضريبة: ${totals.subtotal.toFixed(2)} ريال
+        </div>
+
+        <div style="font-size:14px;color:#f59e0b;">
+            🧮 الضريبة (15%): ${totals.vat.toFixed(2)} ريال
+        </div>
+
+        <div style="
+            font-size:22px;
+            color:#22c55e;
+            margin-top:5px;
+            font-weight:bold;
+        ">
+            💰 الإجمالي: ${totals.total.toFixed(2)} ريال
+        </div>
+    `;  
+}
   
-}  
-  
-function flyToCart(btn){  
-  
-    let cart = document.getElementById('cart'); // 👈 ده الصح عندك  
-  
-    let rectBtn = btn.getBoundingClientRect();  
-    let rectCart = cart.getBoundingClientRect();  
-  
-    let circle = document.createElement('div');  
-    circle.style.position = 'fixed';  
-    circle.style.width = '20px';  
-    circle.style.height = '20px';  
-    circle.style.borderRadius = '50%';  
-    circle.style.background = '#22c55e';  
-    circle.style.left = rectBtn.left + 'px';  
-    circle.style.top = rectBtn.top + 'px';  
-    circle.style.zIndex = 9999;  
-    circle.style.transition = '0.5s cubic-bezier(0.22, 1, 0.36, 1)';  
-  
-    document.body.appendChild(circle);  
-  
-    setTimeout(()=>{  
-        circle.style.left = rectCart.left + 'px';  
-        circle.style.top = rectCart.top + 'px';  
-        circle.style.opacity = 0;  
-    },10);  
-  
-    setTimeout(()=>{  
-        circle.remove();  
-    },700);  
-}  
+function flyToCart(btn){
+
+    let cart = document.getElementById('cart');
+
+    let rectBtn = btn.getBoundingClientRect();
+    let rectCart = cart.getBoundingClientRect();
+
+    let circle = document.createElement('div');
+
+    circle.style.cssText = `
+        position:fixed;
+        width:15px;
+        height:15px;
+        border-radius:50%;
+        background:#22c55e;
+        left:${rectBtn.left}px;
+        top:${rectBtn.top}px;
+        z-index:9999;
+        transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        box-shadow:0 0 15px #22c55e;
+    `;
+
+    document.body.appendChild(circle);
+
+    setTimeout(()=>{
+        circle.style.left = rectCart.left + "px";
+        circle.style.top = rectCart.top + "px";
+        circle.style.opacity = 0;
+        circle.style.transform = "scale(0.3)";
+    },10);
+
+    setTimeout(()=> circle.remove(), 700);
+}
   
 async function getTakeaway(){  
     let snap = await db.ref('takeaway_counter').once('value');  
@@ -623,7 +723,6 @@ async function getTakeaway(){
 // إرسال الطلب  
 async function sendOrder(){  
   
-renderTables();  
     // 👇 حطها هنا بالظبط  
     if(orders[currentOrderIndex]?.orderPath){  
         return alert("تم إرسال الطلب قبل كده ⚠️");  
@@ -1207,16 +1306,6 @@ snap.forEach(o=>{
 
 }
 
-function changeView(type){
-
-if(type === "day"){  
-    getSalesPerDay();  
-}else{  
-    getSalesPerMonth();  
-}
-
-}
-
 function change(index, delta){
 
     let cart = orders[currentOrderIndex]?.items;
@@ -1232,6 +1321,16 @@ function change(index, delta){
 
     renderCart();
     saveOrdersToFirebase();
+}
+
+function changeView(type){
+
+if(type === "day"){  
+    getSalesPerDay();  
+}else{  
+    getSalesPerMonth();  
+}
+
 }
 
 function getSalesPerMonth(){
@@ -1551,6 +1650,7 @@ margin-top:10px;
 
 <button onclick="addUser()">➕ إضافة مستخدم</button>
 
-</div>
+</div> 
+
 </body>
   
