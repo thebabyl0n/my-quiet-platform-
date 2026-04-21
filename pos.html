@@ -195,20 +195,16 @@ button:hover {
 }
 
 .table.free {
-    background: #22c55e !important;
+    background: #22c55e;
 }
 
 .table.open {
-    background: #f59e0b !important;
+    background: #f59e0b;
 }
 
 .table.busy {
-    background: #ef4444 !important;
+    background: #ef4444;
 }
-
-.table.free { background: #22c55e; }  /* أخضر */
-.table.open { background: #f59e0b; }  /* أصفر */
-.table.busy { background: #ef4444; }  /* أحمر */
   
 /* 🧠 Smooth Animation (مهم للسلة الطايرة) */  
 .dept-badge, .status-circle, [id*="circle"] {   
@@ -485,11 +481,12 @@ function add(id, btn){
   
 function renderTables(){
 
-    db.ref('live_orders').off(); // 👈 مهم جدًا يمنع التكرار
+    // db.ref('live_orders').off(); // 👈 مهم جدًا يمنع التكرار
 
     db.ref('live_orders').on('value', snap => {
 
         let data = snap.val() || {};
+        console.log(data); // 👈 ضيف دي
         let html = "";
 
         for(let i=1; i<=12; i++){
