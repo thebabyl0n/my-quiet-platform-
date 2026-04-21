@@ -1559,41 +1559,56 @@ document.getElementById("mainCategories").innerHTML = html;
 
 }
 
-</script>  <div id="notePopup" style="  
-position:fixed;  
-top:0;left:0;right:0;bottom:0;  
-background:rgba(0,0,0,0.6);  
-display:none;  
-justify-content:center;  
-align-items:center;  
-z-index:9999;  
-">  <div style="  
-background:#1e293b;  
-padding:20px;  
-border-radius:10px;  
-width:300px;  
-">  <h3>📝 ملاحظة المنتج</h3>  <textarea id="popupNote" style="  
-width:100%;  
-padding:8px;  
-border-radius:6px;  
-margin-top:10px;  
-"></textarea>  <div style="margin-top:10px; text-align:center;">  
-<button onclick="saveNote()" style="background:#22c55e;color:white;padding:5px 10px;border:none;border-radius:6px;">حفظ</button>  
-<button onclick="closeNotePopup()" style="background:#ef4444;color:white;padding:5px 10px;border:none;border-radius:6px;">إلغاء</button>  
-</div>  </div>  
-</div>  <div id="adminPanel" style="display:none; margin:10px; background:#020617; padding:10px; border-radius:10px;">  <h3>👑 إدارة المستخدمين</h3>  
+</script>
 
-<input id="newUser" placeholder="اسم المستخدم">  
-<input id="newPass" placeholder="كلمة المرور">  
+<div id="notePopup" style="
+position:fixed;
+top:0;left:0;right:0;bottom:0;
+background:rgba(0,0,0,0.6);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:9999;
+">
 
-<select id="newRole">  
-    <option value="user">كاشير</option>  
-    <option value="admin">أدمن</option>  
-</select>  
+<div style="
+background:#1e293b;
+padding:20px;
+border-radius:10px;
+width:300px;
+">
 
-<button onclick="addUser()">➕ إضافة مستخدم</button>
+<h3>📝 ملاحظة المنتج</h3>
 
-</div>  
+<textarea id="popupNote" style="
+width:100%;
+padding:8px;
+border-radius:6px;
+margin-top:10px;
+"></textarea>
 
-</body>  
-  
+<div style="margin-top:10px; text-align:center;">
+<button onclick="saveNote()" style="background:#22c55e;color:white;padding:5px 10px;border:none;border-radius:6px;">حفظ</button>
+<button onclick="closeNotePopup()" style="background:#ef4444;color:white;padding:5px 10px;border:none;border-radius:6px;">إلغاء</button>
+</div>
+
+</div>
+</div>
+
+<div id="adminPanel" style="display:none; margin:10px; background:#020617; padding:10px; border-radius:10px;">
+    
+    <h3>👑 إدارة المستخدمين</h3>
+
+    <input id="newUser" placeholder="اسم المستخدم">
+    <input id="newPass" placeholder="كلمة المرور">
+
+    <select id="newRole">
+        <option value="user">كاشير</option>
+        <option value="admin">أدمن</option>
+    </select>
+
+    <button onclick="addUser()">➕ إضافة مستخدم</button>
+
+</div>
+
+</body>
