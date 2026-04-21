@@ -2228,38 +2228,35 @@ function searchItems(text) {
 // ==========================================
 
 function login() {
-    let username = document.getElementById("user").value;
+    let email = document.getElementById("user").value;
     let password = document.getElementById("pass").value;
 
-    db.ref('users').once('value', snap => {
-        let users = snap.val();
+    firebase.auth().signInWithEmailAndPassword(email, password)
+    .then(userCredential => {
+        let user = userCredential.user;
 
-        if (!users) {
-            alert("مفيش مستخدمين في السيستم");
-            return;
-        }
+        // نجيب بياناته من الداتا بيز
+        db.ref("users/" + user.uid).once("value", snap => {
+            let data = snap.val();
 
-        let found = null;
-
-        Object.keys(users).forEach(key => {
-            let u = users[key];
-            if (u.username === username && u.password === password) {
-                found = u;
+            if (!data) {
+                alert("المستخدم مش متسجل في الداتا");
+                return;
             }
-        });
 
-        if (found) {
-            sessionStorage.setItem("cashier", found.username);
-            sessionStorage.setItem("role", found.role);
+            sessionStorage.setItem("cashier", data.name);
+            sessionStorage.setItem("role", data.role);
 
             document.getElementById("loginBox").style.display = "none";
-            document.getElementById("cashierName").innerText = found.username;
+            document.getElementById("cashierName").innerText = data.name;
 
-            alert("تم تسجيل الدخول");
+            alert("تم تسجيل الدخول ✅");
             applyPermissions();
-        } else {
-            alert("بيانات غلط");
-        }
+        });
+
+    })
+    .catch(err => {
+        alert("خطأ: " + err.message);
     });
 }
 
@@ -2819,3 +2816,4 @@ console.log('[v0] POS System Script Loaded - By Engineer Mahmoud Salah 💀🔥�
 
 </body>
 </html>
+
