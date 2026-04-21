@@ -100,15 +100,13 @@ button:hover {
     padding: 10px;  
     text-align: center;  
     position: relative;  
-    overflow: hidden;
-    transition: 0.25s; 
-}
-
+    transition: 0.25s;  
+}  
   
-.item:hover {
-    transform: translateY(-5px) scale(1.03);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-}
+.item:hover{  
+    transform:translateY(-5px);  
+    box-shadow:0 8px 20px rgba(0,0,0,0.3);  
+}  
   
 .item img {  
     width: 100%;  
@@ -182,29 +180,16 @@ button:hover {
 }  
   
 /* 🍽️ Tables */  
-.table {
-    padding: 10px;
-    border-radius: 10px;
-    text-align: center;
-    font-weight: bold;
-    color: white;
-}
-
-#tables .table {
-    transition: 0.3s;
-}
-
-.table.free {
-    background: #22c55e;
-}
-
-.table.open {
-    background: #f59e0b;
-}
-
-.table.busy {
-    background: #ef4444;
-}
+.table {  
+    padding: 10px;  
+    border-radius: 10px;  
+    text-align: center;  
+    font-weight: bold;  
+}  
+  
+.free { background: #22c55e; }  
+.busy { background: #ef4444; }  
+.open { background: #f59e0b; }  
   
 /* 🧠 Smooth Animation (مهم للسلة الطايرة) */  
 .dept-badge, .status-circle, [id*="circle"] {   
@@ -260,7 +245,6 @@ z-index:999;
 <h3>📊 المبيعات</h3>
 
 <h4>🔥 الأكثر مبيعًا</h4>
-
 <canvas id="topChart"></canvas>
 
 <h4>🧾 آخر الطلبات</h4>
@@ -449,10 +433,10 @@ function renderItems(items){
   
     let key = currentCategory || "all";  
   
-   // if(cachedHTML[key]){
-//     document.getElementById('items').innerHTML = cachedHTML[key];
-//     return;
-// }
+    if(cachedHTML[key]){  
+        document.getElementById('items').innerHTML = cachedHTML[key];  
+        return;  
+    }  
   
     let html = "";  
   
@@ -479,151 +463,55 @@ function renderItems(items){
 `;  
     });  
   
-    // cachedHTML[key] = html;
+    cachedHTML[key] = html;  
   
     document.getElementById('items').innerHTML = html;  
 }  
-
-function calculateTotals(cart){
-    let subtotal = cart.reduce((sum,i)=> sum + (i.price * i.qty), 0);
-
-    let vatRate = 0.15; // ضريبة السعودية
-    let vat = subtotal * vatRate;
-
-    let total = subtotal + vat;
-
-    return {
-        subtotal,
-        vat,
-        total
-    };
-}
   
-function add(id, btn){
-
-    // 🔒 تأكد إن الداتا جاهزة
-    if(!itemsMap || Object.keys(itemsMap).length === 0){
-        console.warn("⚠️ itemsMap لسه محملش");
-        return;
-    }
-
-    // لو مفيش أوردر
-    if(!orders[currentOrderIndex]){
-        orders[currentOrderIndex] = {
-            items: [],
-            orderPath: null
-        };
-    }
-
-    let item = itemsMap[id];
-
-    if(!item){
-        console.error("❌ item مش موجود:", id);
-        return;
-    }
-
-    let cartArr = orders[currentOrderIndex].items;
-
-    // 🔒 توحيد ID (حل مشكلة المقارنة)
-    let found = cartArr.find(i => String(i.id) === String(id));
-
-    if(found){
-        found.qty++;
-
-        // 🧠 تأكد إن السعر رقم
-        found.price = Number(found.price) || 0;
-
-    }else{
-        cartArr.push({
-            ...item,
-            id: id,
-            qty: 1,
-            note: "",
-            price: Number(item.price) || 0 // 🔒 حماية السعر
-        });
-    }
-
-    // 🔄 تحديث فوري
-    renderCart();
-
-    // 💾 حفظ
-    saveOrdersToFirebase();
-    saveLocalOrders();
-
-    // ✨ الأنيميشن القديم (كما هو)
-    if(btn) flyToCart(btn);
-
-    // ✨ لمعة الفاتورة (كما هي)
-    let cart = document.getElementById('cart');
-
-    if(cart){
-        cart.style.boxShadow = "0 0 40px #22c55e";
-
-        setTimeout(()=>{
-            cart.style.boxShadow = "0 0 20px rgba(34,197,94,0.2)";
-        }, 400);
-    }
-
-    // 🔥 إضافة تحسين UX (جديد بدون حذف)
-    navigator.vibrate?.(50); // اهتزاز خفيف لو الجهاز يدعم
-}
+function add(id, btn){  
   
-let tablesListener = null;
-
-function renderTables(){
-
-    let el = document.getElementById("tables");
-
-    // 👇 لو العنصر مش موجود لسه (وقت الريفريش) استنى
-    if(!el){
-        setTimeout(renderTables, 300);
-        return;
-    }
-
-    // ✅ مهم جدًا: امسح أي listener قديم
-    db.ref('live_orders').off();
-
-    db.ref('live_orders').on('value', snap => {
-
-        let data = snap.val() || {};
-        console.log("📊 tables data:", data);
-
-        let html = "";
-
-        for(let i=1; i<=12; i++){
-
-            let status = "free";
-            let tableKey = 'T_' + i;
-
-            if(data[tableKey]){
-                if(data[tableKey].status === "open"){
-                    status = "open";
-                }else{
-                    status = "busy";
-                }
-            }
-
-            html += `
-            <div class="table ${status}" onclick="selectTable(${i})">
-                T${i}
-            </div>`;
-        }
-
-        el.innerHTML = html;
-
-    });
-
-}
-
-
-// إضافة للكارت  
-function add(name){  
+    addItemToOrder(id);  
   
-if(!orders[currentOrderIndex]){  
-    orders[currentOrderIndex] = {  
-        items: [],  
-        orderPath: null  
-    };  
+    flyToCart(btn);  
+  
+    // 👇 لمعة الفاتورة  
+    let cart = document.getElementById('cart');  
+    cart.style.boxShadow = "0 0 40px #22c55e";  
+  
+    setTimeout(()=>{  
+        cart.style.boxShadow = "0 0 20px rgba(34,197,94,0.2)";  
+    }, 400);  
+}  
+  
+function renderTables(){  
+  
+    db.ref('live_orders').once('value', snap => {  
+  
+        let data = snap.val() || {};  
+        let html = "";  
+  
+        for(let i=1; i<=12; i++){  
+            let status = "free";  
+  
+            let tableKey = 'T_' + i;  
+  
+            if(data[tableKey]){  
+                if(data[tableKey].status === "open"){  
+                    status = "open"; // أصفر  
+                }else{  
+                    status = "busy"; // أحمر (لو اتحاسب)  
+                }  
+            }  
+  
+            html += `  
+            <div class="table ${status}" onclick="selectTable(${i})">  
+                T${i}  
+            </div>`;  
+        }  
+  
+        document.getElementById("tables").innerHTML = html;  
+  
+    });  
 }  
   
 function selectTable(num){  
@@ -672,7 +560,30 @@ function selectTable(num){
   
     });  
 }  
-
+  
+// إضافة للكارت  
+function add(name){  
+  
+if(!orders[currentOrderIndex]){  
+    orders[currentOrderIndex] = {  
+        items: [],  
+        orderPath: null  
+    };  
+}  
+  
+    let item = itemsMap[name];  
+  
+    let cart = orders[currentOrderIndex].items;  
+  
+    let found = cart.find(i=>i.id === name);  
+  
+    if(found) found.qty++;  
+    else cart.push({...item, id: name, qty:1});  
+  
+    renderCart();  
+      
+    saveOrdersToFirebase();  
+}  
   
 function restoreOrders(){  
   
@@ -680,6 +591,7 @@ function restoreOrders(){
   
     renderCart();  
     renderOrderTabs();  
+    renderTables();  
   
     alert("تم استرجاع الطلبات 🔄");  
       
@@ -690,9 +602,10 @@ function renderCart(){
   
     let cart = orders[currentOrderIndex]?.items || [];  
   
-    let html="";  
+    let html="", total=0;  
   
-    cart.forEach((i,idx)=>{    
+    cart.forEach((i,idx)=>{  
+        total += i.price*i.qty;  
   
         html += `<div class="cart-item" style="flex-direction:column; align-items:flex-start;">  
       
@@ -719,66 +632,44 @@ function renderCart(){
   
 </div>`;  
   
-    });  
-
-    // ✅ الحساب الجديد (بدون كسر القديم)
-    let totals = calculateTotals(cart);
-
-    document.getElementById('cart').innerHTML = html;  
-
-    document.getElementById('total').innerHTML = `
-        <div style="font-size:14px;color:#94a3b8;">
-            🧾 قبل الضريبة: ${totals.subtotal.toFixed(2)} ريال
-        </div>
-
-        <div style="font-size:14px;color:#f59e0b;">
-            🧮 الضريبة (15%): ${totals.vat.toFixed(2)} ريال
-        </div>
-
-        <div style="
-            font-size:22px;
-            color:#22c55e;
-            margin-top:5px;
-            font-weight:bold;
-        ">
-            💰 الإجمالي: ${totals.total.toFixed(2)} ريال
-        </div>
-    `;  
-}
   
-function flyToCart(btn){
-
-    let cart = document.getElementById('cart');
-
-    let rectBtn = btn.getBoundingClientRect();
-    let rectCart = cart.getBoundingClientRect();
-
-    let circle = document.createElement('div');
-
-    circle.style.cssText = `
-        position:fixed;
-        width:15px;
-        height:15px;
-        border-radius:50%;
-        background:#22c55e;
-        left:${rectBtn.left}px;
-        top:${rectBtn.top}px;
-        z-index:9999;
-        transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-        box-shadow:0 0 15px #22c55e;
-    `;
-
-    document.body.appendChild(circle);
-
-    setTimeout(()=>{
-        circle.style.left = rectCart.left + "px";
-        circle.style.top = rectCart.top + "px";
-        circle.style.opacity = 0;
-        circle.style.transform = "scale(0.3)";
-    },10);
-
-    setTimeout(()=> circle.remove(), 700);
-}
+    });  
+  
+    document.getElementById('cart').innerHTML = html;  
+    document.getElementById('total').innerText = total + " ريال";  
+  
+}  
+  
+function flyToCart(btn){  
+  
+    let cart = document.getElementById('cart'); // 👈 ده الصح عندك  
+  
+    let rectBtn = btn.getBoundingClientRect();  
+    let rectCart = cart.getBoundingClientRect();  
+  
+    let circle = document.createElement('div');  
+    circle.style.position = 'fixed';  
+    circle.style.width = '20px';  
+    circle.style.height = '20px';  
+    circle.style.borderRadius = '50%';  
+    circle.style.background = '#22c55e';  
+    circle.style.left = rectBtn.left + 'px';  
+    circle.style.top = rectBtn.top + 'px';  
+    circle.style.zIndex = 9999;  
+    circle.style.transition = '0.5s cubic-bezier(0.22, 1, 0.36, 1)';  
+  
+    document.body.appendChild(circle);  
+  
+    setTimeout(()=>{  
+        circle.style.left = rectCart.left + 'px';  
+        circle.style.top = rectCart.top + 'px';  
+        circle.style.opacity = 0;  
+    },10);  
+  
+    setTimeout(()=>{  
+        circle.remove();  
+    },700);  
+}  
   
 async function getTakeaway(){  
     let snap = await db.ref('takeaway_counter').once('value');  
@@ -792,6 +683,7 @@ async function getTakeaway(){
 // إرسال الطلب  
 async function sendOrder(){  
   
+renderTables();  
     // 👇 حطها هنا بالظبط  
     if(orders[currentOrderIndex]?.orderPath){  
         return alert("تم إرسال الطلب قبل كده ⚠️");  
@@ -1083,11 +975,7 @@ db.ref('users').once('value', snap => {
         sessionStorage.setItem("role", found.role);  
 
         document.getElementById("loginBox").style.display = "none";  
-        let cashierEl = document.getElementById("cashierName");
-
-if(cashierEl){
-    cashierEl.innerText = "👤 " + cashier;
-}
+        document.getElementById("cashierName").innerText = "👤 " + found.username;.  
 
         alert("تم تسجيل الدخول ✅");  
         applyPermissions();  
@@ -1327,51 +1215,39 @@ snap.forEach(o=>{
 
 window.onload = function(){
 
-    try {
+loadLocalOrders();  
+  
+getLastOrders();  
+getTopItems();  
+  
 
-        loadLocalOrders();
-        getLastOrders();
-        getTopItems();
+let cashier = sessionStorage.getItem("cashier");  
 
-        renderTables();
+if(cashier){  
+    document.getElementById("loginBox").style.display = "none";  
+    document.getElementById("cashierName").innerText = "👤 " + cashier;  
+    checkRole();  
+}  
 
-        let cashier = sessionStorage.getItem("cashier");
+db.ref('open_orders/global').once('value', snap => {  
 
-        if(cashier){
-            document.getElementById("loginBox").style.display = "none";
+    let data = snap.val();  
 
-            let userBox = document.getElementById("username");
-            if(userBox){
-                userBox.innerText = "👤 " + cashier;
-            }
+    if(data){  
+        orders = data;  
+    } else {  
+        loadLocalOrders(); // 👈 fallback لو مفيش داتا  
+    }  
 
-            checkRole();
-            applyPermissions();
-        }
+    renderOrderTabs();  
+    renderCart();  
+    renderTables();  
 
-        db.ref('open_orders/global').once('value', snap => {
+    if(orders.length === 0){  
+        newOrder();  
+    }  
 
-            let data = snap.val();
-
-            if(data){
-                orders = data;
-            } else {
-                loadLocalOrders();
-            }
-
-            renderOrderTabs();
-            renderCart();
-            renderTables();
-
-            if(orders.length === 0){
-                newOrder();
-            }
-
-        });
-
-    } catch(err){
-        console.error("🔥 ERROR ON LOAD:", err);
-    }
+});
 
 };
 
@@ -1389,23 +1265,6 @@ snap.forEach(o=>{
     document.getElementById("orderCount").innerText = count;  
 });
 
-}
-
-function change(index, delta){
-
-    let cart = orders[currentOrderIndex]?.items;
-
-    if(!cart || !cart[index]) return;
-
-    cart[index].qty += delta;
-
-    // لو الكمية بقت صفر نحذف المنتج
-    if(cart[index].qty <= 0){
-        cart.splice(index, 1);
-    }
-
-    renderCart();
-    saveOrdersToFirebase();
 }
 
 function changeView(type){
@@ -1754,3 +1613,4 @@ margin-top:10px;
 </div>
 
 </body>
+
