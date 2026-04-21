@@ -1204,8 +1204,8 @@ button:hover {
     <div id="settingsDropdown" class="dropdown">
         <button onclick="toggleSales()">📊 عرض المبيعات</button>
         <button onclick="showYearReport()">📅 التقرير السنوي</button>
-        <button onclick="showInventory()">📦 المخزون</button>
-        <button onclick="checkLowStock()">⚠️ تنبيه المخزون</button>
+        <button id="btnInventory" onclick="showInventory()">📦 المخزون</button>
+        <button id="btnLowStock" onclick="checkLowStock()">⚠️ تنبيه المخزون</button>
         <button onclick="compareMonths()">📊 مقارنة شهور</button>
         <button onclick="predictSales()">📉 توقع المبيعات</button>
     </div>
@@ -1434,6 +1434,20 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+
+let currentUserRole = null;
+
+firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+        db.ref("users/" + user.uid).once("value", snap => {
+            currentUserRole = snap.val()?.role || "user";
+
+            console.log("role:", currentUserRole);
+
+            applyPermissions();
+        });
+    }
+});
 
 // ==========================================
 // 📦 Global State Variables
@@ -2289,10 +2303,14 @@ function checkRole() {
 }
 
 function applyPermissions() {
-    let role = sessionStorage.getItem("role");
-
-    if (role !== "admin") {
+    if (currentUserRole !== "admin") {
         document.getElementById("adminPanel").style.display = "none";
+
+        let btn1 = document.getElementById("btnInventory");
+        let btn2 = document.getElementById("btnLowStock");
+
+        if (btn1) btn1.style.display = "none";
+        if (btn2) btn2.style.display = "none";
     }
 }
 
@@ -2411,6 +2429,13 @@ function showYearReport() {
 }
 
 function showInventory() {
+    let role = sessionStorage.getItem("role");
+
+    if (role !== "admin") {
+        alert("❌ ليس لديك صلاحية");
+        return;
+    }
+
     db.ref('products').once('value', snap => {
         let data = [];
 
@@ -2426,21 +2451,26 @@ function showInventory() {
     });
 }
 
-function checkLowStock() {
+function showInventory() {
+    let role = sessionStorage.getItem("role");
+
+    if (role !== "admin") {
+        alert("❌ ليس لديك صلاحية");
+        return;
+    }
+
     db.ref('products').once('value', snap => {
-        let low = [];
+        let data = [];
 
         snap.forEach(p => {
-            if (p.val().quantity < 5) {
-                low.push(p.val().name);
-            }
+            data.push({
+                name: p.val().name,
+                qty: p.val().quantity
+            });
         });
 
-        if (low.length > 0) {
-            alert("⚠️ منتجات قربت تخلص:\n" + low.join("\n"));
-        } else {
-            alert("✅ كل المخزون كويس");
-        }
+        console.log("[v0] المخزون:", data);
+        alert("تم عرض المخزون في الكونسول");
     });
 }
 
