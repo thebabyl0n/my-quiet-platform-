@@ -100,13 +100,15 @@ button:hover {
     padding: 10px;  
     text-align: center;  
     position: relative;  
-    transition: 0.25s;  
-}  
+    overflow: hidden;
+    transition: 0.25s; 
+}
+
   
-.item:hover{  
-    transform:translateY(-5px);  
-    box-shadow:0 8px 20px rgba(0,0,0,0.3);  
-}  
+.item:hover {
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
   
 .item img {  
     width: 100%;  
@@ -186,6 +188,22 @@ button:hover {
     text-align: center;
     font-weight: bold;
     color: white;
+}
+
+#tables .table {
+    transition: 0.3s;
+}
+
+.table.free {
+    background: #22c55e !important;
+}
+
+.table.open {
+    background: #f59e0b !important;
+}
+
+.table.busy {
+    background: #ef4444 !important;
 }
 
 .table.free { background: #22c55e; }  /* أخضر */
@@ -467,11 +485,9 @@ function add(id, btn){
   
 function renderTables(){
 
-    let ref = db.ref('live_orders');
+    db.ref('live_orders').off(); // 👈 مهم جدًا يمنع التكرار
 
-    ref.off(); // يمنع التكرار
-
-    ref.on('value', snap => {
+    db.ref('live_orders').on('value', snap => {
 
         let data = snap.val() || {};
         let html = "";
@@ -483,9 +499,9 @@ function renderTables(){
 
             if(data[tableKey]){
                 if(data[tableKey].status === "open"){
-                    status = "open"; // أصفر
+                    status = "open";
                 }else{
-                    status = "busy"; // أحمر
+                    status = "busy";
                 }
             }
 
@@ -557,7 +573,6 @@ function restoreOrders(){
   
     renderCart();  
     renderOrderTabs();  
-    renderTables();  
   
     alert("تم استرجاع الطلبات 🔄");  
       
@@ -606,36 +621,39 @@ function renderCart(){
   
 }  
   
-function flyToCart(btn){  
-  
-    let cart = document.getElementById('cart'); // 👈 ده الصح عندك  
-  
-    let rectBtn = btn.getBoundingClientRect();  
-    let rectCart = cart.getBoundingClientRect();  
-  
-    let circle = document.createElement('div');  
-    circle.style.position = 'fixed';  
-    circle.style.width = '20px';  
-    circle.style.height = '20px';  
-    circle.style.borderRadius = '50%';  
-    circle.style.background = '#22c55e';  
-    circle.style.left = rectBtn.left + 'px';  
-    circle.style.top = rectBtn.top + 'px';  
-    circle.style.zIndex = 9999;  
-    circle.style.transition = '0.5s cubic-bezier(0.22, 1, 0.36, 1)';  
-  
-    document.body.appendChild(circle);  
-  
-    setTimeout(()=>{  
-        circle.style.left = rectCart.left + 'px';  
-        circle.style.top = rectCart.top + 'px';  
-        circle.style.opacity = 0;  
-    },10);  
-  
-    setTimeout(()=>{  
-        circle.remove();  
-    },700);  
-}  
+function flyToCart(btn){
+
+    let cart = document.getElementById('cart');
+
+    let rectBtn = btn.getBoundingClientRect();
+    let rectCart = cart.getBoundingClientRect();
+
+    let circle = document.createElement('div');
+
+    circle.style.cssText = `
+        position:fixed;
+        width:15px;
+        height:15px;
+        border-radius:50%;
+        background:#22c55e;
+        left:${rectBtn.left}px;
+        top:${rectBtn.top}px;
+        z-index:9999;
+        transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        box-shadow:0 0 15px #22c55e;
+    `;
+
+    document.body.appendChild(circle);
+
+    setTimeout(()=>{
+        circle.style.left = rectCart.left + "px";
+        circle.style.top = rectCart.top + "px";
+        circle.style.opacity = 0;
+        circle.style.transform = "scale(0.3)";
+    },10);
+
+    setTimeout(()=> circle.remove(), 700);
+}
   
 async function getTakeaway(){  
     let snap = await db.ref('takeaway_counter').once('value');  
@@ -649,7 +667,6 @@ async function getTakeaway(){
 // إرسال الطلب  
 async function sendOrder(){  
   
-renderTables();  
     // 👇 حطها هنا بالظبط  
     if(orders[currentOrderIndex]?.orderPath){  
         return alert("تم إرسال الطلب قبل كده ⚠️");  
