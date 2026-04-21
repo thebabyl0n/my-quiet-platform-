@@ -225,7 +225,7 @@ button:hover {
 
     <!-- 🔝 الهيدر -->
     <div id="header">
-      ☕ POS System
+        ☕ POS System
     </div>
 
     <!-- 💪 الجسم -->
@@ -233,25 +233,45 @@ button:hover {
 
         <!-- 🪑 الشمال -->
         <div id="leftPanel">
-
             <div id="adminPanel"></div>
         </div>
 
         <!-- 🍔 النص -->
         <div id="centerPanel">
-        
-        <div id="statsBox" style="display:flex; gap:10px; margin:10px 0; align-items:center; flex-wrap:wrap;">
-        
-        <div id="reportsBox" style="
-display:flex;
-gap:10px;
-margin:10px 0;
-flex-wrap:wrap;
-">
 
+            <!-- 📊 الإحصائيات -->
+            <div id="statsBox" style="display:flex; gap:10px; margin:10px 0; flex-wrap:wrap;">
+
+                <!-- 📊 التقارير -->
+                <div id="reportsBox" style="display:flex; gap:10px; flex-wrap:wrap;">
+
+                    <div class="report-card" onclick="getYearlySales()">
+                        📊 <br> تقرير سنوي
+                    </div>
+
+                    <div class="report-card" onclick="getInventoryReport()">
+                        📦 <br> المخزون
+                    </div>
+
+                </div>
+
+                <!-- 💰 -->
+                <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">
+                    💰 <span id="todayTotal">0</span> ريال
+                </div>
+
+                <!-- 🧾 -->
+                <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">
+                    🧾 <span id="orderCount">0</span> طلب
+                </div>
+
+            </div>
+
+            <!-- 🛒 المنتجات -->
             <div id="mainCategories"></div>
             <div id="categories"></div>
             <div id="items"></div>
+
         </div>
 
         <!-- 🧾 اليمين -->
@@ -261,24 +281,20 @@ flex-wrap:wrap;
 
     </div>
 
-
+    <!-- 🔝 الأزرار فوق -->
     <div class="top-actions">
 
-        <!-- 📊 زر المبيعات -->
-        <button onclick="toggleSales()" class="btn-green">
-            📊
-        </button>
+        <!-- 📊 -->
+        <button onclick="toggleSales()" class="btn-green">📊</button>
 
-        <!-- 👤 المستخدم -->
-        <div class="user" id="username">👤</div>
-        
-            <!-- 👇 ضيفي ده هنا -->
-    <div id="cashierName" style="color:white; font-weight:bold;"></div>
+        <!-- 👤 (واحد بس مش اتنين 😏) -->
+        <div id="cashierName" style="color:white; font-weight:bold;"></div>
 
-        <!-- 🚪 خروج -->
+        <!-- 🚪 -->
         <button onclick="logout()" class="btn-red">🚪</button>
 
     </div>
+
 </div>
 
 <!-- 📊 Sales Popup -->
@@ -335,53 +351,35 @@ z-index:9999;
 <button onclick="login()" class="btn-green">دخول</button>
 </div>
 
-    <div class="report-card" onclick="getYearlySales()">
-        📊 <br> تقرير سنوي
-    </div>
-
-    <div class="report-card" onclick="getInventoryReport()">
-        📦 <br> المخزون
-    </div>
-
-</div>
-
-    <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">
-        💰 <span id="todayTotal">0</span> ريال
-    </div>
-
-    <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">
-        🧾 <span id="orderCount">0</span> طلب
-    </div>
-    
-</div>
-
+<!-- 🆕 فاتورة جديدة -->
 <div style="position:fixed; bottom:10px; left:10px; right:10px;">
     <button onclick="newOrder()" class="btn-green" style="width:100%;">
         🆕 فاتورة جديدة
     </button>
 </div>
 
-<!-- 💳 Right Side -->
-<div class="right">
+<div id="rightPanel">
 
-<div id="orderTabs"></div>
+    <div id="orderTabs"></div>
 
-<h3>🧾 الفاتورة</h3>
+    <h3>🧾 الفاتورة</h3>
 
-<select id="orderType">
-<option value="محلي">محلي</option>
-<option value="سفري">سفري</option>
-</select>
+    <div id="cart"></div>
 
-<div id="tables" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;"></div>
+    <div id="total">0 ريال</div>
 
-<div id="total">0 ريال</div>
+    <!-- زرار الملاحظة -->
+    <button onclick="openNotePopup()" class="btn-yellow">
+        📝 إضافة ملاحظة
+    </button>
 
-<button onclick="sendOrder()" class="btn-green">➕ إضافة</button>
-<button onclick="completeOrder()" class="btn-yellow">💰 تحصيل</button>
-<button onclick="printBill()" class="btn-blue">🧾 طباعة</button>
-<button onclick="closeShift()" class="btn-blue">📊 تقفيل وردية</button>
-<button onclick="restoreOrders()" class="btn-yellow">🔄 استرجاع</button>
+    <button onclick="sendOrder()" class="btn-green">➕ إضافة</button>
+    <button onclick="completeOrder()" class="btn-yellow">💰 تحصيل</button>
+    <button onclick="printBill()" class="btn-blue">🧾 طباعة</button>
+    <button onclick="closeShift()" class="btn-blue">📊 تقفيل وردية</button>
+    <button onclick="restoreOrders()" class="btn-yellow">🔄 استرجاع</button>
+
+</div>
 
 <script>  
 const firebaseConfig = {  
