@@ -212,82 +212,137 @@ button:hover {
 }  
   
   
-</style>  </head>  <body>  <!-- 🔝 Top Bar -->  <div class="top-bar">  <div class="logo">☕ POS System</div>  
+</style>
+</head>
 
-<div class="top-actions">  
+<body>
 
-    <!-- 📊 زر المبيعات -->  
-    <button onclick="toggleSales()" class="btn-green">  
-        📊  
-    </button>  
+<!-- 🔝 Top Bar -->
+<div class="top-bar">
 
-    <!-- 👤 المستخدم -->  
-    let userBox = document.getElementById("username");
+    <div class="logo">☕ POS System</div>
 
-if(userBox){
-    userBox.innerText = "👤 " + cashier;
-}  
+    <div class="top-actions">
 
-    <!-- 🔍 بحث -->  
-    <input type="text" placeholder="بحث..." class="search"  
-    oninput="searchItems(this.value)">  
+        <!-- 📊 زر المبيعات -->
+        <button onclick="toggleSales()" class="btn-green">
+            📊
+        </button>
 
-    <!-- 🚪 خروج -->  
-    <button onclick="logout()" class="btn-red">🚪</button>  
+        <!-- 👤 المستخدم -->
+        <div class="user" id="username">👤</div>
 
+        <!-- 🔍 بحث -->
+        <input type="text" placeholder="بحث..." class="search"
+        oninput="searchItems(this.value)">
+
+        <!-- 🚪 خروج -->
+        <button onclick="logout()" class="btn-red">🚪</button>
+
+    </div>
 </div>
 
-</div>  <!-- 📊 Sales Popup -->  <div id="salesBox" style="  
-display:none;  
-position:fixed;  
-top:50%;  
-left:50%;  
-transform:translate(-50%,-50%);  
-width:90%;  
-max-width:600px;  
-background:#1e293b;  
-padding:20px;  
-border-radius:15px;  
-z-index:999;  
-">  <h3>📊 المبيعات</h3>  <h4>🔥 الأكثر مبيعًا</h4>  
-<canvas id="topChart"></canvas>  <h4>🧾 آخر الطلبات</h4>  
-<table id="lastOrders" style="width:100%;color:white;"></table>  <select onchange="changeView(this.value)">  
-<option value="day">يومي</option>  
-<option value="month">شهري</option>  
-</select>  <canvas id="salesChart"></canvas>
+<!-- 📊 Sales Popup -->
+<div id="salesBox" style="
+display:none;
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+width:90%;
+max-width:600px;
+background:#1e293b;
+padding:20px;
+border-radius:15px;
+z-index:999;
+">
+
+<h3>📊 المبيعات</h3>
+
+<h4>🔥 الأكثر مبيعًا</h4>
+
+<canvas id="topChart"></canvas>
+
+<h4>🧾 آخر الطلبات</h4>
+<table id="lastOrders" style="width:100%;color:white;"></table>
+
+<select onchange="changeView(this.value)">
+<option value="day">يومي</option>
+<option value="month">شهري</option>
+</select>
+
+<canvas id="salesChart"></canvas>
 
 <button onclick="toggleSales()" class="btn-red">❌ إغلاق</button>
 
-</div>  <!-- 🔐 Login -->  <div id="loginBox" style="  
-position:fixed;  
-top:0;left:0;right:0;bottom:0;  
-background:#0f172a;  
-display:flex;  
-flex-direction:column;  
-justify-content:center;  
-align-items:center;  
-z-index:9999;  
-">  <h2>🔐 تسجيل الدخول</h2>  <input id="user" placeholder="اسم المستخدم">  
-<input id="pass" type="password" placeholder="كلمة السر">  <button onclick="login()" class="btn-green">دخول</button>
-
-</div>  <!-- 📊 Stats -->  <div id="statsBox" style="display:flex; gap:10px; margin:10px 0;">  
-    <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">  
-        💰 <span id="todayTotal">0</span> ريال  
-    </div>  <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">  
-    🧾 <span id="orderCount">0</span> طلب  
 </div>
 
-</div>  <!-- 📦 Categories & Items -->  <div id="mainCategories"></div>  
-<div id="categories"></div>  
-<div id="items"></div>  <!-- 🆕 New Order -->  <div style="position:fixed; bottom:10px; left:10px; right:10px;">  
-    <button onclick="newOrder()" class="btn-green" style="width:100%;">  
-        🆕 فاتورة جديدة  
-    </button>  
-</div>  <!-- 💳 Right Side -->  <div class="right">  <div id="orderTabs"></div>  <h3>🧾 الفاتورة</h3>  <select id="orderType">  
-<option value="محلي">محلي</option>  
-<option value="سفري">سفري</option>  
-</select>  <div id="tables" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;"></div>  <div id="cart"></div>  
-<div id="total">0 ريال</div>  <textarea id="note" placeholder="ملاحظات"></textarea>  <div id="statusBox"></div>  <button onclick="sendOrder()" class="btn-green">➕ إضافة</button>
+<!-- 🔐 Login -->
+<div id="loginBox" style="
+position:fixed;
+top:0;left:0;right:0;bottom:0;
+background:#0f172a;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:9999;
+">
+
+<h2>🔐 تسجيل الدخول</h2>
+
+<input id="user" placeholder="اسم المستخدم">
+<input id="pass" type="password" placeholder="كلمة السر">
+
+<button onclick="login()" class="btn-green">دخول</button>
+
+</div>
+
+<!-- 📊 Stats -->
+<div id="statsBox" style="display:flex; gap:10px; margin:10px 0;">
+    <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">
+        💰 <span id="todayTotal">0</span> ريال
+    </div>
+
+    <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">
+        🧾 <span id="orderCount">0</span> طلب
+    </div>
+</div>
+
+<!-- 📦 Categories & Items -->
+<div id="mainCategories"></div>
+<div id="categories"></div>
+<div id="items"></div>
+
+<!-- 🆕 New Order -->
+<div style="position:fixed; bottom:10px; left:10px; right:10px;">
+    <button onclick="newOrder()" class="btn-green" style="width:100%;">
+        🆕 فاتورة جديدة
+    </button>
+</div>
+
+<!-- 💳 Right Side -->
+<div class="right">
+
+<div id="orderTabs"></div>
+
+<h3>🧾 الفاتورة</h3>
+
+<select id="orderType">
+<option value="محلي">محلي</option>
+<option value="سفري">سفري</option>
+</select>
+
+<div id="tables" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;"></div>
+
+<div id="cart"></div>
+<div id="total">0 ريال</div>
+
+<textarea id="note" placeholder="ملاحظات"></textarea>
+
+<div id="statusBox"></div>
+
+<button onclick="sendOrder()" class="btn-green">➕ إضافة</button>
 <button onclick="completeOrder()" class="btn-yellow">💰 تحصيل</button>
 <button onclick="printBill()" class="btn-blue">🧾 طباعة</button>
 <button onclick="closeShift()" class="btn-blue">📊 تقفيل وردية</button>
@@ -1646,40 +1701,56 @@ document.getElementById("mainCategories").innerHTML = html;
 
 }
 
-</script>  <div id="notePopup" style="  
-position:fixed;  
-top:0;left:0;right:0;bottom:0;  
-background:rgba(0,0,0,0.6);  
-display:none;  
-justify-content:center;  
-align-items:center;  
-z-index:9999;  
-">  <div style="  
-background:#1e293b;  
-padding:20px;  
-border-radius:10px;  
-width:300px;  
-">  <h3>📝 ملاحظة المنتج</h3>  <textarea id="popupNote" style="  
-width:100%;  
-padding:8px;  
-border-radius:6px;  
-margin-top:10px;  
-"></textarea>  <div style="margin-top:10px; text-align:center;">  
-<button onclick="saveNote()" style="background:#22c55e;color:white;padding:5px 10px;border:none;border-radius:6px;">حفظ</button>  
-<button onclick="closeNotePopup()" style="background:#ef4444;color:white;padding:5px 10px;border:none;border-radius:6px;">إلغاء</button>  
-</div>  </div>  
-</div>  <div id="adminPanel" style="display:none; margin:10px; background:#020617; padding:10px; border-radius:10px;">  <h3>👑 إدارة المستخدمين</h3>  
+</script>
 
-<input id="newUser" placeholder="اسم المستخدم">  
-<input id="newPass" placeholder="كلمة المرور">  
+<div id="notePopup" style="
+position:fixed;
+top:0;left:0;right:0;bottom:0;
+background:rgba(0,0,0,0.6);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:9999;
+">
 
-<select id="newRole">  
-    <option value="user">كاشير</option>  
-    <option value="admin">أدمن</option>  
-</select>  
+<div style="
+background:#1e293b;
+padding:20px;
+border-radius:10px;
+width:300px;
+">
 
-<button onclick="addUser()">➕ إضافة مستخدم</button>
+<h3>📝 ملاحظة المنتج</h3>
 
-</div> 
+<textarea id="popupNote" style="
+width:100%;
+padding:8px;
+border-radius:6px;
+margin-top:10px;
+"></textarea>
 
-</body> 
+<div style="margin-top:10px; text-align:center;">
+<button onclick="saveNote()" style="background:#22c55e;color:white;padding:5px 10px;border:none;border-radius:6px;">حفظ</button>
+<button onclick="closeNotePopup()" style="background:#ef4444;color:white;padding:5px 10px;border:none;border-radius:6px;">إلغاء</button>
+</div>
+
+</div>
+</div>
+
+<div id="adminPanel" style="display:none; margin:10px; background:#020617; padding:10px; border-radius:10px;">
+    
+    <h3>👑 إدارة المستخدمين</h3>
+
+    <input id="newUser" placeholder="اسم المستخدم">
+    <input id="newPass" placeholder="كلمة المرور">
+
+    <select id="newRole">
+        <option value="user">كاشير</option>
+        <option value="admin">أدمن</option>
+    </select>
+
+    <button onclick="addUser()">➕ إضافة مستخدم</button>
+
+</div>
+
+</body>
