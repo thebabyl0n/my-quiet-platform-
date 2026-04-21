@@ -185,7 +185,24 @@ button:hover {
     border-radius: 10px;  
     text-align: center;  
     font-weight: bold;  
-}  
+}
+
+.report-card{
+    flex:1;
+    min-width:120px;
+    background:#020617;
+    padding:15px;
+    border-radius:15px;
+    text-align:center;
+    cursor:pointer;
+    transition:0.3s;
+    font-weight:bold;
+}
+
+.report-card:hover{
+    transform:scale(1.05);
+    background:#0f172a;
+}
   
 .free { background: #22c55e; }  
 .busy { background: #ef4444; }  
@@ -285,11 +302,43 @@ z-index:9999;
 
 </div>
 
-<!-- 📊 Stats -->
-<div id="statsBox" style="display:flex; gap:10px; margin:10px 0;">
+<div id="statsBox" style="display:flex; gap:10px; margin:10px 0; align-items:center; flex-wrap:wrap;">
+
+<div id="reportsBox" style="
+display:flex;
+gap:10px;
+margin:10px 0;
+flex-wrap:wrap;
+">
+
+    <div class="report-card" onclick="getYearlySales()">
+        📊 <br> تقرير سنوي
+    </div>
+
+    <div class="report-card" onclick="getInventoryReport()">
+        📦 <br> المخزون
+    </div>
+
+</div>
+
     <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">
         💰 <span id="todayTotal">0</span> ريال
     </div>
+
+    <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">
+        🧾 <span id="orderCount">0</span> طلب
+    </div>
+
+    <!-- 👇 الأزرار هنا -->
+    <button onclick="getYearlySales()" class="btn-blue">
+        📊 سنوي
+    </button>
+
+    <button onclick="getInventoryReport()" class="btn-green">
+        📦 مخزون
+    </button>
+
+</div>
 
     <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">
         🧾 <span id="orderCount">0</span> طلب
@@ -799,7 +848,83 @@ function completeOrder(){
     alert("تم التحصيل 💰");  
   
     newOrder();  
-}  
+} 
+
+function getYearlySales(){
+
+    db.ref('shifts').once('value', snap => {
+
+        let result = {};
+
+        snap.forEach(shift => {
+            shift.forEach(order => {
+
+                let d = new Date(order.val().time);
+                let year = d.getFullYear();
+
+                if(!result[year]) result[year] = 0;
+
+                result[year] += order.val().totalPrice || 0;
+
+            });
+        });
+
+        console.log(result);
+
+        drawChart(result); // الشارت 👌
+
+        // 👇 كله يتحط هنا جوه
+        let html = "";
+
+        for(let y in result){
+            html += `<div>${y} : ${result[y]} ريال</div>`;
+        }
+
+        openReport("📊 التقرير السنوي", html);
+
+    });
+
+}
+
+function getInventoryReport(){
+
+    db.ref('shifts').once('value', snap => {
+
+        let items = {};
+
+        snap.forEach(shift => {
+            shift.forEach(order => {
+
+                if(order.val().items){
+                    order.val().items.forEach(i => {
+
+                        let name = i.ar;
+
+                        if(!items[name]) items[name] = 0;
+
+                        items[name] += i.qty || 1;
+                    });
+                }
+
+            });
+        });
+
+        console.log(items);
+
+        drawPieChart(items); // pie chart 🔥
+
+        // 👇 ده الجزء الناقص عندك
+        let html = "";
+
+        for(let i in items){
+            html += `<div>${i} : ${items[i]}</div>`;
+        }
+
+        openReport("📦 تقرير المخزون", html);
+
+    });
+
+}
   
 function printBill(){  
   
@@ -1579,6 +1704,16 @@ db.ref('live_orders').limitToLast(10).once('value', snap=>{
 
 }
 
+function openReport(title, content){
+    document.getElementById("reportTitle").innerText = title;
+    document.getElementById("reportContent").innerHTML = content;
+    document.getElementById("reportModal").style.display = "flex";
+}
+
+function closeReport(){
+    document.getElementById("reportModal").style.display = "none";
+}
+
 function renderMainCategories(){
 let html = "";
 
@@ -1600,22 +1735,36 @@ document.getElementById("mainCategories").innerHTML = html;
 
 </script>
 
-<div id="notePopup" style="
+<div id="reportModal" style="
 position:fixed;
-top:0;left:0;right:0;bottom:0;
-background:rgba(0,0,0,0.6);
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
 display:none;
-justify-content:center;
 align-items:center;
-z-index:9999;
+justify-content:center;
+z-index:999;
 ">
 
-<div style="
-background:#1e293b;
-padding:20px;
-border-radius:10px;
-width:300px;
-">
+    <div style="
+    background:#020617;
+    padding:20px;
+    border-radius:15px;
+    width:90%;
+    max-width:400px;
+    color:#fff;
+    ">
+
+        <h3 id="reportTitle"></h3>
+        <div id="reportContent"></div>
+
+        <button onclick="closeReport()" style="margin-top:10px;">❌ إغلاق</button>
+
+    </div>
+
+</div>
 
 <h3>📝 ملاحظة المنتج</h3>
 
