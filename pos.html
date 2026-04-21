@@ -8,6 +8,8 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <!-- 👇 حطي Chart هنا -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
   
 :root {  
     --bg: #0f172a;  
@@ -98,13 +100,15 @@ button:hover {
     padding: 10px;  
     text-align: center;  
     position: relative;  
-    transition: 0.25s;  
-}  
+    overflow: hidden;
+    transition: 0.25s; 
+}
+
   
-.item:hover{  
-    transform:translateY(-5px);  
-    box-shadow:0 8px 20px rgba(0,0,0,0.3);  
-}  
+.item:hover {
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
   
 .item img {  
     width: 100%;  
@@ -178,16 +182,29 @@ button:hover {
 }  
   
 /* 🍽️ Tables */  
-.table {  
-    padding: 10px;  
-    border-radius: 10px;  
-    text-align: center;  
-    font-weight: bold;  
-}  
-  
-.free { background: #22c55e; }  
-.busy { background: #ef4444; }  
-.open { background: #f59e0b; }  
+.table {
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: white;
+}
+
+#tables .table {
+    transition: 0.3s;
+}
+
+.table.free {
+    background: #22c55e;
+}
+
+.table.open {
+    background: #f59e0b;
+}
+
+.table.busy {
+    background: #ef4444;
+}
   
 /* 🧠 Smooth Animation (مهم للسلة الطايرة) */  
 .dept-badge, .status-circle, [id*="circle"] {   
@@ -195,137 +212,82 @@ button:hover {
 }  
   
   
-</style>
-</head>
+</style>  </head>  <body>  <!-- 🔝 Top Bar -->  <div class="top-bar">  <div class="logo">☕ POS System</div>  
 
-<body>
+<div class="top-actions">  
 
-<!-- 🔝 Top Bar -->
-<div class="top-bar">
+    <!-- 📊 زر المبيعات -->  
+    <button onclick="toggleSales()" class="btn-green">  
+        📊  
+    </button>  
 
-    <div class="logo">☕ POS System</div>
+    <!-- 👤 المستخدم -->  
+    let userBox = document.getElementById("username");
 
-    <div class="top-actions">
+if(userBox){
+    userBox.innerText = "👤 " + cashier;
+}  
 
-        <!-- 📊 زر المبيعات -->
-        <button onclick="toggleSales()" class="btn-green">
-            📊
-        </button>
+    <!-- 🔍 بحث -->  
+    <input type="text" placeholder="بحث..." class="search"  
+    oninput="searchItems(this.value)">  
 
-        <!-- 👤 المستخدم -->
-        <div class="user" id="username">👤</div>
+    <!-- 🚪 خروج -->  
+    <button onclick="logout()" class="btn-red">🚪</button>  
 
-        <!-- 🔍 بحث -->
-        <input type="text" placeholder="بحث..." class="search"
-        oninput="searchItems(this.value)">
-
-        <!-- 🚪 خروج -->
-        <button onclick="logout()" class="btn-red">🚪</button>
-
-    </div>
 </div>
 
-<!-- 📊 Sales Popup -->
-<div id="salesBox" style="
-display:none;
-position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-width:90%;
-max-width:600px;
-background:#1e293b;
-padding:20px;
-border-radius:15px;
-z-index:999;
-">
-
-<h3>📊 المبيعات</h3>
-
-<h4>🔥 الأكثر مبيعًا</h4>
-
-<canvas id="topChart"></canvas>
-
-<h4>🧾 آخر الطلبات</h4>
-<table id="lastOrders" style="width:100%;color:white;"></table>
-
-<select onchange="changeView(this.value)">
-<option value="day">يومي</option>
-<option value="month">شهري</option>
-</select>
-
-<canvas id="salesChart"></canvas>
+</div>  <!-- 📊 Sales Popup -->  <div id="salesBox" style="  
+display:none;  
+position:fixed;  
+top:50%;  
+left:50%;  
+transform:translate(-50%,-50%);  
+width:90%;  
+max-width:600px;  
+background:#1e293b;  
+padding:20px;  
+border-radius:15px;  
+z-index:999;  
+">  <h3>📊 المبيعات</h3>  <h4>🔥 الأكثر مبيعًا</h4>  
+<canvas id="topChart"></canvas>  <h4>🧾 آخر الطلبات</h4>  
+<table id="lastOrders" style="width:100%;color:white;"></table>  <select onchange="changeView(this.value)">  
+<option value="day">يومي</option>  
+<option value="month">شهري</option>  
+</select>  <canvas id="salesChart"></canvas>
 
 <button onclick="toggleSales()" class="btn-red">❌ إغلاق</button>
 
+</div>  <!-- 🔐 Login -->  <div id="loginBox" style="  
+position:fixed;  
+top:0;left:0;right:0;bottom:0;  
+background:#0f172a;  
+display:flex;  
+flex-direction:column;  
+justify-content:center;  
+align-items:center;  
+z-index:9999;  
+">  <h2>🔐 تسجيل الدخول</h2>  <input id="user" placeholder="اسم المستخدم">  
+<input id="pass" type="password" placeholder="كلمة السر">  <button onclick="login()" class="btn-green">دخول</button>
+
+</div>  <!-- 📊 Stats -->  <div id="statsBox" style="display:flex; gap:10px; margin:10px 0;">  
+    <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">  
+        💰 <span id="todayTotal">0</span> ريال  
+    </div>  <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">  
+    🧾 <span id="orderCount">0</span> طلب  
 </div>
 
-<!-- 🔐 Login -->
-<div id="loginBox" style="
-position:fixed;
-top:0;left:0;right:0;bottom:0;
-background:#0f172a;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-z-index:9999;
-">
-
-<h2>🔐 تسجيل الدخول</h2>
-
-<input id="user" placeholder="اسم المستخدم">
-<input id="pass" type="password" placeholder="كلمة السر">
-
-<button onclick="login()" class="btn-green">دخول</button>
-
-</div>
-
-<!-- 📊 Stats -->
-<div id="statsBox" style="display:flex; gap:10px; margin:10px 0;">
-    <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">
-        💰 <span id="todayTotal">0</span> ريال
-    </div>
-
-    <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">
-        🧾 <span id="orderCount">0</span> طلب
-    </div>
-</div>
-
-<!-- 📦 Categories & Items -->
-<div id="mainCategories"></div>
-<div id="categories"></div>
-<div id="items"></div>
-
-<!-- 🆕 New Order -->
-<div style="position:fixed; bottom:10px; left:10px; right:10px;">
-    <button onclick="newOrder()" class="btn-green" style="width:100%;">
-        🆕 فاتورة جديدة
-    </button>
-</div>
-
-<!-- 💳 Right Side -->
-<div class="right">
-
-<div id="orderTabs"></div>
-
-<h3>🧾 الفاتورة</h3>
-
-<select id="orderType">
-<option value="محلي">محلي</option>
-<option value="سفري">سفري</option>
-</select>
-
-<div id="tables" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;"></div>
-
-<div id="cart"></div>
-<div id="total">0 ريال</div>
-
-<textarea id="note" placeholder="ملاحظات"></textarea>
-
-<div id="statusBox"></div>
-
-<button onclick="sendOrder()" class="btn-green">➕ إضافة</button>
+</div>  <!-- 📦 Categories & Items -->  <div id="mainCategories"></div>  
+<div id="categories"></div>  
+<div id="items"></div>  <!-- 🆕 New Order -->  <div style="position:fixed; bottom:10px; left:10px; right:10px;">  
+    <button onclick="newOrder()" class="btn-green" style="width:100%;">  
+        🆕 فاتورة جديدة  
+    </button>  
+</div>  <!-- 💳 Right Side -->  <div class="right">  <div id="orderTabs"></div>  <h3>🧾 الفاتورة</h3>  <select id="orderType">  
+<option value="محلي">محلي</option>  
+<option value="سفري">سفري</option>  
+</select>  <div id="tables" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;"></div>  <div id="cart"></div>  
+<div id="total">0 ريال</div>  <textarea id="note" placeholder="ملاحظات"></textarea>  <div id="statusBox"></div>  <button onclick="sendOrder()" class="btn-green">➕ إضافة</button>
 <button onclick="completeOrder()" class="btn-yellow">💰 تحصيل</button>
 <button onclick="printBill()" class="btn-blue">🧾 طباعة</button>
 <button onclick="closeShift()" class="btn-blue">📊 تقفيل وردية</button>
@@ -432,10 +394,10 @@ function renderItems(items){
   
     let key = currentCategory || "all";  
   
-    if(cachedHTML[key]){  
-        document.getElementById('items').innerHTML = cachedHTML[key];  
-        return;  
-    }  
+   // if(cachedHTML[key]){
+//     document.getElementById('items').innerHTML = cachedHTML[key];
+//     return;
+// }
   
     let html = "";  
   
@@ -462,55 +424,151 @@ function renderItems(items){
 `;  
     });  
   
-    cachedHTML[key] = html;  
+    // cachedHTML[key] = html;
   
     document.getElementById('items').innerHTML = html;  
 }  
+
+function calculateTotals(cart){
+    let subtotal = cart.reduce((sum,i)=> sum + (i.price * i.qty), 0);
+
+    let vatRate = 0.15; // ضريبة السعودية
+    let vat = subtotal * vatRate;
+
+    let total = subtotal + vat;
+
+    return {
+        subtotal,
+        vat,
+        total
+    };
+}
   
-function add(id, btn){  
+function add(id, btn){
+
+    // 🔒 تأكد إن الداتا جاهزة
+    if(!itemsMap || Object.keys(itemsMap).length === 0){
+        console.warn("⚠️ itemsMap لسه محملش");
+        return;
+    }
+
+    // لو مفيش أوردر
+    if(!orders[currentOrderIndex]){
+        orders[currentOrderIndex] = {
+            items: [],
+            orderPath: null
+        };
+    }
+
+    let item = itemsMap[id];
+
+    if(!item){
+        console.error("❌ item مش موجود:", id);
+        return;
+    }
+
+    let cartArr = orders[currentOrderIndex].items;
+
+    // 🔒 توحيد ID (حل مشكلة المقارنة)
+    let found = cartArr.find(i => String(i.id) === String(id));
+
+    if(found){
+        found.qty++;
+
+        // 🧠 تأكد إن السعر رقم
+        found.price = Number(found.price) || 0;
+
+    }else{
+        cartArr.push({
+            ...item,
+            id: id,
+            qty: 1,
+            note: "",
+            price: Number(item.price) || 0 // 🔒 حماية السعر
+        });
+    }
+
+    // 🔄 تحديث فوري
+    renderCart();
+
+    // 💾 حفظ
+    saveOrdersToFirebase();
+    saveLocalOrders();
+
+    // ✨ الأنيميشن القديم (كما هو)
+    if(btn) flyToCart(btn);
+
+    // ✨ لمعة الفاتورة (كما هي)
+    let cart = document.getElementById('cart');
+
+    if(cart){
+        cart.style.boxShadow = "0 0 40px #22c55e";
+
+        setTimeout(()=>{
+            cart.style.boxShadow = "0 0 20px rgba(34,197,94,0.2)";
+        }, 400);
+    }
+
+    // 🔥 إضافة تحسين UX (جديد بدون حذف)
+    navigator.vibrate?.(50); // اهتزاز خفيف لو الجهاز يدعم
+}
   
-    addItemToOrder(id);  
+let tablesListener = null;
+
+function renderTables(){
+
+    let el = document.getElementById("tables");
+
+    // 👇 لو العنصر مش موجود لسه (وقت الريفريش) استنى
+    if(!el){
+        setTimeout(renderTables, 300);
+        return;
+    }
+
+    // ✅ مهم جدًا: امسح أي listener قديم
+    db.ref('live_orders').off();
+
+    db.ref('live_orders').on('value', snap => {
+
+        let data = snap.val() || {};
+        console.log("📊 tables data:", data);
+
+        let html = "";
+
+        for(let i=1; i<=12; i++){
+
+            let status = "free";
+            let tableKey = 'T_' + i;
+
+            if(data[tableKey]){
+                if(data[tableKey].status === "open"){
+                    status = "open";
+                }else{
+                    status = "busy";
+                }
+            }
+
+            html += `
+            <div class="table ${status}" onclick="selectTable(${i})">
+                T${i}
+            </div>`;
+        }
+
+        el.innerHTML = html;
+
+    });
+
+}
+
+
+// إضافة للكارت  
+function add(name){  
   
-    flyToCart(btn);  
-  
-    // 👇 لمعة الفاتورة  
-    let cart = document.getElementById('cart');  
-    cart.style.boxShadow = "0 0 40px #22c55e";  
-  
-    setTimeout(()=>{  
-        cart.style.boxShadow = "0 0 20px rgba(34,197,94,0.2)";  
-    }, 400);  
-}  
-  
-function renderTables(){  
-  
-    db.ref('live_orders').once('value', snap => {  
-  
-        let data = snap.val() || {};  
-        let html = "";  
-  
-        for(let i=1; i<=12; i++){  
-            let status = "free";  
-  
-            let tableKey = 'T_' + i;  
-  
-            if(data[tableKey]){  
-                if(data[tableKey].status === "open"){  
-                    status = "open"; // أصفر  
-                }else{  
-                    status = "busy"; // أحمر (لو اتحاسب)  
-                }  
-            }  
-  
-            html += `  
-            <div class="table ${status}" onclick="selectTable(${i})">  
-                T${i}  
-            </div>`;  
-        }  
-  
-        document.getElementById("tables").innerHTML = html;  
-  
-    });  
+if(!orders[currentOrderIndex]){  
+    orders[currentOrderIndex] = {  
+        items: [],  
+        orderPath: null  
+    };  
 }  
   
 function selectTable(num){  
@@ -559,30 +617,7 @@ function selectTable(num){
   
     });  
 }  
-  
-// إضافة للكارت  
-function add(name){  
-  
-if(!orders[currentOrderIndex]){  
-    orders[currentOrderIndex] = {  
-        items: [],  
-        orderPath: null  
-    };  
-}  
-  
-    let item = itemsMap[name];  
-  
-    let cart = orders[currentOrderIndex].items;  
-  
-    let found = cart.find(i=>i.id === name);  
-  
-    if(found) found.qty++;  
-    else cart.push({...item, id: name, qty:1});  
-  
-    renderCart();  
-      
-    saveOrdersToFirebase();  
-}  
+
   
 function restoreOrders(){  
   
@@ -590,7 +625,6 @@ function restoreOrders(){
   
     renderCart();  
     renderOrderTabs();  
-    renderTables();  
   
     alert("تم استرجاع الطلبات 🔄");  
       
@@ -601,10 +635,9 @@ function renderCart(){
   
     let cart = orders[currentOrderIndex]?.items || [];  
   
-    let html="", total=0;  
+    let html="";  
   
-    cart.forEach((i,idx)=>{  
-        total += i.price*i.qty;  
+    cart.forEach((i,idx)=>{    
   
         html += `<div class="cart-item" style="flex-direction:column; align-items:flex-start;">  
       
@@ -631,44 +664,66 @@ function renderCart(){
   
 </div>`;  
   
-  
     });  
-  
+
+    // ✅ الحساب الجديد (بدون كسر القديم)
+    let totals = calculateTotals(cart);
+
     document.getElementById('cart').innerHTML = html;  
-    document.getElementById('total').innerText = total + " ريال";  
+
+    document.getElementById('total').innerHTML = `
+        <div style="font-size:14px;color:#94a3b8;">
+            🧾 قبل الضريبة: ${totals.subtotal.toFixed(2)} ريال
+        </div>
+
+        <div style="font-size:14px;color:#f59e0b;">
+            🧮 الضريبة (15%): ${totals.vat.toFixed(2)} ريال
+        </div>
+
+        <div style="
+            font-size:22px;
+            color:#22c55e;
+            margin-top:5px;
+            font-weight:bold;
+        ">
+            💰 الإجمالي: ${totals.total.toFixed(2)} ريال
+        </div>
+    `;  
+}
   
-}  
-  
-function flyToCart(btn){  
-  
-    let cart = document.getElementById('cart'); // 👈 ده الصح عندك  
-  
-    let rectBtn = btn.getBoundingClientRect();  
-    let rectCart = cart.getBoundingClientRect();  
-  
-    let circle = document.createElement('div');  
-    circle.style.position = 'fixed';  
-    circle.style.width = '20px';  
-    circle.style.height = '20px';  
-    circle.style.borderRadius = '50%';  
-    circle.style.background = '#22c55e';  
-    circle.style.left = rectBtn.left + 'px';  
-    circle.style.top = rectBtn.top + 'px';  
-    circle.style.zIndex = 9999;  
-    circle.style.transition = '0.5s cubic-bezier(0.22, 1, 0.36, 1)';  
-  
-    document.body.appendChild(circle);  
-  
-    setTimeout(()=>{  
-        circle.style.left = rectCart.left + 'px';  
-        circle.style.top = rectCart.top + 'px';  
-        circle.style.opacity = 0;  
-    },10);  
-  
-    setTimeout(()=>{  
-        circle.remove();  
-    },700);  
-}  
+function flyToCart(btn){
+
+    let cart = document.getElementById('cart');
+
+    let rectBtn = btn.getBoundingClientRect();
+    let rectCart = cart.getBoundingClientRect();
+
+    let circle = document.createElement('div');
+
+    circle.style.cssText = `
+        position:fixed;
+        width:15px;
+        height:15px;
+        border-radius:50%;
+        background:#22c55e;
+        left:${rectBtn.left}px;
+        top:${rectBtn.top}px;
+        z-index:9999;
+        transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        box-shadow:0 0 15px #22c55e;
+    `;
+
+    document.body.appendChild(circle);
+
+    setTimeout(()=>{
+        circle.style.left = rectCart.left + "px";
+        circle.style.top = rectCart.top + "px";
+        circle.style.opacity = 0;
+        circle.style.transform = "scale(0.3)";
+    },10);
+
+    setTimeout(()=> circle.remove(), 700);
+}
   
 async function getTakeaway(){  
     let snap = await db.ref('takeaway_counter').once('value');  
@@ -682,7 +737,6 @@ async function getTakeaway(){
 // إرسال الطلب  
 async function sendOrder(){  
   
-renderTables();  
     // 👇 حطها هنا بالظبط  
     if(orders[currentOrderIndex]?.orderPath){  
         return alert("تم إرسال الطلب قبل كده ⚠️");  
@@ -974,7 +1028,11 @@ db.ref('users').once('value', snap => {
         sessionStorage.setItem("role", found.role);  
 
         document.getElementById("loginBox").style.display = "none";  
-        document.getElementById("cashierName").innerText = "👤 " + found.username;  
+        let cashierEl = document.getElementById("cashierName");
+
+if(cashierEl){
+    cashierEl.innerText = "👤 " + cashier;
+}
 
         alert("تم تسجيل الدخول ✅");  
         applyPermissions();  
@@ -1214,39 +1272,51 @@ snap.forEach(o=>{
 
 window.onload = function(){
 
-loadLocalOrders();  
-  
-getLastOrders();  
-getTopItems();  
-  
+    try {
 
-let cashier = sessionStorage.getItem("cashier");  
+        loadLocalOrders();
+        getLastOrders();
+        getTopItems();
 
-if(cashier){  
-    document.getElementById("loginBox").style.display = "none";  
-    document.getElementById("cashierName").innerText = "👤 " + cashier;  
-    checkRole();  
-}  
+        renderTables();
 
-db.ref('open_orders/global').once('value', snap => {  
+        let cashier = sessionStorage.getItem("cashier");
 
-    let data = snap.val();  
+        if(cashier){
+            document.getElementById("loginBox").style.display = "none";
 
-    if(data){  
-        orders = data;  
-    } else {  
-        loadLocalOrders(); // 👈 fallback لو مفيش داتا  
-    }  
+            let userBox = document.getElementById("username");
+            if(userBox){
+                userBox.innerText = "👤 " + cashier;
+            }
 
-    renderOrderTabs();  
-    renderCart();  
-    renderTables();  
+            checkRole();
+            applyPermissions();
+        }
 
-    if(orders.length === 0){  
-        newOrder();  
-    }  
+        db.ref('open_orders/global').once('value', snap => {
 
-});
+            let data = snap.val();
+
+            if(data){
+                orders = data;
+            } else {
+                loadLocalOrders();
+            }
+
+            renderOrderTabs();
+            renderCart();
+            renderTables();
+
+            if(orders.length === 0){
+                newOrder();
+            }
+
+        });
+
+    } catch(err){
+        console.error("🔥 ERROR ON LOAD:", err);
+    }
 
 };
 
@@ -1264,6 +1334,23 @@ snap.forEach(o=>{
     document.getElementById("orderCount").innerText = count;  
 });
 
+}
+
+function change(index, delta){
+
+    let cart = orders[currentOrderIndex]?.items;
+
+    if(!cart || !cart[index]) return;
+
+    cart[index].qty += delta;
+
+    // لو الكمية بقت صفر نحذف المنتج
+    if(cart[index].qty <= 0){
+        cart.splice(index, 1);
+    }
+
+    renderCart();
+    saveOrdersToFirebase();
 }
 
 function changeView(type){
@@ -1559,56 +1646,40 @@ document.getElementById("mainCategories").innerHTML = html;
 
 }
 
-</script>
+</script>  <div id="notePopup" style="  
+position:fixed;  
+top:0;left:0;right:0;bottom:0;  
+background:rgba(0,0,0,0.6);  
+display:none;  
+justify-content:center;  
+align-items:center;  
+z-index:9999;  
+">  <div style="  
+background:#1e293b;  
+padding:20px;  
+border-radius:10px;  
+width:300px;  
+">  <h3>📝 ملاحظة المنتج</h3>  <textarea id="popupNote" style="  
+width:100%;  
+padding:8px;  
+border-radius:6px;  
+margin-top:10px;  
+"></textarea>  <div style="margin-top:10px; text-align:center;">  
+<button onclick="saveNote()" style="background:#22c55e;color:white;padding:5px 10px;border:none;border-radius:6px;">حفظ</button>  
+<button onclick="closeNotePopup()" style="background:#ef4444;color:white;padding:5px 10px;border:none;border-radius:6px;">إلغاء</button>  
+</div>  </div>  
+</div>  <div id="adminPanel" style="display:none; margin:10px; background:#020617; padding:10px; border-radius:10px;">  <h3>👑 إدارة المستخدمين</h3>  
 
-<div id="notePopup" style="
-position:fixed;
-top:0;left:0;right:0;bottom:0;
-background:rgba(0,0,0,0.6);
-display:none;
-justify-content:center;
-align-items:center;
-z-index:9999;
-">
+<input id="newUser" placeholder="اسم المستخدم">  
+<input id="newPass" placeholder="كلمة المرور">  
 
-<div style="
-background:#1e293b;
-padding:20px;
-border-radius:10px;
-width:300px;
-">
+<select id="newRole">  
+    <option value="user">كاشير</option>  
+    <option value="admin">أدمن</option>  
+</select>  
 
-<h3>📝 ملاحظة المنتج</h3>
+<button onclick="addUser()">➕ إضافة مستخدم</button>
 
-<textarea id="popupNote" style="
-width:100%;
-padding:8px;
-border-radius:6px;
-margin-top:10px;
-"></textarea>
+</div> 
 
-<div style="margin-top:10px; text-align:center;">
-<button onclick="saveNote()" style="background:#22c55e;color:white;padding:5px 10px;border:none;border-radius:6px;">حفظ</button>
-<button onclick="closeNotePopup()" style="background:#ef4444;color:white;padding:5px 10px;border:none;border-radius:6px;">إلغاء</button>
-</div>
-
-</div>
-</div>
-
-<div id="adminPanel" style="display:none; margin:10px; background:#020617; padding:10px; border-radius:10px;">
-    
-    <h3>👑 إدارة المستخدمين</h3>
-
-    <input id="newUser" placeholder="اسم المستخدم">
-    <input id="newPass" placeholder="كلمة المرور">
-
-    <select id="newRole">
-        <option value="user">كاشير</option>
-        <option value="admin">أدمن</option>
-    </select>
-
-    <button onclick="addUser()">➕ إضافة مستخدم</button>
-
-</div>
-
-</body>
+</body> 
