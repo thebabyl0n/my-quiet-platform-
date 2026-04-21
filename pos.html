@@ -521,6 +521,37 @@ function add(id, btn){
         }, 400);
     }
 }
+
+function renderTables(){
+
+    db.ref('live_orders').once('value', snap => {
+
+        let data = snap.val() || {};
+        let html = "";
+
+        for(let i=1; i<=12; i++){
+            let status = "free";
+
+            let tableKey = 'T_' + i;
+
+            if(data[tableKey]){
+                if(data[tableKey].status === "open"){
+                    status = "open"; // أصفر
+                }else{
+                    status = "busy"; // أحمر (لو اتحاسب)
+                }
+            }
+
+            html += `
+            <div class="table ${status}" onclick="selectTable(${i})">
+                T${i}
+            </div>`;
+        }
+
+        document.getElementById("tables").innerHTML = html;
+
+    });
+}
   
 function selectTable(num){  
   
