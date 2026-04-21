@@ -934,41 +934,40 @@ renderItems(filtered);
 }
 
 function login(){
-let username = document.getElementById("user").value;
-let password = document.getElementById("pass").value;
+    let username = document.getElementById("user").value;
+    let password = document.getElementById("pass").value;
 
-db.ref('users').once('value', snap => {  
-    let users = snap.val();  
+    db.ref('users').once('value', snap => {
+        let users = snap.val();
 
-    if(!users){  
-        alert("❌ مفيش مستخدمين في السيستم");  
-        return;  
-    }  
+        if(!users){
+            alert("❌ مفيش مستخدمين في السيستم");
+            return;
+        }
 
-    let found = null;  
+        let found = null;
 
-    Object.keys(users).forEach(key => {  
-        let u = users[key];  
+        Object.keys(users).forEach(key => {
+            let u = users[key];
 
-        if(u.username === username && u.password === password){  
-            found = u;  
-        }  
-    });  
+            if(u.username === username && u.password === password){
+                found = u;
+            }
+        });
 
-    if(found){  
-        sessionStorage.setItem("cashier", found.username);  
-        sessionStorage.setItem("role", found.role);  
+        if(found){
+            sessionStorage.setItem("cashier", found.username);
+            sessionStorage.setItem("role", found.role);
 
-        document.getElementById("loginBox").style.display = "none";  
-        document.getElementById("cashierName").innerText = "👤 " + found.username;.  
+            document.getElementById("loginBox").style.display = "none";
+            document.getElementById("cashierName").innerText = "👤 " + found.username;
 
-        alert("تم تسجيل الدخول ✅");  
-        applyPermissions();  
-    }else{  
-        alert("بيانات غلط ❌");  
-    }  
-});
-
+            alert("تم تسجيل الدخول ✅");
+            applyPermissions();
+        }else{
+            alert("بيانات غلط ❌");
+        }
+    });
 }
 
 function addUser(){
@@ -1615,3 +1614,4 @@ margin-top:10px;
 </div>
 
 </body>
+
