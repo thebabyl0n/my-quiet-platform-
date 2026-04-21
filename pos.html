@@ -1524,14 +1524,15 @@ function renderMainCategories() {
 
     // Render default categories
     defaultCats.forEach((cat, index) => {
-        const isActive = (currentMainCategory === cat.key) || (index === 0 && currentMainCategory === 'all');
-        html += `
-        <button class="main-cat-btn ${isActive ? 'active' : ''}" onclick="selectMainCategory('${cat.key}', this)">
-            <span class="icon">${cat.icon}</span>
-            <span class="name">${cat.name}</span>
-            <span class="desc">${cat.desc}</span>
-        </button>`;
-    });
+    const isActive = (currentMainCategory === cat.key) || (index === 0 && currentMainCategory === 'all');
+    
+    html += `
+    <button class="main-cat-btn ${isActive ? 'active' : ''}" onclick="selectMainCategory('${cat.key}', this)">
+        <span class="icon">${cat.icon}</span>
+        <span class="name">${cat.name}</span>
+        <span class="desc">${cat.desc}</span>
+    </button>`;
+});
 
     // Add categories from Firebase that are not in defaults
     Object.keys(mainCategories).forEach(key => {
@@ -2092,6 +2093,28 @@ function closeTab(index) {
     saveOrdersToFirebase();
     renderOrderTabs();
     renderCart();
+}
+
+
+function loadMainCategories() {
+    let container = document.getElementById("mainCategories"); // نفس مكان الأزرار
+
+    db.ref("categories").on("value", snap => {
+        let html = "";
+
+        snap.forEach(cat => {
+            let data = cat.val();
+
+            html += `
+            <button class="main-cat-btn">
+                <span class="name">${data.name}</span>
+                <span class="desc">${data.desc || ""}</span>
+            </button>
+            `;
+        });
+
+        container.innerHTML = html;
+    });
 }
 
 // ==========================================
