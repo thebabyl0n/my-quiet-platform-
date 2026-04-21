@@ -1338,6 +1338,11 @@ button:hover {
 
     <!-- RIGHT PANEL - Products -->
     <div id="rightPanel">
+        <!-- المنتجات / المخزون -->
+    <h3 style="color:#00c3ff;">📦 المخزون</h3>  
+    <div id="productsContainer"></div>
+
+</div>
         
         <!-- Search Bar -->
         <div class="search-bar">
@@ -1395,10 +1400,23 @@ button:hover {
 
 <!-- LOGIN BOX -->
 <div id="loginBox">
-    <h2>&#128274; تسجيل الدخول</h2>
-    <input id="user" placeholder="اسم المستخدم">
-    <input id="pass" type="password" placeholder="كلمة السر">
-    <button onclick="login()">دخول</button>
+    <h2 style="text-align:center;">&#128274; تسجيل الدخول</h2>
+
+<div style="text-align:center;margin-bottom:20px;">
+    <img src="logo.png" style="width:120px;">
+    <h1 style="color:gold;">ALFA</h1>
+    <p style="color:#aaa;">POS SYSTEM</p>
+</div>
+
+<input id="user" type="text" placeholder="Email / اسم المستخدم">
+<input id="pass" type="password" placeholder="Password / كلمة المرور">
+
+<button onclick="login()">تسجيل الدخول</button>
+
+<p style="margin-top:20px;color:#888;text-align:center;">
+    للتواصل والدعم 📞 <br>
+    +966 579 747 707
+</p>
 </div>
 
 <!-- REPORT MODAL -->
@@ -2467,20 +2485,23 @@ function showInventory() {
         return;
     }
 
-    db.ref('products').once('value', snap => {
-        let data = [];
+    db.ref("products").once("value", snap => {
+    let data = snap.val();
+    let container = document.getElementById("productsContainer");
 
-        snap.forEach(p => {
-            data.push({
-                name: p.val().name,
-                qty: p.val().quantity
-            });
-        });
+    container.innerHTML = "";
 
-        console.log("[v0] المخزون:", data);
-        alert("تم عرض المخزون في الكونسول");
+    Object.keys(data).forEach(key => {
+        let p = data[key];
+
+        container.innerHTML += `
+            <div class="product">
+                <h4>${p.name}</h4>
+                <p>السعر: ${p.price}</p>
+            </div>
+        `;
     });
-}
+});
 
 function compareMonths() {
     showYearReport();
