@@ -527,7 +527,7 @@ function add(id, btn){
 
 function renderTables(){
 
-    db.ref('live_orders').once('value', snap => {
+    db.ref('live_orders').on('value', snap => {
 
         let data = snap.val() || {};
         let html = "";
@@ -541,7 +541,7 @@ function renderTables(){
                 if(data[tableKey].status === "open"){
                     status = "open"; // أصفر
                 }else{
-                    status = "busy"; // أحمر (لو اتحاسب)
+                    status = "busy"; // أحمر
                 }
             }
 
@@ -1217,7 +1217,7 @@ renderCart();
 }
 
 function getTodaySales(){
-db.ref('live_orders').once('value', snap=>{
+db.ref('live_orders').on('value', snap=>{
 let total = 0;
 let count = 0;
 
@@ -1273,7 +1273,7 @@ db.ref('open_orders/global').once('value', snap => {
 };
 
 function getTodayStats(){
-db.ref('live_orders').once('value', snap=>{
+db.ref('live_orders').on('value', snap=>{
 let total = 0;
 let count = 0;
 
@@ -1389,7 +1389,7 @@ chartInstance = new Chart(ctx, {
 function topItems(){  
 let map = {};  
 
-db.ref('live_orders').once('value', snap=>{  
+db.ref('live_orders').on('value', snap=>{
     snap.forEach(o=>{  
         o.val().items.forEach(i=>{  
             map[i.ar] = (map[i.ar] || 0) + i.qty;  
