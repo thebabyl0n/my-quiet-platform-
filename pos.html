@@ -85,14 +85,23 @@ button:hover {
 .btn-green { background: var(--green); }  
 .btn-blue { background: var(--blue); }  
 .btn-red { background: #ef4444; }  
-.btn-yellow { background: #f59e0b; }  
-  
-/* 🛍️ Items Grid */  
-#items {  
-    display: grid;  
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));  
-    gap: 15px;  
-}  
+.btn-yellow { background: #f59e0b; }
+
+#mainLayout{
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: 10px;
+    padding: 10px;
+}
+
+#leftPanel,
+#centerPanel,
+#rightPanel{
+    background: #020617;
+    border-radius: 15px;
+    padding: 10px;
+}
+
   
 /* المنتجات */
 #items{
@@ -212,117 +221,167 @@ button:hover {
 
 <body>
 
-<!-- 🔐 شاشة تسجيل الدخول (أعلى طبقة) -->
-<div id="loginBox" style="position:fixed; top:0; left:0; right:0; bottom:0; background:#0f172a; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:9999;">
-    <h2>🔐 تسجيل الدخول</h2>
-    <input id="user" placeholder="اسم المستخدم" style="margin-bottom:10px; padding:10px;">
-    <input id="pass" type="password" placeholder="كلمة السر" style="margin-bottom:10px; padding:10px;">
-    <button onclick="login()" class="btn-green">دخول</button>
-</div>
-
-<!-- 📊 نافذة المبيعات (Popup) -->
-<div id="salesBox" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:95%; max-width:600px; background:#1e293b; padding:20px; border-radius:15px; z-index:1000; overflow-y:auto; max-height:90vh;">
-    <h3 style="color:#00ced1;">📊 المبيعات</h3>
-    <select onchange="changeView(this.value)" style="margin-bottom:15px;">
-        <option value="day">يومي</option>
-        <option value="month">شهري</option>
-    </select>
-    
-    <h4>🔥 الأكثر مبيعًا</h4>
-    <canvas id="topChart"></canvas>
-    
-    <h4>🧾 آخر الطلبات</h4>
-    <table id="lastOrders" style="width:100%; color:white; border-collapse:collapse;"></table>
-    
-    <canvas id="salesChart" style="margin-top:20px;"></canvas>
-    <button onclick="toggleSales()" class="btn-red" style="margin-top:15px;">❌ إغلاق</button>
-</div>
-
 <div id="app">
-    <!-- 🔝 الهيدر والأكشنز -->
-    <div id="header" style="display:flex; justify-content:space-between; align-items:center; padding:10px 20px; background:#1e293b;">
-        <div style="font-size:1.5rem; font-weight:bold; color:#00ced1;">☕ Shadow POS System</div>
-        
-        <div class="top-actions" style="display:flex; align-items:center; gap:15px;">
-            <div id="cashierName" style="color:#ffd700; font-weight:bold;">👤 <span id="username"></span></div>
-            <button onclick="toggleSales()" class="btn-green">📊</button>
-            <button onclick="logout()" class="btn-red">🚪</button>
-        </div>
+
+    <!-- 🔝 الهيدر -->
+    <div id="header">
+      ☕ POS System
     </div>
 
-    <!-- 💪 الجسم الرئيسي للمنظومة -->
-    <div id="mainLayout" style="display:grid; grid-template-columns: 250px 1fr 350px; height: calc(100vh - 120px); gap:10px; padding:10px;">
+    <!-- 💪 الجسم -->
+    <div id="mainLayout">
 
-        <!-- 🪑 اليمين (لوحة الطاولات والإدارة) -->
-        <div id="leftPanel" style="background:#1e293b; padding:10px; border-radius:10px; overflow-y:auto;">
-            <h3 style="color:#ffd700;">🪑 الطاولات</h3>
-            <div id="tables" style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px;"></div>
-            <hr style="border:0.5px solid #334155; margin:20px 0;">
+        <!-- 🪑 الشمال -->
+        <div id="leftPanel">
+
             <div id="adminPanel"></div>
         </div>
 
-        <!-- 🍔 الوسط (المبيعات والمنيو) -->
-        <div id="centerPanel" style="display:flex; flex-direction:column; gap:10px; overflow-y:auto;">
-            <!-- صناديق الإحصائيات -->
-            <div id="statsBox" style="display:flex; gap:10px; background:#0f172a; padding:15px; border-radius:10px;">
-                <div style="flex:1; background:#020617; padding:10px; border-radius:10px; text-align:center;">
-                    💰 <span id="todayTotal">0</span> ريال
-                </div>
-                <div style="flex:1; background:#020617; padding:10px; border-radius:10px; text-align:center;">
-                    🧾 <span id="orderCount">0</span> طلب
-                </div>
-            </div>
+        <!-- 🍔 النص -->
+        <div id="centerPanel">
+        
+        <div id="statsBox" style="display:flex; gap:10px; margin:10px 0; align-items:center; flex-wrap:wrap;">
+        
+        <div id="reportsBox" style="
+display:flex;
+gap:10px;
+margin:10px 0;
+flex-wrap:wrap;
+">
 
-            <!-- التقارير السريعة -->
-            <div id="reportsBox" style="display:flex; gap:10px; margin-bottom:10px;">
-                <div class="report-card" onclick="getYearlySales()" style="cursor:pointer; background:#334155; padding:10px; border-radius:8px; flex:1; text-align:center;">
-                    📊 تقرير سنوي
-                </div>
-                <div class="report-card" onclick="getInventoryReport()" style="cursor:pointer; background:#334155; padding:10px; border-radius:8px; flex:1; text-align:center;">
-                    📦 المخزون
-                </div>
-            </div>
-
-            <!-- المنيو -->
-            <div id="mainCategories" style="display:flex; gap:5px; flex-wrap:wrap;"></div>
-            <div id="categories" style="display:flex; gap:5px; flex-wrap:wrap; margin-top:5px;"></div>
-            <div id="items" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:10px; margin-top:10px;"></div>
+            <div id="mainCategories"></div>
+            <div id="categories"></div>
+            <div id="items"></div>
         </div>
 
-        <!-- 🧾 اليسار (الفاتورة والتحصيل) -->
-        <div id="rightPanel" style="background:#1e293b; padding:15px; border-radius:10px; display:flex; flex-direction:column; gap:10px;">
-            <div id="orderTabs" style="display:flex; gap:5px; overflow-x:auto;"></div>
-            <h3 style="color:#ffd700; margin:0;">🧾 الفاتورة</h3>
-            
-            <select id="orderType" style="padding:8px; border-radius:5px; background:#0f172a; color:white;">
-                <option value="محلي">محلي</option>
-                <option value="سفري">سفري</option>
-            </select>
-
-            <div id="cart" style="flex:1; overflow-y:auto; background:#0f172a; padding:10px; border-radius:5px;"></div>
-            
-            <div id="total" style="font-size:1.8rem; text-align:center; color:#00ced1; font-weight:bold; padding:10px; background:#020617; border-radius:5px;">0 ريال</div>
-            
-            <textarea id="note" placeholder="ملاحظات الطلب..." style="width:100%; height:60px; background:#0f172a; color:white; border-radius:5px; padding:5px;"></textarea>
-
-            <div id="statusBox"></div>
-
-            <!-- أزرار الأكشن -->
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                <button onclick="sendOrder()" class="btn-green">➕ إضافة</button>
-                <button onclick="completeOrder()" class="btn-yellow">💰 تحصيل</button>
-                <button onclick="printBill()" class="btn-blue">🧾 طباعة</button>
-                <button onclick="restoreOrders()" class="btn-yellow">🔄 استرجاع</button>
-            </div>
-            <button onclick="closeShift()" class="btn-red" style="width:100%; margin-top:5px;">📊 تقفيل وردية</button>
+        <!-- 🧾 اليمين -->
+        <div id="rightPanel">
+            <div id="cart"></div>
         </div>
+
     </div>
 
-    <!-- 🆕 زر فاتورة جديدة ثابت -->
-    <div style="position:fixed; bottom:0; left:0; right:0; padding:10px; background:rgba(15,23,42,0.8); backdrop-filter:blur(5px);">
-        <button onclick="newOrder()" class="btn-green" style="width:100%; font-size:1.2rem; padding:12px;">🆕 فاتورة جديدة</button>
+
+    <div class="top-actions">
+
+        <!-- 📊 زر المبيعات -->
+        <button onclick="toggleSales()" class="btn-green">
+            📊
+        </button>
+
+        <!-- 👤 المستخدم -->
+        <div class="user" id="username">👤</div>
+        
+            <!-- 👇 ضيفي ده هنا -->
+    <div id="cashierName" style="color:white; font-weight:bold;"></div>
+
+        <!-- 🚪 خروج -->
+        <button onclick="logout()" class="btn-red">🚪</button>
+
     </div>
 </div>
+
+<!-- 📊 Sales Popup -->
+<div id="salesBox" style="
+display:none;
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+width:90%;
+max-width:600px;
+background:#1e293b;
+padding:20px;
+border-radius:15px;
+z-index:999;
+">
+
+<h3>📊 المبيعات</h3>
+
+<h4>🔥 الأكثر مبيعًا</h4>
+<canvas id="topChart"></canvas>
+
+<h4>🧾 آخر الطلبات</h4>
+<table id="lastOrders" style="width:100%;color:white;"></table>
+
+<select onchange="changeView(this.value)">
+<option value="day">يومي</option>
+<option value="month">شهري</option>
+</select>
+
+<canvas id="salesChart"></canvas>
+
+<button onclick="toggleSales()" class="btn-red">❌ إغلاق</button>
+
+</div>
+
+<!-- 🔐 Login -->
+<div id="loginBox" style="
+position:fixed;
+top:0;left:0;right:0;bottom:0;
+background:#0f172a;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:9999;
+">
+
+<h2>🔐 تسجيل الدخول</h2>
+
+<input id="user" placeholder="اسم المستخدم">
+<input id="pass" type="password" placeholder="كلمة السر">
+
+<button onclick="login()" class="btn-green">دخول</button>
+</div>
+
+    <div class="report-card" onclick="getYearlySales()">
+        📊 <br> تقرير سنوي
+    </div>
+
+    <div class="report-card" onclick="getInventoryReport()">
+        📦 <br> المخزون
+    </div>
+
+</div>
+
+    <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">
+        💰 <span id="todayTotal">0</span> ريال
+    </div>
+
+    <div style="flex:1;background:#020617;padding:10px;border-radius:10px;">
+        🧾 <span id="orderCount">0</span> طلب
+    </div>
+    
+</div>
+
+<div style="position:fixed; bottom:10px; left:10px; right:10px;">
+    <button onclick="newOrder()" class="btn-green" style="width:100%;">
+        🆕 فاتورة جديدة
+    </button>
+</div>
+
+<!-- 💳 Right Side -->
+<div class="right">
+
+<div id="orderTabs"></div>
+
+<h3>🧾 الفاتورة</h3>
+
+<select id="orderType">
+<option value="محلي">محلي</option>
+<option value="سفري">سفري</option>
+</select>
+
+<div id="tables" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;"></div>
+
+<div id="total">0 ريال</div>
+
+<button onclick="sendOrder()" class="btn-green">➕ إضافة</button>
+<button onclick="completeOrder()" class="btn-yellow">💰 تحصيل</button>
+<button onclick="printBill()" class="btn-blue">🧾 طباعة</button>
+<button onclick="closeShift()" class="btn-blue">📊 تقفيل وردية</button>
+<button onclick="restoreOrders()" class="btn-yellow">🔄 استرجاع</button>
 
 <script>  
 const firebaseConfig = {  
@@ -1739,4 +1798,4 @@ margin-top:10px;
 </div>
 
 </body>
-  
+
